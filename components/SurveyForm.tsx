@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 interface SurveyForm {
   q1: string; q2: string; q3: string; q4: string
@@ -33,7 +33,7 @@ const QUESTIONS: Record<keyof SurveyForm, OptionSet> = {
   q3:  { q: "Biggest complaint about your child's tuition teacher?", opts: ['Explains too fast','Too boring','Child afraid to ask doubts','Too expensive','Not personalised at all'] },
   q4:  { q: "Does your child ask doubts in class?", opts: ['Yes, always','Sometimes','Rarely — feels shy','Never'] },
   q5:  { q: "Quality missing most in today's teachers?", opts: ['Unlimited patience','24/7 availability','Never makes child feel stupid',"Adapts to child's pace",'Visual teaching — diagrams'] },
-  q6:  { q: "When your child has a question during homework at night — what usually happens?", opts: ['Searches YouTube','Waits until next day','Asks parents for help','Messages teacher (if allowed)','Gives up & moves on'] },
+  q6:  { q: "When your child has a doubt late at night while studying — what usually happens?", opts: ['Searches YouTube','Waits until next day','Asks teacher on WhatsApp','Asks parents','Gives up and moves on'] },
   q7:  { q: "Students per teacher in your child's coaching class?", opts: ['Under 10','10–25','25–40','More than 40'] },
   q8:  { q: "When class moves too fast — who adjusts?", opts: ['Nobody — child falls behind','We hire extra tutor','Child studies alone for hours','Teacher slows down (rare)'] },
   q9:  { q: "AI teacher: 24/7 available, never judges, infinitely patient, adapts to your child's pace. Your reaction?", opts: ['Excited — this is what we need','Interested — want to see it first','Neutral — not sure yet','Worried about human touch','Against it — prefer human only'] },
@@ -45,8 +45,8 @@ const QUESTIONS: Record<keyof SurveyForm, OptionSet> = {
   q15: { q: "If your child's classmate used AI-Gurukool and topped the class — would you try it?", opts: ['Yes immediately — results speak','Yes, after researching it','Would ask the other parent first','Probably not','Definitely not'] },
 }
 
-export default function SurveyPage() {
-  const [step, setStep] = useState(0)  // 0=intro, 1–5=blocks, 6=done
+export default function SurveyFormComponent() {
+  const [step, setStep] = useState(0)
   const [form, setForm] = useState<SurveyForm>({ ...EMPTY })
   const [animDir, setAnimDir] = useState<'forward'|'back'>('forward')
   const [visible, setVisible] = useState(true)
@@ -85,106 +85,101 @@ export default function SurveyPage() {
   const progressPct = step === 6 ? 100 : step === 0 ? 0 : Math.round((answered / totalQ) * 100)
 
   return (
-    <div className="gf-page">
-      {/* Top progress bar */}
+    <div className="gf-embed">
+      {/* Top progress bar (inside card) */}
       {step > 0 && step < 6 && (
-        <div className="gf-topbar">
+        <div className="gf-topbar-embed">
           <div className="gf-topbar-fill" style={{ width: `${progressPct}%` }} />
         </div>
       )}
 
-      <div className="gf-center">
-
-        {/* ── Intro ── */}
-        {step === 0 && (
-          <div className={`gf-card gf-intro ${visible ? 'gf-in' : 'gf-out-forward'}`}>
-            <div className="gf-brand">🏛️ AI-Gurukool</div>
-            <h1 className="gf-intro-title">Survey for AI-Gurukool</h1>
-            <p className="gf-intro-sub">
-              Before writing a single line of code, we talk to real parents.
-              3 minutes of your time shapes what 1000s of students experience.
-            </p>
-            <div className="gf-intro-pills">
-              <span>✦ 15 questions</span>
-              <span>✦ 3 minutes</span>
-              <span>✦ Anonymous</span>
-            </div>
-            <button className="gf-start-btn" onClick={() => go('forward')}>
-              Start Survey
-              <span className="gf-arrow">→</span>
-            </button>
-            <p className="gf-disclaimer">Your data stays on your device. We never sell it.</p>
+      {/* Intro */}
+      {step === 0 && (
+        <div className={`gf-card gf-intro ${visible ? 'gf-in' : 'gf-out-forward'}`}>
+          <div className="gf-brand">🏛️ AI-Gurukool</div>
+          <h1 className="gf-intro-title">Help Shape the Future of Learning</h1>
+          <p className="gf-intro-sub">
+            15 questions. 3 minutes. Your voice shapes what we build for 1000s of students.
+          </p>
+          <div className="gf-intro-pills">
+            <span>✦ 15 questions</span>
+            <span>✦ 3 minutes</span>
+            <span>✦ Anonymous</span>
           </div>
-        )}
+          <button className="gf-start-btn" onClick={() => go('forward')}>
+            Start Survey
+            <span className="gf-arrow">→</span>
+          </button>
+          <p className="gf-disclaimer">Your responses help us build a better AI teacher.</p>
+        </div>
+      )}
 
-        {/* ── Blocks 1–5 ── */}
-        {step >= 1 && step <= 5 && (
-          <div className={`gf-card gf-block ${visible ? 'gf-in' : animDir === 'forward' ? 'gf-out-forward' : 'gf-out-back'}`}>
-            <div className="gf-block-meta">
-              <span className="gf-step-label">Section {step} of 5</span>
-              <span className="gf-answered">{answered} / {totalQ} answered</span>
-            </div>
-            <h2 className="gf-block-title">{BLOCKS[step-1].title}</h2>
-            <p className="gf-block-sub">{BLOCKS[step-1].subtitle}</p>
+      {/* Blocks */}
+      {step >= 1 && step <= 5 && (
+        <div className={`gf-card gf-block ${visible ? 'gf-in' : animDir === 'forward' ? 'gf-out-forward' : 'gf-out-back'}`}>
+          <div className="gf-block-meta">
+            <span className="gf-step-label">Section {step} of 5</span>
+            <span className="gf-answered">{answered} / {totalQ} answered</span>
+          </div>
+          <h2 className="gf-block-title">{BLOCKS[step-1].title}</h2>
+          <p className="gf-block-sub">{BLOCKS[step-1].subtitle}</p>
 
-            <div className="gf-questions">
-              {BLOCKS[step-1].fields.map((field, qi) => {
-                const qdata = QUESTIONS[field]
-                const qNum = Object.keys(QUESTIONS).indexOf(field) + 1
-                return (
-                  <div key={field} className="gf-q">
-                    <div className="gf-q-label">
-                      <span className="gf-q-num">{qNum}</span>
-                      {qdata.q}
-                    </div>
-                    <div className="gf-opts">
-                      {qdata.opts.map(opt => (
-                        <button
-                          key={opt}
-                          className={`gf-opt${form[field] === opt ? ' gf-opt-sel' : ''}`}
-                          onClick={() => pick(field, opt)}
-                        >
-                          <span className="gf-opt-radio" />
-                          {opt}
-                        </button>
-                      ))}
-                    </div>
+          <div className="gf-questions">
+            {BLOCKS[step-1].fields.map((field) => {
+              const qdata = QUESTIONS[field]
+              const qNum = Object.keys(QUESTIONS).indexOf(field) + 1
+              return (
+                <div key={field} className="gf-q">
+                  <div className="gf-q-label">
+                    <span className="gf-q-num">{qNum}</span>
+                    {qdata.q}
                   </div>
-                )
-              })}
-            </div>
-
-            <div className="gf-nav">
-              <button className="gf-btn-back" onClick={() => go('back')}>← Back</button>
-              <div className="gf-dots">
-                {[1,2,3,4,5].map(i => (
-                  <div key={i} className={`gf-dot${i === step ? ' gf-dot-active' : i < step ? ' gf-dot-done' : ''}`} />
-                ))}
-              </div>
-              {step < 5
-                ? <button className="gf-btn-next" disabled={!blockComplete()} onClick={() => go('forward')}>Next →</button>
-                : <button className="gf-btn-submit" disabled={!blockComplete()} onClick={submit}>Submit ✓</button>
-              }
-            </div>
+                  <div className="gf-opts">
+                    {qdata.opts.map(opt => (
+                      <button
+                        key={opt}
+                        className={`gf-opt${form[field] === opt ? ' gf-opt-sel' : ''}`}
+                        onClick={() => pick(field, opt)}
+                      >
+                        <span className="gf-opt-radio" />
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
           </div>
-        )}
 
-        {/* ── Thank You ── */}
-        {step === 6 && (
-          <div className={`gf-card gf-done ${visible ? 'gf-in' : 'gf-out-forward'}`}>
-            <div className="gf-done-confetti">🎉</div>
-            <h2 className="gf-done-title">Thank you!</h2>
-            <p className="gf-done-sub">Your feedback has been recorded and will directly shape what we build.</p>
-            <div className="gf-done-row">
-              <div className="gf-done-stat"><strong>3 min</strong><span>well spent</span></div>
-              <div className="gf-done-stat"><strong>15</strong><span>insights shared</span></div>
-              <div className="gf-done-stat"><strong>∞</strong><span>students helped</span></div>
+          <div className="gf-nav">
+            <button className="gf-btn-back" onClick={() => go('back')}>← Back</button>
+            <div className="gf-dots">
+              {[1,2,3,4,5].map(i => (
+                <div key={i} className={`gf-dot${i === step ? ' gf-dot-active' : i < step ? ' gf-dot-done' : ''}`} />
+              ))}
             </div>
-            <a href="/" className="gf-home-btn">← Back to Home</a>
+            {step < 5
+              ? <button className="gf-btn-next" disabled={!blockComplete()} onClick={() => go('forward')}>Next →</button>
+              : <button className="gf-btn-submit" disabled={!blockComplete()} onClick={submit}>Submit ✓</button>
+            }
           </div>
-        )}
+        </div>
+      )}
 
-      </div>
+      {/* Thank You */}
+      {step === 6 && (
+        <div className={`gf-card gf-done ${visible ? 'gf-in' : 'gf-out-forward'}`}>
+          <div className="gf-done-confetti">🎉</div>
+          <h2 className="gf-done-title">Thank you!</h2>
+          <p className="gf-done-sub">Your feedback has been saved and will directly shape what we build.</p>
+          <div className="gf-done-row">
+            <div className="gf-done-stat"><strong>15</strong><span>insights shared</span></div>
+            <div className="gf-done-stat"><strong>3 min</strong><span>well spent</span></div>
+            <div className="gf-done-stat"><strong>∞</strong><span>students helped</span></div>
+          </div>
+          <button onClick={() => { setForm({ ...EMPTY }); go('back'); setTimeout(() => setStep(0), 100) }} className="gf-home-btn">Take Again</button>
+        </div>
+      )}
     </div>
   )
 }

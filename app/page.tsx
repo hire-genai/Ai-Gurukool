@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import SurveyFormComponent from '@/components/SurveyForm'
 
 const STORE_KEY = 'aig_phase0_v2'
 
@@ -41,6 +42,7 @@ export default function HomePage() {
   const [valData, setValData] = useState<ValData | null>(null)
   const [counters, setCounters] = useState({ c1: 0, c2: 0, c3: 0 })
   const [surveyStats, setSurveyStats] = useState<SurveyStats | null>(null)
+  const [mobileNav, setMobileNav] = useState(false)
 
   // Scroll reveal
   useEffect(() => {
@@ -231,16 +233,19 @@ export default function HomePage() {
       <nav className="main-nav">
         <a href="#" className="nav-logo">
           <div className="nav-logo-mark">🏛️</div>
-          <span>AI-Gurukool</span>
+          <span className="nav-logo-text">AI-Gurukool</span>
         </a>
-        <ul className="nav-links">
-          <li><a href="#classroom">The Classroom</a></li>
-          <li><a href="#subjects">Subjects</a></li>
-          <li><a href="#portal">Parent Portal</a></li>
-          <li><a href="#reports">Reports</a></li>
-          <li><a href="#hybrid">Hybrid</a></li>
+        <button className="nav-toggle" onClick={() => setMobileNav(v => !v)} aria-label="Toggle menu">
+          <span></span><span></span><span></span>
+        </button>
+        <ul className={`nav-links${mobileNav ? ' nav-open' : ''}`}>
+          <li><a href="#classroom" onClick={() => setMobileNav(false)}>The Classroom</a></li>
+          <li><a href="#subjects" onClick={() => setMobileNav(false)}>Subjects</a></li>
+          <li><a href="#portal" onClick={() => setMobileNav(false)}>Parent Portal</a></li>
+          <li><a href="#reports" onClick={() => setMobileNav(false)}>Reports</a></li>
+          <li><a href="#hybrid" onClick={() => setMobileNav(false)}>Hybrid</a></li>
         </ul>
-        <a href="/survey" className="nav-cta">📋 Take Survey</a>
+        <a href="#survey" className="nav-cta">📋 Take Survey</a>
       </nav>
 
       {/* HERO */}
@@ -285,6 +290,53 @@ export default function HomePage() {
           ))}
         </div>
       </div>
+
+      {/* ═════ EMBEDDED SURVEY SECTION ═════ */}
+      <section id="survey" className="survey-hero-section">
+        <div className="container">
+          <div className="survey-hero-grid">
+            {/* Left: Pitch */}
+            <div className="survey-hero-left reveal-left">
+              <div className="section-eyebrow">Help Us Build Better</div>
+              <h2 className="survey-hero-title">
+                Frustrated That Your Child<br />
+                <span className="grad-text">Isn't Getting Personalised Attention?</span>
+              </h2>
+              <p className="survey-hero-sub">
+                Answer 15 quick questions to shape the AI teacher your child deserves — and get a peek at what we're building.
+              </p>
+              <div className="survey-hero-features">
+                <div className="shf-item">
+                  <div className="shf-icon">🎯</div>
+                  <div>
+                    <strong>Share your struggles</strong>
+                    <span>Real pain points — real product decisions</span>
+                  </div>
+                </div>
+                <div className="shf-item">
+                  <div className="shf-icon">📊</div>
+                  <div>
+                    <strong>See live insights</strong>
+                    <span>Your response joins the data pool below</span>
+                  </div>
+                </div>
+                <div className="shf-item">
+                  <div className="shf-icon">⏱️</div>
+                  <div>
+                    <strong>Only 3 minutes</strong>
+                    <span>15 multiple-choice questions, that's it</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Embedded survey */}
+            <div className="survey-hero-right reveal-right">
+              <SurveyFormComponent />
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* MARKET VALIDATION — only shown when admin enables it */}
       {valData?.showSection && (
@@ -366,7 +418,7 @@ export default function HomePage() {
               <p style={{ fontSize: '.93rem', color: 'var(--muted)', marginBottom: 24, maxWidth: 520, marginLeft: 'auto', marginRight: 'auto' }}>We are actively speaking to parents, students, and educators. Join our focus group or take a 5-minute survey — your input shapes what we build.</p>
               <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
                 <a href="#trial" className="btn-primary" style={{ fontSize: '.9rem', padding: '12px 26px' }}>🎯 Join a Focus Group</a>
-                <a href="/survey" className="btn-ghost" style={{ fontSize: '.9rem', padding: '12px 26px' }}>📋 Take the Survey</a>
+                <a href="#survey" className="btn-ghost" style={{ fontSize: '.9rem', padding: '12px 26px' }}>📋 Take the Survey</a>
               </div>
             </div>
           </div>
@@ -444,8 +496,8 @@ export default function HomePage() {
             <h2 className="section-title section-title-white">20+ Subjects. One Roundtable.<br /><span className="grad-text">Infinite Curiosity.</span></h2>
             <p className="section-sub section-sub-white" style={{ margin: '14px auto 0' }}>From foundational Mathematics to JEE, NEET, and CLAT entrance prep — every subject taught through real-world Socratic dialogue.</p>
           </div>
-          <div className="subjects-grid">
-            {[
+          {(() => {
+            const subjects = [
               ['01_Math.png','Mathematics'],
               ['02_English.png','English'],
               ['03_Science.png','Science'],
@@ -463,17 +515,36 @@ export default function HomePage() {
               ['15_Competitive_Exams.png','Competitive Exams'],
               ['16_Job_Entrance_Exam.png','Job Entrance Exams'],
               ['17_Engineering_Entrance_JEE.png','Engineering — JEE'],
-            ].map(([file, name], i) => (
-              <div
-                key={file}
-                className="subj-card reveal"
-                style={{ transitionDelay: `${(i % 5) * 0.07}s` }}
-              >
-                <img src={`/subjects/${file}`} alt={name} loading="lazy" />
-                <div className="subj-label"><span className="subj-name">{name}</span></div>
+            ]
+            const row1 = subjects.slice(0, 9)
+            const row2 = subjects.slice(9)
+            return (
+              <div className="subjects-marquee reveal">
+                {/* Row 1 — scrolls left */}
+                <div className="subj-row subj-row-left">
+                  <div className="subj-track">
+                    {[...row1, ...row1].map(([file, name], i) => (
+                      <div key={`r1-${i}`} className="subj-card-mq">
+                        <img src={`/subjects/${file}`} alt={name} loading="lazy" />
+                        <div className="subj-label"><span className="subj-name">{name}</span></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {/* Row 2 — scrolls right */}
+                <div className="subj-row subj-row-right">
+                  <div className="subj-track subj-track-reverse">
+                    {[...row2, ...row2].map(([file, name], i) => (
+                      <div key={`r2-${i}`} className="subj-card-mq">
+                        <img src={`/subjects/${file}`} alt={name} loading="lazy" />
+                        <div className="subj-label"><span className="subj-name">{name}</span></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
-            ))}
-          </div>
+            )
+          })()}
         </div>
       </section>
 
@@ -696,7 +767,7 @@ export default function HomePage() {
             <div style={{ display: 'inline-block', fontSize: '.7rem', fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--gold)', background: 'rgba(245,166,35,.12)', border: '1px solid rgba(245,166,35,.3)', padding: '6px 16px', borderRadius: 40, marginBottom: 20 }}>Limited Seats Available</div>
             <h2>Experience the Roundtable — <span className="grad-text">Live.</span></h2>
             <p>Book a free 20-minute trial session. Sit your child at the roundtable, watch the AI in action, and feel the difference before you decide.</p>
-            <a href="/survey" className="btn-primary" style={{ fontSize: '1rem', padding: '17px 38px' }}>📋 &nbsp;Take the Parent Survey</a>
+            <a href="#survey" className="btn-primary" style={{ fontSize: '1rem', padding: '17px 38px' }}>📋 &nbsp;Take the Parent Survey</a>
           </div>
         </div>
       </section>
@@ -807,7 +878,7 @@ export default function HomePage() {
 
             <div className="reveal sv-stats-cta">
               <p>Add your voice to the data →</p>
-              <a href="/survey" className="btn-primary" style={{ fontSize: '.9rem', padding: '12px 28px' }}>Take the Survey (3 min)</a>
+              <a href="#survey" className="btn-primary" style={{ fontSize: '.9rem', padding: '12px 28px' }}>Take the Survey (3 min)</a>
             </div>
           </div>
         </section>
