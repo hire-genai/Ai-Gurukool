@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Classroom – Discovery & Validation Phase 0</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1e222d;
+    --surface2: #22263a;
+    --border: #2e3250;
+    --green: #22c55e;
+    --green-dim: #16a34a22;
+    --yellow: #eab308;
+    --yellow-dim: #ca8a0422;
+    --blue: #3b82f6;
+    --blue-dim: #2563eb22;
+    --purple: #a855f7;
+    --purple-dim: #9333ea22;
+    --red: #ef4444;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+    --radius: 10px;
+    --shadow: 0 4px 24px #0008;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* ── Header ── */
+  .hero {
+    background: linear-gradient(135deg, #1e1b4b 0%, #0f1117 60%);
+    border-bottom: 1px solid var(--border);
+    padding: 40px 24px 32px;
+    text-align: center;
+  }
+  .hero-badge {
+    display: inline-block;
+    background: var(--purple-dim);
+    border: 1px solid var(--purple);
+    color: var(--purple);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 4px 14px;
+    border-radius: 100px;
+    margin-bottom: 16px;
+  }
+  .hero h1 {
+    font-size: clamp(22px, 4vw, 38px);
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+    background: linear-gradient(90deg, #e2e8f0, #a855f7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero p { color: var(--text-muted); font-size: 14px; }
+
+  /* ── Master Progress ── */
+  .master-progress {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin: 24px auto;
+    max-width: 1100px;
+  }
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .progress-header span { font-size: 13px; color: var(--text-muted); }
+  .progress-header strong { font-size: 15px; color: var(--text); }
+  .progress-bar-track {
+    background: var(--surface2);
+    border-radius: 100px;
+    height: 10px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--purple), var(--blue));
+    border-radius: 100px;
+    transition: width 0.4s ease;
+  }
+  .progress-stats {
+    display: flex;
+    gap: 24px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  .progress-stat {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .progress-stat strong { color: var(--text); }
+
+  /* ── Layout ── */
+  .main { max-width: 1100px; margin: 0 auto; padding: 0 24px 60px; }
+
+  /* ── Segment Headings ── */
+  .segment-heading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    border-radius: var(--radius);
+    margin: 36px 0 4px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .segment-heading.green  { background: var(--green-dim);  border-left: 3px solid var(--green);  color: var(--green); }
+  .segment-heading.yellow { background: var(--yellow-dim); border-left: 3px solid var(--yellow); color: var(--yellow); }
+  .segment-heading.blue   { background: var(--blue-dim);   border-left: 3px solid var(--blue);   color: var(--blue); }
+  .segment-heading.purple { background: var(--purple-dim); border-left: 3px solid var(--purple); color: var(--purple); }
+
+  /* ── Activity Card ── */
+  .activity {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 20px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .activity-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    cursor: pointer;
+    user-select: none;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s;
+  }
+  .activity-header:hover { background: var(--surface2); }
+  .activity-id {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 3px 10px;
+    border-radius: 100px;
+    white-space: nowrap;
+  }
+  .activity-title { flex: 1; font-size: 15px; font-weight: 600; }
+  .activity-meta {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .chip {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 100px;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+  .chip-owner  { color: var(--blue);   border-color: var(--blue);   background: var(--blue-dim); }
+  .chip-time   { color: var(--yellow); border-color: var(--yellow); background: var(--yellow-dim); }
+  .chip-count  { color: var(--green);  border-color: var(--green);  background: var(--green-dim); }
+  .activity-toggle {
+    color: var(--text-dim);
+    font-size: 18px;
+    transition: transform 0.3s;
+    line-height: 1;
+  }
+  .activity-toggle.open { transform: rotate(180deg); }
+  .activity-mini-progress {
+    height: 3px;
+    background: var(--surface2);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+  .activity-mini-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--purple), var(--blue));
+    border-radius: 100px;
+    transition: width 0.4s ease;
+  }
+
+  /* ── Task Table ── */
+  .task-body { display: none; padding: 16px 20px 20px; }
+  .task-body.open { display: block; }
+
+  .task-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .task-table th {
+    background: var(--surface2);
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .task-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .task-table tr:last-child td { border-bottom: none; }
+  .task-table tr:hover td { background: var(--surface2); }
+  .task-table tr.done td { opacity: 0.5; }
+  .task-table tr.done .task-label { text-decoration: line-through; }
+
+  .task-check-cell { width: 36px; text-align: center; }
+  .task-check {
+    width: 18px; height: 18px;
+    cursor: pointer;
+    accent-color: var(--purple);
+  }
+  .task-id-cell { width: 60px; }
+  .task-id {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+  }
+  .task-label { color: var(--text); line-height: 1.5; }
+  .task-label em { color: var(--text-muted); font-style: normal; font-size: 12px; }
+  .task-owner-cell, .task-time-cell, .task-prereq-cell { width: 120px; }
+  .task-owner-val { color: var(--blue); font-size: 12px; }
+  .task-time-val  { color: var(--yellow); font-size: 12px; font-weight: 600; }
+  .task-prereq-val { color: var(--text-dim); font-size: 12px; font-family: monospace; }
+  .task-success-cell { }
+  .task-success-val {
+    color: var(--green);
+    font-size: 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 5px;
+  }
+  .task-success-val::before { content: "✓"; flex-shrink: 0; font-weight: 700; }
+
+  /* ── Dashboard Table ── */
+  .dashboard {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin: 36px 0 20px;
+    box-shadow: var(--shadow);
+  }
+  .dashboard-title {
+    padding: 16px 20px;
+    font-size: 15px;
+    font-weight: 700;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dash-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .dash-table th {
+    background: var(--surface2);
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 10px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .dash-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .dash-table tr:last-child td {
+    border-bottom: none;
+    background: var(--surface2);
+    font-weight: 700;
+    color: var(--purple);
+  }
+  .dash-mini-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dash-mini-track {
+    flex: 1;
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 100px;
+    overflow: hidden;
+    min-width: 80px;
+  }
+  .dash-mini-fill {
+    height: 100%;
+    border-radius: 100px;
+    background: linear-gradient(90deg, var(--purple), var(--blue));
+    transition: width 0.4s ease;
+  }
+  .dash-pct { font-size: 11px; color: var(--text-dim); width: 36px; text-align: right; }
+
+  /* ── Notes, Dependencies ── */
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin: 24px 0;
+  }
+  .info-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+  .info-card h3 {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .info-card ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .info-card li {
+    font-size: 13px;
+    color: var(--text-muted);
+    padding-left: 14px;
+    position: relative;
+    line-height: 1.5;
+  }
+  .info-card li::before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    color: var(--purple);
+  }
+  .dep-code {
+    font-family: monospace;
+    font-size: 12px;
+    color: var(--yellow);
+    background: var(--yellow-dim);
+    border: 1px solid var(--yellow);
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+
+  /* ── Sign-off Table ── */
+  .signoff {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-top: 24px;
+  }
+  .signoff-title {
+    padding: 14px 20px;
+    font-size: 14px;
+    font-weight: 700;
+    border-bottom: 1px solid var(--border);
+  }
+  .signoff-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .signoff-table th {
+    background: var(--surface2);
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 10px 16px;
+    text-align: left;
+  }
+  .signoff-table td {
+    padding: 14px 16px;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+  .signoff-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 13px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .signoff-input:focus { border-color: var(--purple); }
+
+  /* ── Floating Controls ── */
+  .fab-group {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 100;
+  }
+  .fab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 10px 16px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .fab:hover { background: var(--surface2); color: var(--text); border-color: var(--purple); }
+  .fab.primary { background: var(--purple); border-color: var(--purple); color: #fff; }
+  .fab.primary:hover { background: #9333ea; }
+
+  /* ── Misc ── */
+  .section-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 40px 0 20px;
+  }
+  @media (max-width: 700px) {
+    .task-table th:nth-child(4),
+    .task-table td:nth-child(4),
+    .task-table th:nth-child(5),
+    .task-table td:nth-child(5),
+    .task-table th:nth-child(6),
+    .task-table td:nth-child(6) { display: none; }
+    .activity-meta .chip-time { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Hero ── -->
+<div class="hero">
+  <div class="hero-badge">Phase 0 · Discovery & Validation</div>
+  <h1>AI Classroom – Discovery & Validation</h1>
+  <p>Detailed Checkbox Task List · Activities 0.7 to 0.15 · 49 Sub-Tasks · ~130.5 hrs total</p>
+</div>
+
+<div class="main">
+
+  <!-- ── Master Progress ── -->
+  <div class="master-progress">
+    <div class="progress-header">
+      <strong>Overall Phase 0 Progress</strong>
+      <span id="master-pct">0 / 49 tasks</span>
+    </div>
+    <div class="progress-bar-track">
+      <div class="progress-bar-fill" id="master-bar" style="width:0%"></div>
+    </div>
+    <div class="progress-stats">
+      <div class="progress-stat">Tasks Done: <strong id="done-count">0</strong></div>
+      <div class="progress-stat">Remaining: <strong id="rem-count">49</strong></div>
+      <div class="progress-stat">Total Hours: <strong>~130.5 hrs</strong></div>
+      <div class="progress-stat">Total Sub-Tasks: <strong>49</strong></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       SEGMENT A – PARENTS & STUDENTS
+  ══════════════════════════════════════════════ -->
+  <div class="segment-heading green">🟢 Segment A: Parent &amp; Student Validation (Tuition Market – Primary / Secondary)</div>
+
+  <!-- 0.7 -->
+  <div class="activity" id="act-0-7">
+    <div class="activity-header" onclick="toggleActivity('act-0-7')">
+      <span class="activity-id">0.7</span>
+      <span class="activity-title">Conduct 20 In-Person / Zoom Focus Groups with Parents</span>
+      <div class="activity-meta">
+        <span class="chip chip-owner">UX Researcher</span>
+        <span class="chip chip-time">~26 hrs</span>
+        <span class="chip chip-count" id="cnt-0-7">0 / 6</span>
+      </div>
+      <span class="activity-toggle" id="tog-act-0-7">▾</span>
+    </div>
+    <div class="activity-mini-progress"><div class="activity-mini-fill" id="bar-0-7" style="width:0%"></div></div>
+    <div class="task-body" id="body-act-0-7">
+      <table class="task-table">
+        <thead>
+          <tr>
+            <th class="task-check-cell"></th>
+            <th class="task-id-cell">#</th>
+            <th>Task</th>
+            <th class="task-owner-cell">Owner</th>
+            <th class="task-time-cell">Est. Time</th>
+            <th class="task-prereq-cell">Prerequisites</th>
+            <th class="task-success-cell">Success Criteria</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="row-0-7-1">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-7','0-7-1')"></td>
+            <td class="task-id-cell"><span class="task-id">0.7.1</span></td>
+            <td><span class="task-label">Create a 15-question focus group discussion guide <em>(probe: trust in AI, screen time fears, current tuition costs, desired features)</em></span></td>
+            <td><span class="task-owner-val">UX Researcher</span></td>
+            <td><span class="task-time-val">3 hrs</span></td>
+            <td><span class="task-prereq-val">None</span></td>
+            <td><span class="task-success-val">Guide approved by PM</span></td>
+          </tr>
+          <tr id="row-0-7-2">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-7','0-7-2')"></td>
+            <td class="task-id-cell"><span class="task-id">0.7.2</span></td>
+            <td><span class="task-label">Design a 2-min "Teaser Video" showing the AI teaching a 5th-grade math problem <em>(voice + ink drawing using a simple screen recording)</em></span></td>
+            <td><span class="task-owner-val">UX Researcher + Designer</span></td>
+            <td><span class="task-time-val">4 hrs</span></td>
+            <td><span class="task-prereq-val">None</span></td>
+            <td><span class="task-success-val">Video is &lt;50 MB and plays on Zoom / WhatsApp</span></td>
+          </tr>
+          <tr id="row-0-7-3">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-7','0-7-3')"></td>
+            <td class="task-id-cell"><span class="task-id">0.7.3</span></td>
+            <td><span class="task-label">Recruit 20 parents via local school PTAs, Facebook Parenting Groups, and personal networks. <em>Offer $10 Amazon voucher for participation.</em></span></td>
+            <td><span class="task-owner-val">BD Lead</span></td>
+            <td><span class="task-time-val">5 days</span></td>
+            <td><span class="task-prereq-val">0.7.1</span></td>
+            <td><span class="task-success-val">20 parents confirmed and scheduled</span></td>
+          </tr>
+          <tr id="row-0-7-4">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-7','0-7-4')"></td>
+            <td class="task-id-cell"><span class="task-id">0.7.4</span></td>
+            <td><span class="task-label">Schedule and conduct 4 focus groups <em>(5 parents each, 60 mins each)</em> over Zoom. Record sessions (with consent).</span></td>
+            <td><span class="task-owner-val">UX Researcher</span></td>
+            <td><span class="task-time-val">1 week</span></td>
+            <td><span class="task-prereq-val">0.7.3</span></td>
+            <td><span class="task-success-val">All 4 sessions recorded and transcribed</span></td>
+          </tr>
+          <tr id="row-0-7-5">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-7','0-7-5')"></td>
+            <td class="task-id-cell"><span class="task-id">0.7.5</span></td>
+            <td><span class="task-label">Transcribe audio using Otter.ai and perform thematic analysis <em>(tagging: "Trust," "Cost," "Fear," "Excitement")</em></span></td>
+            <td><span class="task-owner-val">UX Researcher</span></td>
+            <td><span class="task-time-val">6 hrs</span></td>
+            <td><span class="task-prereq-val">0.7.4</span></td>
+            <td><span class="task-success-val">Thematic tag cloud generated</span></td>
+          </tr>
+          <tr id="row-0-7-6">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-7','0-7-6')"></td>
+            <td class="task-id-cell"><span class="task-id">0.7.6</span></td>
+            <td><span class="task-label">Write a 5-page "Parent Sentiment Report" summarizing top 3 fears and top 3 desired features</span></td>
+            <td><span class="task-owner-val">UX Researcher</span></td>
+            <td><span class="task-time-val">4 hrs</span></td>
+            <td><span class="task-prereq-val">0.7.5</span></td>
+            <td><span class="task-success-val">Report shared with PM &amp; Architects</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 0.8 -->
+  <div class="activity" id="act-0-8">
+    <div class="activity-header" onclick="toggleActivity('act-0-8')">
+      <span class="activity-id">0.8</span>
+      <span class="activity-title">Run 3 "Shadow Testing" Sessions with Parents</span>
+      <div class="activity-meta">
+        <span class="chip chip-owner">UX Researcher + Data Analyst</span>
+        <span class="chip chip-time">~20 hrs</span>
+        <span class="chip chip-count" id="cnt-0-8">0 / 6</span>
+      </div>
+      <span class="activity-toggle" id="tog-act-0-8">▾</span>
+    </div>
+    <div class="activity-mini-progress"><div class="activity-mini-fill" id="bar-0-8" style="width:0%"></div></div>
+    <div class="task-body" id="body-act-0-8">
+      <table class="task-table">
+        <thead>
+          <tr>
+            <th class="task-check-cell"></th>
+            <th class="task-id-cell">#</th>
+            <th>Task</th>
+            <th class="task-owner-cell">Owner</th>
+            <th class="task-time-cell">Est. Time</th>
+            <th class="task-prereq-cell">Prerequisites</th>
+            <th class="task-success-cell">Success Criteria</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="row-0-8-1">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-8','0-8-1')"></td>
+            <td class="task-id-cell"><span class="task-id">0.8.1</span></td>
+            <td><span class="task-label">Build a simple 10-min interactive prototype in Figma showing the full student journey <em>(AI asks question → Student speaks → AI draws answer on board)</em></span></td>
+            <td><span class="task-owner-val">UX Researcher</span></td>
+            <td><span class="task-time-val">8 hrs</span></td>
+            <td><span class="task-prereq-val">0.7.2</span></td>
+            <td><span class="task-success-val">Clickable Figma prototype URL shared</span></td>
+          </tr>
+          <tr id="row-0-8-2">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-8','0-8-2')"></td>
+            <td class="task-id-cell"><span class="task-id">0.8.2</span></td>
+            <td><span class="task-label">Create a 1-page "Scorecard" with 10 metrics <em>(Clarity 1–10, Trust 1–10, Willingness to Pay $0–$100, Likeliness to Recommend)</em></span></td>
+            <td><span class="task-owner-val">PM</span></td>
+            <td><span class="task-time-val">2 hrs</span></td>
+            <td><span class="task-prereq-val">None</span></td>
+            <td><span class="task-success-val">Scorecard printed / PDF ready</span></td>
+          </tr>
+          <tr id="row-0-8-3">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-8','0-8-3')"></td>
+            <td class="task-id-cell"><span class="task-id">0.8.3</span></td>
+            <td><span class="task-label">Invite the same 20 parents to a 30-min "Shadow Test" session <em>(split into 3 batches of 6–7 parents)</em></span></td>
+            <td><span class="task-owner-val">BD Lead</span></td>
+            <td><span class="task-time-val">2 days</span></td>
+            <td><span class="task-prereq-val">0.8.1, 0.8.2</span></td>
+            <td><span class="task-success-val">18 parents confirmed (90% attendance)</span></td>
+          </tr>
+          <tr id="row-0-8-4">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-8','0-8-4')"></td>
+            <td class="task-id-cell"><span class="task-id">0.8.4</span></td>
+            <td><span class="task-label">Facilitate 3 shadow test sessions: show prototype, let parents click through, then fill out the scorecard</span></td>
+            <td><span class="task-owner-val">UX Researcher</span></td>
+            <td><span class="task-time-val">1.5 hrs</span></td>
+            <td><span class="task-prereq-val">0.8.3</span></td>
+            <td><span class="task-success-val">18 filled scorecards collected</span></td>
+          </tr>
+          <tr id="row-0-8-5">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-8','0-8-5')"></td>
+            <td class="task-id-cell"><span class="task-id">0.8.5</span></td>
+            <td><span class="task-label">Aggregate scores into an Excel sheet. Calculate average, median, and standard deviation for each metric</span></td>
+            <td><span class="task-owner-val">Data Analyst</span></td>
+            <td><span class="task-time-val">2 hrs</span></td>
+            <td><span class="task-prereq-val">0.8.4</span></td>
+            <td><span class="task-success-val">Aggregated scorecard Excel file</span></td>
+          </tr>
+          <tr id="row-0-8-6">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-8','0-8-6')"></td>
+            <td class="task-id-cell"><span class="task-id">0.8.6</span></td>
+            <td><span class="task-label">Identify "Price Elasticity": plot a graph of Willingness-to-Pay vs. Age of Child</span></td>
+            <td><span class="task-owner-val">Data Analyst</span></td>
+            <td><span class="task-time-val">1 hr</span></td>
+            <td><span class="task-prereq-val">0.8.5</span></td>
+            <td><span class="task-success-val">Graph shows optimal pricing point</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 0.9 -->
+  <div class="activity" id="act-0-9">
+    <div class="activity-header" onclick="toggleActivity('act-0-9')">
+      <span class="activity-id">0.9</span>
+      <span class="activity-title">Interview 15 Primary / Secondary Students Directly</span>
+      <div class="activity-meta">
+        <span class="chip chip-owner">UX Researcher</span>
+        <span class="chip chip-time">~16 hrs</span>
+        <span class="chip chip-count" id="cnt-0-9">0 / 5</span>
+      </div>
+      <span class="activity-toggle" id="tog-act-0-9">▾</span>
+    </div>
+    <div class="activity-mini-progress"><div class="activity-mini-fill" id="bar-0-9" style="width:0%"></div></div>
+    <div class="task-body" id="body-act-0-9">
+      <table class="task-table">
+        <thead>
+          <tr>
+            <th class="task-check-cell"></th>
+            <th class="task-id-cell">#</th>
+            <th>Task</th>
+            <th class="task-owner-cell">Owner</th>
+            <th class="task-time-cell">Est. Time</th>
+            <th class="task-prereq-cell">Prerequisites</th>
+            <th class="task-success-cell">Success Criteria</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="row-0-9-1">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-9','0-9-1')"></td>
+            <td class="task-id-cell"><span class="task-id">0.9.1</span></td>
+            <td><span class="task-label">Create a child-friendly "Conversation Starter" card deck <em>(10 questions with emojis: "What makes you 😴 in class?" "Would you like a robot that 👀 watches you?")</em></span></td>
+            <td><span class="task-owner-val">UX Researcher</span></td>
+            <td><span class="task-time-val">3 hrs</span></td>
+            <td><span class="task-prereq-val">None</span></td>
+            <td><span class="task-success-val">Card deck PDF approved by child psychologist (optional)</span></td>
+          </tr>
+          <tr id="row-0-9-2">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-9','0-9-2')"></td>
+            <td class="task-id-cell"><span class="task-id">0.9.2</span></td>
+            <td><span class="task-label">Partner with 1 local tuition center to allow 15-min 1-on-1 interviews with 15 students during their break <em>(with parental consent forms)</em></span></td>
+            <td><span class="task-owner-val">BD Lead</span></td>
+            <td><span class="task-time-val">3 days</span></td>
+            <td><span class="task-prereq-val">0.9.1</span></td>
+            <td><span class="task-success-val">Consent forms signed by parents of 15 students</span></td>
+          </tr>
+          <tr id="row-0-9-3">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-9','0-9-3')"></td>
+            <td class="task-id-cell"><span class="task-id">0.9.3</span></td>
+            <td><span class="task-label">Conduct 15 student interviews (15 mins each) in person or via Zoom. <em>Record audio only (no video to reduce anxiety).</em></span></td>
+            <td><span class="task-owner-val">UX Researcher</span></td>
+            <td><span class="task-time-val">4 hrs</span></td>
+            <td><span class="task-prereq-val">0.9.2</span></td>
+            <td><span class="task-success-val">15 audio recordings</span></td>
+          </tr>
+          <tr id="row-0-9-4">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-9','0-9-4')"></td>
+            <td class="task-id-cell"><span class="task-id">0.9.4</span></td>
+            <td><span class="task-label">Transcribe interviews and code responses into 3 categories: <em>"Engagement Triggers," "Boredom Triggers," "AI Fears"</em></span></td>
+            <td><span class="task-owner-val">UX Researcher</span></td>
+            <td><span class="task-time-val">4 hrs</span></td>
+            <td><span class="task-prereq-val">0.9.3</span></td>
+            <td><span class="task-success-val">Coded transcript document</span></td>
+          </tr>
+          <tr id="row-0-9-5">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-9','0-9-5')"></td>
+            <td class="task-id-cell"><span class="task-id">0.9.5</span></td>
+            <td><span class="task-label">Create a "Student Persona" poster: <em>"Alex, Age 12, loves when teachers draw diagrams, hates when teachers repeat the same thing twice"</em></span></td>
+            <td><span class="task-owner-val">UX Researcher + Designer</span></td>
+            <td><span class="task-time-val">2 hrs</span></td>
+            <td><span class="task-prereq-val">0.9.4</span></td>
+            <td><span class="task-success-val">1 visual persona poster shared with the team</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       SEGMENT B – COMPETITIVE EXAMS
+  ══════════════════════════════════════════════ -->
+  <div class="segment-heading yellow">🟡 Segment B: Competitive Exam Segment (JEE / NEET / SAT / Olympiads)</div>
+
+  <!-- 0.10 -->
+  <div class="activity" id="act-0-10">
+    <div class="activity-header" onclick="toggleActivity('act-0-10')">
+      <span class="activity-id">0.10</span>
+      <span class="activity-title">Interview 10 Competitive Exam Coaching Center Owners</span>
+      <div class="activity-meta">
+        <span class="chip chip-owner">BD Lead</span>
+        <span class="chip chip-time">~17 hrs</span>
+        <span class="chip chip-count" id="cnt-0-10">0 / 5</span>
+      </div>
+      <span class="activity-toggle" id="tog-act-0-10">▾</span>
+    </div>
+    <div class="activity-mini-progress"><div class="activity-mini-fill" id="bar-0-10" style="width:0%"></div></div>
+    <div class="task-body" id="body-act-0-10">
+      <table class="task-table">
+        <thead>
+          <tr>
+            <th class="task-check-cell"></th>
+            <th class="task-id-cell">#</th>
+            <th>Task</th>
+            <th class="task-owner-cell">Owner</th>
+            <th class="task-time-cell">Est. Time</th>
+            <th class="task-prereq-cell">Prerequisites</th>
+            <th class="task-success-cell">Success Criteria</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="row-0-10-1">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-10','0-10-1')"></td>
+            <td class="task-id-cell"><span class="task-id">0.10.1</span></td>
+            <td><span class="task-label">Create a list of 50 coaching centers <em>(Allen, Byju's, Khan Academy, local "Champion" institutes)</em> with contact emails / phones</span></td>
+            <td><span class="task-owner-val">BD Lead</span></td>
+            <td><span class="task-time-val">3 hrs</span></td>
+            <td><span class="task-prereq-val">None</span></td>
+            <td><span class="task-success-val">50-contact CRM list created</span></td>
+          </tr>
+          <tr id="row-0-10-2">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-10','0-10-2')"></td>
+            <td class="task-id-cell"><span class="task-id">0.10.2</span></td>
+            <td><span class="task-label">Draft a cold-email script + LinkedIn InMail template focused on <em>"Operational Cost Reduction" (not "cool AI")</em></span></td>
+            <td><span class="task-owner-val">BD Lead</span></td>
+            <td><span class="task-time-val">2 hrs</span></td>
+            <td><span class="task-prereq-val">0.10.1</span></td>
+            <td><span class="task-success-val">Templates approved by PM</span></td>
+          </tr>
+          <tr id="row-0-10-3">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-10','0-10-3')"></td>
+            <td class="task-id-cell"><span class="task-id">0.10.3</span></td>
+            <td><span class="task-label">Send emails / LinkedIn messages to 50 centers. Follow up twice <em>(Day 3 and Day 7)</em></span></td>
+            <td><span class="task-owner-val">BD Lead</span></td>
+            <td><span class="task-time-val">10 days</span></td>
+            <td><span class="task-prereq-val">0.10.2</span></td>
+            <td><span class="task-success-val">10 centers agree to a 30-min Zoom call</span></td>
+          </tr>
+          <tr id="row-0-10-4">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-10','0-10-4')"></td>
+            <td class="task-id-cell"><span class="task-id">0.10.4</span></td>
+            <td><span class="task-label">Conduct 10 Zoom calls. Ask structured questions: <em>"Student-to-teacher ratio?" "Cost per teacher?" "Biggest bottleneck?"</em></span></td>
+            <td><span class="task-owner-val">BD Lead</span></td>
+            <td><span class="task-time-val">5 hrs</span></td>
+            <td><span class="task-prereq-val">0.10.3</span></td>
+            <td><span class="task-success-val">10 call recordings</span></td>
+          </tr>
+          <tr id="row-0-10-5">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-10','0-10-5')"></td>
+            <td class="task-id-cell"><span class="task-id">0.10.5</span></td>
+            <td><span class="task-label">Transcribe calls and build a "Pain-Point Matrix" <em>(X-axis: Pain Severity, Y-axis: Willingness to try AI)</em></span></td>
+            <td><span class="task-owner-val">BD Lead + Data Analyst</span></td>
+            <td><span class="task-time-val">4 hrs</span></td>
+            <td><span class="task-prereq-val">0.10.4</span></td>
+            <td><span class="task-success-val">Pain-Point Matrix visual</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 0.11 -->
+  <div class="activity" id="act-0-11">
+    <div class="activity-header" onclick="toggleActivity('act-0-11')">
+      <span class="activity-id">0.11</span>
+      <span class="activity-title">Survey 50 Competitive Exam Aspirants</span>
+      <div class="activity-meta">
+        <span class="chip chip-owner">Data Analyst</span>
+        <span class="chip chip-time">~9 hrs</span>
+        <span class="chip chip-count" id="cnt-0-11">0 / 5</span>
+      </div>
+      <span class="activity-toggle" id="tog-act-0-11">▾</span>
+    </div>
+    <div class="activity-mini-progress"><div class="activity-mini-fill" id="bar-0-11" style="width:0%"></div></div>
+    <div class="task-body" id="body-act-0-11">
+      <table class="task-table">
+        <thead>
+          <tr>
+            <th class="task-check-cell"></th>
+            <th class="task-id-cell">#</th>
+            <th>Task</th>
+            <th class="task-owner-cell">Owner</th>
+            <th class="task-time-cell">Est. Time</th>
+            <th class="task-prereq-cell">Prerequisites</th>
+            <th class="task-success-cell">Success Criteria</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="row-0-11-1">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-11','0-11-1')"></td>
+            <td class="task-id-cell"><span class="task-id">0.11.1</span></td>
+            <td><span class="task-label">Design a 10-question Google Form with MCQ + Likert scale <em>(e.g., "I study alone 0–5 hrs/day," "I prefer recorded lectures over live classes")</em></span></td>
+            <td><span class="task-owner-val">Data Analyst</span></td>
+            <td><span class="task-time-val">2 hrs</span></td>
+            <td><span class="task-prereq-val">None</span></td>
+            <td><span class="task-success-val">Google Form URL generated</span></td>
+          </tr>
+          <tr id="row-0-11-2">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-11','0-11-2')"></td>
+            <td class="task-id-cell"><span class="task-id">0.11.2</span></td>
+            <td><span class="task-label">Post the survey link in 5 Reddit communities <em>(r/JEE, r/NEET, r/SAT, r/GetStudying)</em> and 5 Telegram / Discord groups</span></td>
+            <td><span class="task-owner-val">BD Lead</span></td>
+            <td><span class="task-time-val">2 hrs</span></td>
+            <td><span class="task-prereq-val">0.11.1</span></td>
+            <td><span class="task-success-val">Link posted in 10 channels</span></td>
+          </tr>
+          <tr id="row-0-11-3">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-11','0-11-3')"></td>
+            <td class="task-id-cell"><span class="task-id">0.11.3</span></td>
+            <td><span class="task-label">Incentivize: offer a $5 Amazon voucher to 10 randomly selected respondents</span></td>
+            <td><span class="task-owner-val">PM</span></td>
+            <td><span class="task-time-val">1 hr</span></td>
+            <td><span class="task-prereq-val">0.11.2</span></td>
+            <td><span class="task-success-val">Voucher budget approved</span></td>
+          </tr>
+          <tr id="row-0-11-4">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-11','0-11-4')"></td>
+            <td class="task-id-cell"><span class="task-id">0.11.4</span></td>
+            <td><span class="task-label">Close survey after 50 responses. Export CSV to Excel</span></td>
+            <td><span class="task-owner-val">Data Analyst</span></td>
+            <td><span class="task-time-val">1 hr</span></td>
+            <td><span class="task-prereq-val">0.11.3</span></td>
+            <td><span class="task-success-val">CSV file with 50 rows</span></td>
+          </tr>
+          <tr id="row-0-11-5">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-11','0-11-5')"></td>
+            <td class="task-id-cell"><span class="task-id">0.11.5</span></td>
+            <td><span class="task-label">Analyze: cross-tabulate "Hours Studied Alone" vs. "Interest in AI Tutor." Generate pivot tables</span></td>
+            <td><span class="task-owner-val">Data Analyst</span></td>
+            <td><span class="task-time-val">3 hrs</span></td>
+            <td><span class="task-prereq-val">0.11.4</span></td>
+            <td><span class="task-success-val">5-slide PowerPoint with key insights</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 0.12 -->
+  <div class="activity" id="act-0-12">
+    <div class="activity-header" onclick="toggleActivity('act-0-12')">
+      <span class="activity-id">0.12</span>
+      <span class="activity-title">Build "Chapter Completion Speed" Prototype</span>
+      <div class="activity-meta">
+        <span class="chip chip-owner">AI Engineer</span>
+        <span class="chip chip-time">~8 hrs</span>
+        <span class="chip chip-count" id="cnt-0-12">0 / 5</span>
+      </div>
+      <span class="activity-toggle" id="tog-act-0-12">▾</span>
+    </div>
+    <div class="activity-mini-progress"><div class="activity-mini-fill" id="bar-0-12" style="width:0%"></div></div>
+    <div class="task-body" id="body-act-0-12">
+      <table class="task-table">
+        <thead>
+          <tr>
+            <th class="task-check-cell"></th>
+            <th class="task-id-cell">#</th>
+            <th>Task</th>
+            <th class="task-owner-cell">Owner</th>
+            <th class="task-time-cell">Est. Time</th>
+            <th class="task-prereq-cell">Prerequisites</th>
+            <th class="task-success-cell">Success Criteria</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="row-0-12-1">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-12','0-12-1')"></td>
+            <td class="task-id-cell"><span class="task-id">0.12.1</span></td>
+            <td><span class="task-label">Pick 1 dense chapter <em>(e.g., "Quadratic Equations")</em> from a standard JEE prep book. Convert it into a raw text script</span></td>
+            <td><span class="task-owner-val">AI Engineer</span></td>
+            <td><span class="task-time-val">1 hr</span></td>
+            <td><span class="task-prereq-val">0.2</span></td>
+            <td><span class="task-success-val">Raw script text file</span></td>
+          </tr>
+          <tr id="row-0-12-2">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-12','0-12-2')"></td>
+            <td class="task-id-cell"><span class="task-id">0.12.2</span></td>
+            <td><span class="task-label">Use GPT-4 to compress the chapter into a "Speed Script" <em>(eliminate fluff, use bullet points, 50% shorter than human teacher script)</em></span></td>
+            <td><span class="task-owner-val">AI Engineer</span></td>
+            <td><span class="task-time-val">2 hrs</span></td>
+            <td><span class="task-prereq-val">0.12.1</span></td>
+            <td><span class="task-success-val">Speed Script generated</span></td>
+          </tr>
+          <tr id="row-0-12-3">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-12','0-12-3')"></td>
+            <td class="task-id-cell"><span class="task-id">0.12.3</span></td>
+            <td><span class="task-label">Use TTS <em>(Azure)</em> to generate audio for the Speed Script. Time the audio length <em>(target: 15 mins)</em></span></td>
+            <td><span class="task-owner-val">AI Engineer</span></td>
+            <td><span class="task-time-val">1 hr</span></td>
+            <td><span class="task-prereq-val">0.12.2</span></td>
+            <td><span class="task-success-val">MP3 file with duration noted</span></td>
+          </tr>
+          <tr id="row-0-12-4">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-12','0-12-4')"></td>
+            <td class="task-id-cell"><span class="task-id">0.12.4</span></td>
+            <td><span class="task-label">Record a human teacher teaching the same chapter <em>(from YouTube or a real lecture)</em>. Measure its duration</span></td>
+            <td><span class="task-owner-val">AI Engineer</span></td>
+            <td><span class="task-time-val">1 hr</span></td>
+            <td><span class="task-prereq-val">None</span></td>
+            <td><span class="task-success-val">YouTube link with timestamp</span></td>
+          </tr>
+          <tr id="row-0-12-5">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-12','0-12-5')"></td>
+            <td class="task-id-cell"><span class="task-id">0.12.5</span></td>
+            <td><span class="task-label">Create an infographic comparing: <em>"AI Speed (15 mins) vs. Human Speed (60 mins)."</em> Add a "Syllabus Completion Calculator"</span></td>
+            <td><span class="task-owner-val">Designer</span></td>
+            <td><span class="task-time-val">3 hrs</span></td>
+            <td><span class="task-prereq-val">0.12.3, 0.12.4</span></td>
+            <td><span class="task-success-val">Infographic PDF ready for marketing</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       SEGMENT C – JOB ENTRANCE EXAMS
+  ══════════════════════════════════════════════ -->
+  <div class="segment-heading blue">🔵 Segment C: Job Entrance Exams (Banking / Civil Services / IT Certifications)</div>
+
+  <!-- 0.13 -->
+  <div class="activity" id="act-0-13">
+    <div class="activity-header" onclick="toggleActivity('act-0-13')">
+      <span class="activity-id">0.13</span>
+      <span class="activity-title">Interview 10 Working Professionals (Age 22–35)</span>
+      <div class="activity-meta">
+        <span class="chip chip-owner">BD Lead</span>
+        <span class="chip chip-time">~13.5 hrs</span>
+        <span class="chip chip-count" id="cnt-0-13">0 / 5</span>
+      </div>
+      <span class="activity-toggle" id="tog-act-0-13">▾</span>
+    </div>
+    <div class="activity-mini-progress"><div class="activity-mini-fill" id="bar-0-13" style="width:0%"></div></div>
+    <div class="task-body" id="body-act-0-13">
+      <table class="task-table">
+        <thead>
+          <tr>
+            <th class="task-check-cell"></th>
+            <th class="task-id-cell">#</th>
+            <th>Task</th>
+            <th class="task-owner-cell">Owner</th>
+            <th class="task-time-cell">Est. Time</th>
+            <th class="task-prereq-cell">Prerequisites</th>
+            <th class="task-success-cell">Success Criteria</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="row-0-13-1">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-13','0-13-1')"></td>
+            <td class="task-id-cell"><span class="task-id">0.13.1</span></td>
+            <td><span class="task-label">Define target job exam personas <em>(e.g., UPSC aspirant, GRE aspirant, AWS Certified Developer)</em></span></td>
+            <td><span class="task-owner-val">PM</span></td>
+            <td><span class="task-time-val">1 hr</span></td>
+            <td><span class="task-prereq-val">None</span></td>
+            <td><span class="task-success-val">3 Persona definitions documented</span></td>
+          </tr>
+          <tr id="row-0-13-2">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-13','0-13-2')"></td>
+            <td class="task-id-cell"><span class="task-id">0.13.2</span></td>
+            <td><span class="task-label">Source 10 professionals via LinkedIn Sales Navigator <em>(filter by "Open to Work" + "Certification" keywords)</em></span></td>
+            <td><span class="task-owner-val">BD Lead</span></td>
+            <td><span class="task-time-val">3 hrs</span></td>
+            <td><span class="task-prereq-val">0.13.1</span></td>
+            <td><span class="task-success-val">10 relevant profiles shortlisted</span></td>
+          </tr>
+          <tr id="row-0-13-3">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-13','0-13-3')"></td>
+            <td class="task-id-cell"><span class="task-id">0.13.3</span></td>
+            <td><span class="task-label">Send personalized LinkedIn DMs offering a $20 Starbucks card for a 20-min "Education Tech" chat</span></td>
+            <td><span class="task-owner-val">BD Lead</span></td>
+            <td><span class="task-time-val">2 days</span></td>
+            <td><span class="task-prereq-val">0.13.2</span></td>
+            <td><span class="task-success-val">10 professionals booked</span></td>
+          </tr>
+          <tr id="row-0-13-4">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-13','0-13-4')"></td>
+            <td class="task-id-cell"><span class="task-id">0.13.4</span></td>
+            <td><span class="task-label">Conduct 10 calls. Ask: <em>"When do you study? (Commute, Night). What frustrates you about self-study? Would you pay for an AI that teaches while you commute?"</em></span></td>
+            <td><span class="task-owner-val">BD Lead</span></td>
+            <td><span class="task-time-val">3.5 hrs</span></td>
+            <td><span class="task-prereq-val">0.13.3</span></td>
+            <td><span class="task-success-val">10 call notes</span></td>
+          </tr>
+          <tr id="row-0-13-5">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-13','0-13-5')"></td>
+            <td class="task-id-cell"><span class="task-id">0.13.5</span></td>
+            <td><span class="task-label">Synthesize notes into a "Professional Learner Persona Doc" <em>(e.g., "Riya, 28, studies on the train, hates reading long PDFs, will pay $50/mo for audio lessons")</em></span></td>
+            <td><span class="task-owner-val">BD Lead + PM</span></td>
+            <td><span class="task-time-val">3 hrs</span></td>
+            <td><span class="task-prereq-val">0.13.4</span></td>
+            <td><span class="task-success-val">3-page Persona Doc</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 0.14 -->
+  <div class="activity" id="act-0-14">
+    <div class="activity-header" onclick="toggleActivity('act-0-14')">
+      <span class="activity-id">0.14</span>
+      <span class="activity-title">Launch Waitlist Landing Page &amp; Run $200 Ads</span>
+      <div class="activity-meta">
+        <span class="chip chip-owner">Growth Marketer</span>
+        <span class="chip chip-time">~11 hrs + 10 days</span>
+        <span class="chip chip-count" id="cnt-0-14">0 / 6</span>
+      </div>
+      <span class="activity-toggle" id="tog-act-0-14">▾</span>
+    </div>
+    <div class="activity-mini-progress"><div class="activity-mini-fill" id="bar-0-14" style="width:0%"></div></div>
+    <div class="task-body" id="body-act-0-14">
+      <table class="task-table">
+        <thead>
+          <tr>
+            <th class="task-check-cell"></th>
+            <th class="task-id-cell">#</th>
+            <th>Task</th>
+            <th class="task-owner-cell">Owner</th>
+            <th class="task-time-cell">Est. Time</th>
+            <th class="task-prereq-cell">Prerequisites</th>
+            <th class="task-success-cell">Success Criteria</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="row-0-14-1">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-14','0-14-1')"></td>
+            <td class="task-id-cell"><span class="task-id">0.14.1</span></td>
+            <td><span class="task-label">Build a simple 1-page landing page on Carrd / Webflow. Headline: <em>"AI Teacher That Completes Your Syllabus 2x Faster."</em> Add an email sign-up field</span></td>
+            <td><span class="task-owner-val">Growth Marketer</span></td>
+            <td><span class="task-time-val">3 hrs</span></td>
+            <td><span class="task-prereq-val">0.12.5</span></td>
+            <td><span class="task-success-val">Landing page URL live</span></td>
+          </tr>
+          <tr id="row-0-14-2">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-14','0-14-2')"></td>
+            <td class="task-id-cell"><span class="task-id">0.14.2</span></td>
+            <td><span class="task-label">Install Facebook Pixel and Google Analytics on the landing page for conversion tracking</span></td>
+            <td><span class="task-owner-val">Growth Marketer</span></td>
+            <td><span class="task-time-val">1 hr</span></td>
+            <td><span class="task-prereq-val">0.14.1</span></td>
+            <td><span class="task-success-val">Pixel fires on page load and sign-up</span></td>
+          </tr>
+          <tr id="row-0-14-3">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-14','0-14-3')"></td>
+            <td class="task-id-cell"><span class="task-id">0.14.3</span></td>
+            <td><span class="task-label">Create 3 ad creatives: <em>(1) Infographic (from 0.12.5), (2) 30-sec voiceover video, (3) Testimonial quote (placeholder)</em></span></td>
+            <td><span class="task-owner-val">Growth Marketer + Designer</span></td>
+            <td><span class="task-time-val">4 hrs</span></td>
+            <td><span class="task-prereq-val">0.14.1</span></td>
+            <td><span class="task-success-val">3 ad sets ready</span></td>
+          </tr>
+          <tr id="row-0-14-4">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-14','0-14-4')"></td>
+            <td class="task-id-cell"><span class="task-id">0.14.4</span></td>
+            <td><span class="task-label">Launch Facebook + LinkedIn ads with a total daily budget of <em>$20/day for 10 days ($200 total).</em> Target: "Job Aspirants" + "Certification Seekers"</span></td>
+            <td><span class="task-owner-val">Growth Marketer</span></td>
+            <td><span class="task-time-val">10 days</span></td>
+            <td><span class="task-prereq-val">0.14.3</span></td>
+            <td><span class="task-success-val">Ads running</span></td>
+          </tr>
+          <tr id="row-0-14-5">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-14','0-14-5')"></td>
+            <td class="task-id-cell"><span class="task-id">0.14.5</span></td>
+            <td><span class="task-label">Monitor dashboard daily: track Click-Through Rate (CTR) and Cost-Per-Signup (CPS). Pause underperforming ads</span></td>
+            <td><span class="task-owner-val">Growth Marketer</span></td>
+            <td><span class="task-time-val">10 min/day</span></td>
+            <td><span class="task-prereq-val">0.14.4</span></td>
+            <td><span class="task-success-val">Daily performance screenshots</span></td>
+          </tr>
+          <tr id="row-0-14-6">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-14','0-14-6')"></td>
+            <td class="task-id-cell"><span class="task-id">0.14.6</span></td>
+            <td><span class="task-label">At the end of 10 days, generate a report: <em>Total sign-ups, CTR%, CPS, and best-performing creative</em></span></td>
+            <td><span class="task-owner-val">Growth Marketer</span></td>
+            <td><span class="task-time-val">2 hrs</span></td>
+            <td><span class="task-prereq-val">0.14.5</span></td>
+            <td><span class="task-success-val">5-slide Ads Report</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       FINAL DECISION
+  ══════════════════════════════════════════════ -->
+  <div class="segment-heading purple">🟣 Final Decision Phase</div>
+
+  <!-- 0.15 -->
+  <div class="activity" id="act-0-15">
+    <div class="activity-header" onclick="toggleActivity('act-0-15')">
+      <span class="activity-id">0.15</span>
+      <span class="activity-title">Consolidate Findings into "Go / No-Go" Decision Matrix</span>
+      <div class="activity-meta">
+        <span class="chip chip-owner">PM</span>
+        <span class="chip chip-time">~10 hrs</span>
+        <span class="chip chip-count" id="cnt-0-15">0 / 6</span>
+      </div>
+      <span class="activity-toggle" id="tog-act-0-15">▾</span>
+    </div>
+    <div class="activity-mini-progress"><div class="activity-mini-fill" id="bar-0-15" style="width:0%"></div></div>
+    <div class="task-body" id="body-act-0-15">
+      <table class="task-table">
+        <thead>
+          <tr>
+            <th class="task-check-cell"></th>
+            <th class="task-id-cell">#</th>
+            <th>Task</th>
+            <th class="task-owner-cell">Owner</th>
+            <th class="task-time-cell">Est. Time</th>
+            <th class="task-prereq-cell">Prerequisites</th>
+            <th class="task-success-cell">Success Criteria</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="row-0-15-1">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-15','0-15-1')"></td>
+            <td class="task-id-cell"><span class="task-id">0.15.1</span></td>
+            <td><span class="task-label">Create a master Excel sheet with 4 columns: <em>Segment, Trust Score (0.8.5), Willingness-to-Pay (0.8.5), Market Size (from 0.10/0.13), Tech Feasibility (1–10 from Architect)</em></span></td>
+            <td><span class="task-owner-val">PM</span></td>
+            <td><span class="task-time-val">2 hrs</span></td>
+            <td><span class="task-prereq-val">0.8.5, 0.10.5, 0.13.5</span></td>
+            <td><span class="task-success-val">Master Excel file created</span></td>
+          </tr>
+          <tr id="row-0-15-2">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-15','0-15-2')"></td>
+            <td class="task-id-cell"><span class="task-id">0.15.2</span></td>
+            <td><span class="task-label">Assign weights to each criterion <em>(e.g., Trust=40%, WTP=30%, Market Size=20%, Feasibility=10%)</em></span></td>
+            <td><span class="task-owner-val">PM + Lead Architect</span></td>
+            <td><span class="task-time-val">1 hr</span></td>
+            <td><span class="task-prereq-val">0.15.1</span></td>
+            <td><span class="task-success-val">Weighted scoring model built</span></td>
+          </tr>
+          <tr id="row-0-15-3">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-15','0-15-3')"></td>
+            <td class="task-id-cell"><span class="task-id">0.15.3</span></td>
+            <td><span class="task-label">Calculate a final "Go Score" for each of the 3 segments <em>(Tuition, Competitive Exams, Job Entrance)</em></span></td>
+            <td><span class="task-owner-val">Data Analyst</span></td>
+            <td><span class="task-time-val">2 hrs</span></td>
+            <td><span class="task-prereq-val">0.15.2</span></td>
+            <td><span class="task-success-val">Scores calculated</span></td>
+          </tr>
+          <tr id="row-0-15-4">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-15','0-15-4')"></td>
+            <td class="task-id-cell"><span class="task-id">0.15.4</span></td>
+            <td><span class="task-label">Host a 2-hour "Go/No-Go" team meeting. Present the matrix, Student Persona (0.9.5), Ads Report (0.14.6), and Competitive Speed Infographic (0.12.5)</span></td>
+            <td><span class="task-owner-val">PM</span></td>
+            <td><span class="task-time-val">2 hrs</span></td>
+            <td><span class="task-prereq-val">0.15.3</span></td>
+            <td><span class="task-success-val">Team votes recorded</span></td>
+          </tr>
+          <tr id="row-0-15-5">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-15','0-15-5')"></td>
+            <td class="task-id-cell"><span class="task-id">0.15.5</span></td>
+            <td><span class="task-label">Formally document the decision in a 1-page "Segment Prioritization Memo" signed off by PM and Lead Architect <em>(e.g., "MVP = Competitive Exams")</em></span></td>
+            <td><span class="task-owner-val">PM</span></td>
+            <td><span class="task-time-val">1 hr</span></td>
+            <td><span class="task-prereq-val">0.15.4</span></td>
+            <td><span class="task-success-val">Signed Memo completed</span></td>
+          </tr>
+          <tr id="row-0-15-6">
+            <td class="task-check-cell"><input type="checkbox" class="task-check" onchange="taskToggle(this,'0-15','0-15-6')"></td>
+            <td class="task-id-cell"><span class="task-id">0.15.6</span></td>
+            <td><span class="task-label">Archive all raw data <em>(recordings, CSVs, transcripts)</em> in a shared Google Drive folder for future reference</span></td>
+            <td><span class="task-owner-val">PM + All</span></td>
+            <td><span class="task-time-val">1 hr</span></td>
+            <td><span class="task-prereq-val">All above</span></td>
+            <td><span class="task-success-val">Drive folder organized and shared</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── Dashboard ── -->
+  <hr class="section-divider">
+  <div class="dashboard">
+    <div class="dashboard-title">📊 Phase 0 Summary Dashboard</div>
+    <table class="dash-table">
+      <thead>
+        <tr>
+          <th>Segment</th>
+          <th>Activity</th>
+          <th>Owner</th>
+          <th>Est. Hours</th>
+          <th>Sub-Tasks</th>
+          <th style="min-width:160px">Progress</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Parents</td>
+          <td>0.7</td>
+          <td style="color:var(--blue);font-size:12px">UX Researcher</td>
+          <td style="color:var(--yellow);font-weight:600">~26 hrs</td>
+          <td>6</td>
+          <td><div class="dash-mini-bar"><div class="dash-mini-track"><div class="dash-mini-fill" id="dprog-0-7" style="width:0%"></div></div><span class="dash-pct" id="dpct-0-7">0%</span></div></td>
+        </tr>
+        <tr>
+          <td>Shadow Tests</td>
+          <td>0.8</td>
+          <td style="color:var(--blue);font-size:12px">UX Researcher + Data</td>
+          <td style="color:var(--yellow);font-weight:600">~20 hrs</td>
+          <td>6</td>
+          <td><div class="dash-mini-bar"><div class="dash-mini-track"><div class="dash-mini-fill" id="dprog-0-8" style="width:0%"></div></div><span class="dash-pct" id="dpct-0-8">0%</span></div></td>
+        </tr>
+        <tr>
+          <td>Students</td>
+          <td>0.9</td>
+          <td style="color:var(--blue);font-size:12px">UX Researcher</td>
+          <td style="color:var(--yellow);font-weight:600">~16 hrs</td>
+          <td>5</td>
+          <td><div class="dash-mini-bar"><div class="dash-mini-track"><div class="dash-mini-fill" id="dprog-0-9" style="width:0%"></div></div><span class="dash-pct" id="dpct-0-9">0%</span></div></td>
+        </tr>
+        <tr>
+          <td>Coaching Centers</td>
+          <td>0.10</td>
+          <td style="color:var(--blue);font-size:12px">BD Lead</td>
+          <td style="color:var(--yellow);font-weight:600">~17 hrs</td>
+          <td>5</td>
+          <td><div class="dash-mini-bar"><div class="dash-mini-track"><div class="dash-mini-fill" id="dprog-0-10" style="width:0%"></div></div><span class="dash-pct" id="dpct-0-10">0%</span></div></td>
+        </tr>
+        <tr>
+          <td>Aspirants Survey</td>
+          <td>0.11</td>
+          <td style="color:var(--blue);font-size:12px">Data Analyst</td>
+          <td style="color:var(--yellow);font-weight:600">~9 hrs</td>
+          <td>5</td>
+          <td><div class="dash-mini-bar"><div class="dash-mini-track"><div class="dash-mini-fill" id="dprog-0-11" style="width:0%"></div></div><span class="dash-pct" id="dpct-0-11">0%</span></div></td>
+        </tr>
+        <tr>
+          <td>Speed Prototype</td>
+          <td>0.12</td>
+          <td style="color:var(--blue);font-size:12px">AI Engineer</td>
+          <td style="color:var(--yellow);font-weight:600">~8 hrs</td>
+          <td>5</td>
+          <td><div class="dash-mini-bar"><div class="dash-mini-track"><div class="dash-mini-fill" id="dprog-0-12" style="width:0%"></div></div><span class="dash-pct" id="dpct-0-12">0%</span></div></td>
+        </tr>
+        <tr>
+          <td>Professionals</td>
+          <td>0.13</td>
+          <td style="color:var(--blue);font-size:12px">BD Lead</td>
+          <td style="color:var(--yellow);font-weight:600">~13.5 hrs</td>
+          <td>5</td>
+          <td><div class="dash-mini-bar"><div class="dash-mini-track"><div class="dash-mini-fill" id="dprog-0-13" style="width:0%"></div></div><span class="dash-pct" id="dpct-0-13">0%</span></div></td>
+        </tr>
+        <tr>
+          <td>Waitlist Ads</td>
+          <td>0.14</td>
+          <td style="color:var(--blue);font-size:12px">Growth Marketer</td>
+          <td style="color:var(--yellow);font-weight:600">~11 hrs + 10d</td>
+          <td>6</td>
+          <td><div class="dash-mini-bar"><div class="dash-mini-track"><div class="dash-mini-fill" id="dprog-0-14" style="width:0%"></div></div><span class="dash-pct" id="dpct-0-14">0%</span></div></td>
+        </tr>
+        <tr>
+          <td>Final Decision</td>
+          <td>0.15</td>
+          <td style="color:var(--blue);font-size:12px">PM</td>
+          <td style="color:var(--yellow);font-weight:600">~10 hrs</td>
+          <td>6</td>
+          <td><div class="dash-mini-bar"><div class="dash-mini-track"><div class="dash-mini-fill" id="dprog-0-15" style="width:0%"></div></div><span class="dash-pct" id="dpct-0-15">0%</span></div></td>
+        </tr>
+        <tr>
+          <td>TOTAL</td>
+          <td>0.7 – 0.15</td>
+          <td style="color:var(--purple);font-size:12px">All Roles</td>
+          <td style="color:var(--purple)">~130.5 hrs</td>
+          <td>49</td>
+          <td><div class="dash-mini-bar"><div class="dash-mini-track"><div class="dash-mini-fill" id="dprog-total" style="width:0%;background:linear-gradient(90deg,var(--purple),var(--blue))"></div></div><span class="dash-pct" id="dpct-total">0%</span></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── Info Cards ── -->
+  <div class="info-grid">
+    <div class="info-card">
+      <h3>⚠️ Critical Dependencies</h3>
+      <ul>
+        <li><span class="dep-code">0.7.2</span> Teaser Video must complete before <span class="dep-code">0.8.1</span> Figma Prototype</li>
+        <li><span class="dep-code">0.12.5</span> Infographic must complete before <span class="dep-code">0.14.1</span> Landing Page</li>
+        <li><span class="dep-code">0.8.5</span> and <span class="dep-code">0.10.5</span> must complete before <span class="dep-code">0.15.1</span> Master Matrix</li>
+      </ul>
+    </div>
+    <div class="info-card">
+      <h3>🛠️ Tools Needed</h3>
+      <ul>
+        <li>Zoom / Google Meet — focus groups and interviews</li>
+        <li>Otter.ai — transcription</li>
+        <li>Figma — clickable prototype</li>
+        <li>Google Forms + Excel — surveys &amp; analysis</li>
+        <li>Carrd / Webflow — landing page</li>
+        <li>Facebook Ads Manager + LinkedIn Campaign Manager</li>
+      </ul>
+    </div>
+    <div class="info-card">
+      <h3>🛡️ Risk Mitigation</h3>
+      <ul>
+        <li>If parent recruitment is slow (0.7.3) → expand to Nextdoor app and local community centers</li>
+        <li>If coaching centers don't respond (0.10.3) → offer a free 1-month trial as incentive</li>
+        <li>If ad performance is poor (0.14.4) → pause and re-target with a different creative within 48 hours</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ── Sign-off ── -->
+  <div class="signoff">
+    <div class="signoff-title">✅ Approval Sign-Off</div>
+    <table class="signoff-table">
+      <thead>
+        <tr>
+          <th>Role</th>
+          <th>Name</th>
+          <th>Signature</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Product Manager</td>
+          <td><input class="signoff-input" placeholder="Full name…"></td>
+          <td><input class="signoff-input" placeholder="Signature…"></td>
+          <td><input class="signoff-input" type="date"></td>
+        </tr>
+        <tr>
+          <td>Lead Architect</td>
+          <td><input class="signoff-input" placeholder="Full name…"></td>
+          <td><input class="signoff-input" placeholder="Signature…"></td>
+          <td><input class="signoff-input" type="date"></td>
+        </tr>
+        <tr>
+          <td>BD Lead</td>
+          <td><input class="signoff-input" placeholder="Full name…"></td>
+          <td><input class="signoff-input" placeholder="Signature…"></td>
+          <td><input class="signoff-input" type="date"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div><!-- /main -->
+
+<!-- ── Floating Controls ── -->
+<div class="fab-group">
+  <button class="fab" onclick="expandAll()">⊞ Expand All</button>
+  <button class="fab" onclick="collapseAll()">⊟ Collapse All</button>
+  <button class="fab primary" onclick="resetAll()">↺ Reset Progress</button>
+</div>
+
+<script>
+  // ── State ──────────────────────────────────────────
+  const ACTIVITIES = {
+    '0-7':  { total: 6,  done: 0 },
+    '0-8':  { total: 6,  done: 0 },
+    '0-9':  { total: 5,  done: 0 },
+    '0-10': { total: 5,  done: 0 },
+    '0-11': { total: 5,  done: 0 },
+    '0-12': { total: 5,  done: 0 },
+    '0-13': { total: 5,  done: 0 },
+    '0-14': { total: 6,  done: 0 },
+    '0-15': { total: 6,  done: 0 },
+  };
+  const TOTAL_TASKS = 49;
+
+  function pct(done, total) { return total ? Math.round((done / total) * 100) : 0; }
+
+  function taskToggle(cb, actId, rowId) {
+    const row = document.getElementById('row-' + rowId);
+    if (cb.checked) {
+      row.classList.add('done');
+      ACTIVITIES[actId].done++;
+    } else {
+      row.classList.remove('done');
+      ACTIVITIES[actId].done--;
+    }
+    updateActivity(actId);
+    updateMaster();
+  }
+
+  function updateActivity(actId) {
+    const { done, total } = ACTIVITIES[actId];
+    const p = pct(done, total);
+    document.getElementById('cnt-' + actId).textContent = done + ' / ' + total;
+    document.getElementById('bar-' + actId).style.width = p + '%';
+    // dashboard row
+    const dp = document.getElementById('dprog-' + actId);
+    const dpc = document.getElementById('dpct-' + actId);
+    if (dp) dp.style.width = p + '%';
+    if (dpc) dpc.textContent = p + '%';
+  }
+
+  function updateMaster() {
+    let totalDone = 0;
+    Object.values(ACTIVITIES).forEach(a => totalDone += a.done);
+    const p = pct(totalDone, TOTAL_TASKS);
+    document.getElementById('master-bar').style.width = p + '%';
+    document.getElementById('master-pct').textContent = totalDone + ' / ' + TOTAL_TASKS + ' tasks';
+    document.getElementById('done-count').textContent = totalDone;
+    document.getElementById('rem-count').textContent = TOTAL_TASKS - totalDone;
+    const dp = document.getElementById('dprog-total');
+    const dpc = document.getElementById('dpct-total');
+    if (dp) dp.style.width = p + '%';
+    if (dpc) dpc.textContent = p + '%';
+  }
+
+  // ── Accordion ──────────────────────────────────────
+  function toggleActivity(id) {
+    const body = document.getElementById('body-' + id);
+    const tog  = document.getElementById('tog-' + id);
+    const open = body.classList.toggle('open');
+    tog.classList.toggle('open', open);
+  }
+
+  function expandAll() {
+    Object.keys(ACTIVITIES).forEach(id => {
+      document.getElementById('body-act-' + id).classList.add('open');
+      document.getElementById('tog-act-' + id).classList.add('open');
+    });
+  }
+
+  function collapseAll() {
+    Object.keys(ACTIVITIES).forEach(id => {
+      document.getElementById('body-act-' + id).classList.remove('open');
+      document.getElementById('tog-act-' + id).classList.remove('open');
+    });
+  }
+
+  function resetAll() {
+    if (!confirm('Reset all task progress? This cannot be undone.')) return;
+    document.querySelectorAll('.task-check').forEach(cb => { cb.checked = false; });
+    document.querySelectorAll('.task-table tr').forEach(r => r.classList.remove('done'));
+    Object.keys(ACTIVITIES).forEach(id => { ACTIVITIES[id].done = 0; updateActivity(id); });
+    updateMaster();
+  }
+
+  // Open first activity by default
+  toggleActivity('act-0-7');
+</script>
+</body>
+</html>
