@@ -33,7 +33,7 @@ const QUESTIONS: Record<keyof SurveyForm, OptionSet> = {
   q3:  { q: "Biggest complaint about your child's tuition teacher?", opts: ['Explains too fast','Too boring','Child afraid to ask doubts','Too expensive','Not personalised at all'] },
   q4:  { q: "Does your child ask doubts in class?", opts: ['Yes, always','Sometimes','Rarely — feels shy','Never'] },
   q5:  { q: "Quality missing most in today's teachers?", opts: ['Unlimited patience','24/7 availability','Never makes child feel stupid',"Adapts to child's pace",'Visual teaching — diagrams'] },
-  q6:  { q: "Child has a doubt at 11pm — what happens today?", opts: ['Searches YouTube','Leaves for tomorrow','WhatsApps teacher','Asks us (parents)','Gives up entirely'] },
+  q6:  { q: "When your child has a question during homework at night — what usually happens?", opts: ['Searches YouTube','Waits until next day','Asks parents for help','Messages teacher (if allowed)','Gives up & moves on'] },
   q7:  { q: "Students per teacher in your child's coaching class?", opts: ['Under 10','10–25','25–40','More than 40'] },
   q8:  { q: "When class moves too fast — who adjusts?", opts: ['Nobody — child falls behind','We hire extra tutor','Child studies alone for hours','Teacher slows down (rare)'] },
   q9:  { q: "AI teacher: 24/7 available, never judges, infinitely patient, adapts to your child's pace. Your reaction?", opts: ['Excited — this is what we need','Interested — want to see it first','Neutral — not sure yet','Worried about human touch','Against it — prefer human only'] },

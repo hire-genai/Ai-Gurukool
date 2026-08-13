@@ -231,7 +231,7 @@ export default function HomePage() {
       <nav className="main-nav">
         <a href="#" className="nav-logo">
           <div className="nav-logo-mark">🏛️</div>
-          AI-<span>Gurukool</span>
+          <span>AI-Gurukool</span>
         </a>
         <ul className="nav-links">
           <li><a href="#classroom">The Classroom</a></li>
