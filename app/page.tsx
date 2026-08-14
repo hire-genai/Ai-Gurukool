@@ -84,7 +84,7 @@ export default function HomePage() {
   // Hero parallax
   useEffect(() => {
     const onScroll = () => {
-      if (heroBgRef.current) heroBgRef.current.style.transform = `translateY(${window.scrollY * 0.35}px)`
+      if (heroBgRef.current && window.innerWidth > 860) heroBgRef.current.style.transform = `translateY(${window.scrollY * 0.35}px)`
     }
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
@@ -268,7 +268,7 @@ export default function HomePage() {
               <a href="#classroom" className="btn-ghost">▶ See How It Works</a>
             </div>
             <div className="hero-stats reveal delay-4">
-              {[['1:10','Teacher–\nStudent Ratio'],['2×','Faster\nSyllabus'],['20+','Subjects\nCovered'],['100%','Parent\nVisibility']].map(([n,l]) => (
+              {[['1:10','Teacher–Student Ratio'],['2×','Faster Syllabus'],['20+','Subjects Covered'],['100%','Parent Visibility']].map(([n,l]) => (
                 <div key={n} className="hstat-pill">
                   <div className="hstat-n">{n}</div>
                   <div className="hstat-l">{l}</div>
@@ -425,51 +425,28 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* FEATURES */}
-      <section className="pad bg-dark2">
-        <div className="container">
-          <div className="reveal" style={{ textAlign: 'center', marginBottom: 56 }}>
-            <div className="section-eyebrow">What Makes Us Different</div>
-            <h2 className="section-title section-title-white">This Isn&apos;t Just Schooling.<br />This Is Mentorship at Scale.</h2>
-            <p className="section-sub section-sub-white" style={{ margin: '14px auto 0' }}>Gone are the days of one-way lectures. Every student is seen, heard, challenged, and tracked — by an AI that never loses patience.</p>
-          </div>
-          <div className="feat-grid">
-            {[
-              ['🔄','Roundtable Learning','No front-of-class hierarchy. Students sit in a circle — the AI moderates, every voice gets equal time.'],
-              ['🤖','Socratic AI Dialogue','Correct answer? AI asks "Why?" Wrong answer? AI guides with questions — never just corrects.'],
-              ['👁️','Real-Time Comprehension','AI detects confusion the moment it happens and rephrases before the student falls behind.'],
-              ['📱','Glass Classroom Portal','Parents livestream their child\'s session from anywhere via secure login — watch them think, live.'],
-              ['📊','Weekly Vitality Report','Academic scores, participation levels, critical thinking index — every week, not once a year.'],
-              ['🌐','Seamless Hybrid','Join from home via Teams or Zoom with identical engagement, AI participation, and session recording.'],
-            ].map(([icon, title, desc]) => (
-              <div key={title} className="glass-card feat-card reveal">
-                <div className="feat-icon-wrap">{icon}</div>
-                <h3>{title}</h3>
-                <p>{desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ROUNDTABLE */}
       <section id="classroom" className="pad bg-dark">
         <div className="container">
-          <div className="two-col">
-            <div className="photo-frame reveal-left" style={{ height: 500 }}>
-              <img src="/roundtable.png" alt="Students at AI roundtable" style={{ height: '100%', objectFit: 'cover' }} />
-              <div className="photo-badge"><span className="live-dot" /> Live — Class 7B · Science</div>
-            </div>
-            <div className="reveal-right">
+          <div className="two-col-adv">
+            <div className="tc-heading reveal-left">
               <div className="section-eyebrow">Section A — The Roundtable</div>
               <h2 className="section-title section-title-white">From Chalk &amp; Talk<br />to Dialogue &amp; Discovery</h2>
               <div className="divider" />
+            </div>
+            <div className="tc-visual reveal-right">
+              <div className="photo-frame" style={{ height: 500 }}>
+                <img src="/roundtable.png" alt="Students at AI roundtable" style={{ height: '100%', objectFit: 'cover' }} />
+                <div className="photo-badge"><span className="live-dot" /> Live — Class 7B · Science</div>
+              </div>
+            </div>
+            <div className="tc-body reveal-left">
               <p style={{ color: 'rgba(255,255,255,.6)', fontSize: '.95rem' }}>We have eliminated the &quot;front of the classroom.&quot; By placing students in a roundtable setup, we remove hierarchy and fear. The AI Teacher acts as a moderator — ensuring every voice is heard.</p>
               <ul className="checklist">
-                <li><div className="ck">✓</div>Students learn to look each other in the eye and <b>debate solutions</b></li>
-                <li><div className="ck">✓</div>Ink-based digital board draws <b>live alongside</b> the student&apos;s thinking</li>
-                <li><div className="ck">✓</div>Ceiling-mounted audio-video captures every moment for the vault</li>
-                <li><div className="ck">✓</div>Real-world application questions replace rote memorisation</li>
+                <li><div className="ck">✓</div><span>Students learn to look each other in the eye and <b>debate solutions</b></span></li>
+                <li><div className="ck">✓</div><span>Ink-based digital board draws <b>live alongside</b> the student&apos;s thinking</span></li>
+                <li><div className="ck">✓</div><span>Ceiling-mounted audio-video captures every moment for the vault</span></li>
+                <li><div className="ck">✓</div><span>Real-world application questions replace rote memorisation</span></li>
               </ul>
             </div>
           </div>
@@ -563,23 +540,27 @@ export default function HomePage() {
       </section>
 
       {/* AI CO-PILOT */}
-      <section id="aiteacher" className="pad bg-dark">
+      <section id="aiteacher" className="pad bg-dark2">
         <div className="container">
-          <div className="two-col flip">
-            <div className="photo-frame reveal-right" style={{ height: 480 }}>
-              <img src="/math.png" alt="Math Applications at roundtable" style={{ height: '100%', objectFit: 'cover' }} />
-              <div className="photo-badge">📐 Math Applications — Real-World Problems</div>
-            </div>
-            <div className="reveal-left">
+          <div className="two-col-adv flip">
+            <div className="tc-heading reveal-right">
               <div className="section-eyebrow">Section B — The AI Co-Pilot</div>
               <h2 className="section-title section-title-white">Subject Mastery Through<br />Application, Not Memorisation</h2>
               <div className="divider" />
+            </div>
+            <div className="tc-visual reveal-left">
+              <div className="photo-frame" style={{ height: 480 }}>
+                <img src="/math.png" alt="Math Applications at roundtable" style={{ height: '100%', objectFit: 'cover' }} />
+                <div className="photo-badge">📐 Math Applications — Real-World Problems</div>
+              </div>
+            </div>
+            <div className="tc-body reveal-right">
               <p style={{ color: 'rgba(255,255,255,.6)', fontSize: '.95rem' }}>Our AI doesn&apos;t just display text. It projects real-world applications and challenges students to think beyond the textbook — in every subject, every day.</p>
               <ul className="checklist">
-                <li><div className="ck">✓</div><b>&quot;How would you use this formula to build a bridge?&quot;</b></li>
-                <li><div className="ck">✓</div><b>&quot;What would you have done differently in this war?&quot;</b></li>
-                <li><div className="ck">✓</div>Questions adapt in real-time to each student&apos;s level</li>
-                <li><div className="ck">✓</div>AI draws diagrams live on the ink-based board as students answer</li>
+                <li><div className="ck">✓</div><span><b>&quot;How would you use this formula to build a bridge?&quot;</b></span></li>
+                <li><div className="ck">✓</div><span><b>&quot;What would you have done differently in this war?&quot;</b></span></li>
+                <li><div className="ck">✓</div><span>Questions adapt in real-time to each student&apos;s level</span></li>
+                <li><div className="ck">✓</div><span>AI draws diagrams live on the ink-based board as students answer</span></li>
               </ul>
             </div>
           </div>
@@ -587,58 +568,66 @@ export default function HomePage() {
       </section>
 
       {/* 1:10 RATIO */}
-      <section id="ratio" className="pad bg-dark2">
+      <section id="ratio" className="pad bg-dark">
         <div className="container">
-          <div className="two-col">
-            <div className="reveal-left">
+          <div className="two-col-adv">
+            <div className="tc-heading reveal-left">
               <div className="section-eyebrow">Section C — The Golden Rule</div>
               <h2 className="section-title section-title-white">Maximum Attention.<br />Maximum Understanding.</h2>
               <div className="divider" />
+            </div>
+            <div className="tc-visual reveal-right">
+              <div className="photo-frame" style={{ height: 460 }}>
+                <img src="/ratio.png" alt="Multiple classroom learning scenarios" style={{ height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+                <div className="photo-badge">🎯 Personalised to every student in the room</div>
+              </div>
+            </div>
+            <div className="tc-body reveal-left">
               <p style={{ color: 'rgba(255,255,255,.6)', fontSize: '.95rem' }}>The teacher-student ratio is strictly 1:10. This allows our AI and human moderators to track the engagement of every student — not as a group, but as individuals.</p>
               <ul className="checklist">
-                <li><div className="ck">✓</div>AI identifies confusion in real-time and <b>rephrases immediately</b></li>
-                <li><div className="ck">✓</div>No student moves forward until <b>mastery is confirmed</b></li>
-                <li><div className="ck">✓</div>Every contribution logged and weighted in the weekly report</li>
-                <li><div className="ck">✓</div>Human moderator alongside AI for emotional support</li>
+                <li><div className="ck">✓</div><span>AI identifies confusion in real-time and <b>rephrases immediately</b></span></li>
+                <li><div className="ck">✓</div><span>No student moves forward until <b>mastery is confirmed</b></span></li>
+                <li><div className="ck">✓</div><span>Every contribution logged and weighted in the weekly report</span></li>
+                <li><div className="ck">✓</div><span>Human moderator alongside AI for emotional support</span></li>
               </ul>
-            </div>
-            <div className="photo-frame reveal-right" style={{ height: 460 }}>
-              <img src="/ratio.png" alt="Multiple classroom learning scenarios" style={{ height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
-              <div className="photo-badge">🎯 Personalised to every student in the room</div>
             </div>
           </div>
         </div>
       </section>
 
       {/* GLASS CLASSROOM */}
-      <section id="portal" className="pad bg-dark">
+      <section id="portal" className="pad bg-dark2">
         <div className="container">
-          <div className="two-col flip">
-            <div className="portal-card reveal-right">
-              <div className="portal-topbar">
-                <div className="pbar-dot" style={{ background: '#ef4444' }} /><div className="pbar-dot" style={{ background: '#f59e0b' }} /><div className="pbar-dot" style={{ background: '#22c55e' }} />
-                <span className="portal-title">Parent Portal — AI-Gurukool</span>
-              </div>
-              <div className="portal-body">
-                <div className="live-chip"><span className="live-red" /> Live Now — Room 4B · Science</div>
-                <div className="portal-thumb"><img src="/hero-bg.png" alt="Live classroom" /></div>
-                <div className="portal-metrics">
-                  <div className="pm"><div className="pm-n">9/10</div><div className="pm-l">Engagement</div></div>
-                  <div className="pm"><div className="pm-n">4</div><div className="pm-l">Contributions</div></div>
-                  <div className="pm"><div className="pm-n">A+</div><div className="pm-l">This Week</div></div>
-                </div>
-              </div>
-            </div>
-            <div className="reveal-left">
+          <div className="two-col-adv flip">
+            <div className="tc-heading reveal-right">
               <div className="section-eyebrow">Section D — Glass Classroom</div>
               <h2 className="section-title section-title-white">Watch Them Grow, Live.</h2>
               <div className="divider" />
+            </div>
+            <div className="tc-visual reveal-left">
+              <div className="portal-card">
+                <div className="portal-topbar">
+                  <div className="pbar-dot" style={{ background: '#ef4444' }} /><div className="pbar-dot" style={{ background: '#f59e0b' }} /><div className="pbar-dot" style={{ background: '#22c55e' }} />
+                  <span className="portal-title">Parent Portal — AI-Gurukool</span>
+                </div>
+                <div className="portal-body">
+                  <div className="live-chip"><span className="live-red" /> Live Now — Room 4B · Science</div>
+                  <div className="portal-thumb"><img src="/hero-bg.png" alt="Live classroom" /></div>
+                  <div className="portal-metrics">
+                    <div className="pm"><div className="pm-n">9/10</div><div className="pm-l">Engagement</div></div>
+                    <div className="pm"><div className="pm-n">4</div><div className="pm-l">Contributions</div></div>
+                    <div className="pm"><div className="pm-n">A+</div><div className="pm-l">This Week</div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="tc-body reveal-right">
               <p style={{ color: 'rgba(255,255,255,.6)', fontSize: '.95rem' }}>Why wait for a yearly parent-teacher meeting? Our portal allows parents to livestream their child&apos;s roundtable discussion from anywhere in the world via secure login.</p>
               <ul className="checklist">
-                <li><div className="ck">✓</div>You don&apos;t just see their grades — you <b>see how they think</b></li>
-                <li><div className="ck">✓</div>Watch your child debate, contribute, and collaborate in real-time</li>
-                <li><div className="ck">✓</div>Secure, encrypted stream — verified parents only</li>
-                <li><div className="ck">✓</div>Rewatch any session from the Knowledge Vault within 24 hours</li>
+                <li><div className="ck">✓</div><span>You don&apos;t just see their grades — you <b>see how they think</b></span></li>
+                <li><div className="ck">✓</div><span>Watch your child debate, contribute, and collaborate in real-time</span></li>
+                <li><div className="ck">✓</div><span>Secure, encrypted stream — verified parents only</span></li>
+                <li><div className="ck">✓</div><span>Rewatch any session from the Knowledge Vault within 24 hours</span></li>
               </ul>
             </div>
           </div>
@@ -646,38 +635,42 @@ export default function HomePage() {
       </section>
 
       {/* VITALITY REPORT */}
-      <section id="reports" className="pad bg-dark2">
+      <section id="reports" className="pad bg-dark">
         <div className="container">
-          <div className="two-col">
-            <div className="report-card reveal-left">
-              <div className="rc-head">
-                <div><div className="rc-title">📋 Weekly Vitality Report</div><div className="rc-sub">Arjun Sharma · Class 8B · AI-Gurukool</div></div>
-                <div className="rc-week">Week 24</div>
-              </div>
-              <div className="rc-body">
-                <div className="rc-scores">
-                  <div className="rc-s"><div className="rc-s-n">87</div><div className="rc-s-l">Academic Score</div><div className="badge bg-g">↑ +5 pts</div></div>
-                  <div className="rc-s"><div className="rc-s-n">9.2</div><div className="rc-s-l">Participation</div><div className="badge bg-b">Excellent</div></div>
-                  <div className="rc-s"><div className="rc-s-n">7.8</div><div className="rc-s-l">Critical Thinking</div><div className="badge bg-a">Growing</div></div>
-                </div>
-                <div className="rc-insights">
-                  <div className="ri"><span className="ri-ic">✅</span>Correctly answered 3 Socratic follow-up questions in Physics this week</div>
-                  <div className="ri"><span className="ri-ic">💡</span>Proposed an original solution during History roundtable — flagged for gifted programme</div>
-                  <div className="ri"><span className="ri-ic">📌</span>Focus area: algebraic word problems — AI has scheduled extra dialogue sessions</div>
-                  <div className="ri"><span className="ri-ic">🎯</span>Next week: Chapter 9 · Quadratic Equations · Estimated mastery in 2 sessions</div>
-                </div>
-              </div>
-            </div>
-            <div className="reveal-right">
+          <div className="two-col-adv">
+            <div className="tc-heading reveal-left">
               <div className="section-eyebrow">Section E — Vitality Report</div>
               <h2 className="section-title section-title-white">Real-Time Feedback,<br />Not Yearly Surprises.</h2>
               <div className="divider" />
+            </div>
+            <div className="tc-visual reveal-right">
+              <div className="report-card">
+                <div className="rc-head">
+                  <div><div className="rc-title">📋 Weekly Vitality Report</div><div className="rc-sub">Arjun Sharma · Class 8B · AI-Gurukool</div></div>
+                  <div className="rc-week">Week 24</div>
+                </div>
+                <div className="rc-body">
+                  <div className="rc-scores">
+                    <div className="rc-s"><div className="rc-s-n">87</div><div className="rc-s-l">Academic Score</div><div className="badge bg-g">↑ +5 pts</div></div>
+                    <div className="rc-s"><div className="rc-s-n">9.2</div><div className="rc-s-l">Participation</div><div className="badge bg-b">Excellent</div></div>
+                    <div className="rc-s"><div className="rc-s-n">7.8</div><div className="rc-s-l">Critical Thinking</div><div className="badge bg-a">Growing</div></div>
+                  </div>
+                  <div className="rc-insights">
+                    <div className="ri"><span className="ri-ic">✅</span>Correctly answered 3 Socratic follow-up questions in Physics this week</div>
+                    <div className="ri"><span className="ri-ic">💡</span>Proposed an original solution during History roundtable — flagged for gifted programme</div>
+                    <div className="ri"><span className="ri-ic">📌</span>Focus area: algebraic word problems — AI has scheduled extra dialogue sessions</div>
+                    <div className="ri"><span className="ri-ic">🎯</span>Next week: Chapter 9 · Quadratic Equations · Estimated mastery in 2 sessions</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="tc-body reveal-left">
               <p style={{ color: 'rgba(255,255,255,.6)', fontSize: '.95rem' }}>Forget the annual report card stress. Parents receive a comprehensive, AI-generated Vitality Report every week — covering not just scores, but how your child thinks.</p>
               <ul className="checklist">
-                <li><div className="ck">✓</div>Academic scores across all subjects, every week</li>
-                <li><div className="ck">✓</div>Participation levels and quality of contributions</li>
-                <li><div className="ck">✓</div>Critical thinking index — tracked and trended over time</li>
-                <li><div className="ck">✓</div>AI recommendations personalised per child, per week</li>
+                <li><div className="ck">✓</div><span>Academic scores across all subjects, every week</span></li>
+                <li><div className="ck">✓</div><span>Participation levels and quality of contributions</span></li>
+                <li><div className="ck">✓</div><span>Critical thinking index — tracked and trended over time</span></li>
+                <li><div className="ck">✓</div><span>AI recommendations personalised per child, per week</span></li>
               </ul>
             </div>
           </div>
@@ -685,77 +678,29 @@ export default function HomePage() {
       </section>
 
       {/* HYBRID */}
-      <section id="hybrid" className="pad bg-dark">
+      <section id="hybrid" className="pad bg-dark2">
         <div className="container">
-          <div className="two-col flip">
-            <div className="photo-frame reveal-right" style={{ height: 460 }}>
-              <img src="/hybrid.png" alt="Hybrid class" style={{ height: '100%', objectFit: 'cover', objectPosition: 'center 20%' }} />
-              <div className="photo-badge">🌐 Hybrid — Remote &amp; In-Person Together</div>
-            </div>
-            <div className="reveal-left">
+          <div className="two-col-adv flip">
+            <div className="tc-heading reveal-right">
               <div className="section-eyebrow">Section F — Hybrid Learning</div>
               <h2 className="section-title section-title-white">Never Miss a Day.<br />Join from Anywhere.</h2>
               <div className="divider" />
+            </div>
+            <div className="tc-visual reveal-left">
+              <div className="photo-frame" style={{ height: 460 }}>
+                <img src="/hybrid.png" alt="Hybrid class" style={{ height: '100%', objectFit: 'cover', objectPosition: 'center 20%' }} />
+                <div className="photo-badge">🌐 Hybrid — Remote &amp; In-Person Together</div>
+              </div>
+            </div>
+            <div className="tc-body reveal-right">
               <p style={{ color: 'rgba(255,255,255,.6)', fontSize: '.95rem' }}>Sick day? Family vacation? No problem. Students join the live roundtable via Teams or Zoom. The AI seamlessly integrates remote students — same engagement, same report.</p>
               <ul className="checklist">
-                <li><div className="ck">✓</div>Remote student&apos;s voice <b>projected to the full roundtable</b> in real-time</li>
-                <li><div className="ck">✓</div>AI calls on remote students equally to in-person participants</li>
-                <li><div className="ck">✓</div>No penalty to participation score for hybrid attendance</li>
-                <li><div className="ck">✓</div>Works on any device — laptop, tablet, or phone</li>
+                <li><div className="ck">✓</div><span>Remote student&apos;s voice <b>projected to the full roundtable</b> in real-time</span></li>
+                <li><div className="ck">✓</div><span>AI calls on remote students equally to in-person participants</span></li>
+                <li><div className="ck">✓</div><span>No penalty to participation score for hybrid attendance</span></li>
+                <li><div className="ck">✓</div><span>Works on any device — laptop, tablet, or phone</span></li>
               </ul>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* KNOWLEDGE VAULT */}
-      <section id="vault" className="pad bg-dark2">
-        <div className="container">
-          <div className="reveal" style={{ textAlign: 'center', marginBottom: 52 }}>
-            <div className="section-eyebrow">Section G — Knowledge Vault</div>
-            <h2 className="section-title section-title-white">Learn. Revise. <span className="grad-text">Replay.</span></h2>
-            <p className="section-sub section-sub-white" style={{ margin: '14px auto 0' }}>Every lesson, every AI interaction, and every whiteboard scribble is recorded and available 24/7 for revision at your own pace.</p>
-          </div>
-          <div className="feat-grid">
-            {[
-              ['🎥','Full Session Recordings','Multi-camera audio-video of every roundtable, auto-tagged by topic and timestamp.'],
-              ['📝','AI Session Transcripts','Full searchable text of every question asked, every answer given, every AI response.'],
-              ['🖊️','Whiteboard Saves','Every ink diagram saved as high-resolution with the AI\'s annotation alongside.'],
-              ['📚','AI Study Notes','Auto-generated concise revision notes from each session — bullet-pointed, exam-ready.'],
-              ['🧪','Personalised Q-Bank','AI generates 10 follow-up questions per session based on each student\'s weak areas.'],
-              ['🏆','Progress Timeline','Visual map of every topic mastered over the year — students and parents see the full journey.'],
-            ].map(([icon,title,desc],i) => (
-              <div key={title} className={`glass-card feat-card reveal delay-${(i%3)+1}`}>
-                <div className="feat-icon-wrap">{icon}</div>
-                <h3>{title}</h3>
-                <p>{desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* SOCRATIC DIALOGUE */}
-      <section className="socratic-section pad">
-        <div className="container socratic-grid">
-          <div className="reveal-left">
-            <div className="section-eyebrow">Our Unique Approach</div>
-            <h2 className="section-title section-title-white">The AI Doesn&apos;t Just Answer.<br />It Asks <span className="grad-text">&quot;Why?&quot;</span></h2>
-            <div className="divider" />
-            <p style={{ color: 'rgba(255,255,255,.6)', fontSize: '.95rem' }}>Unlike ChatGPT where you type and get an answer, our AI is programmed for Socratic Dialogue. It teaches resilience and logic — not dependency on answers.</p>
-            <ul className="checklist" style={{ marginTop: 22 }}>
-              <li><div className="ck">✓</div>Correct answer? AI asks a <b>harder &quot;Why?&quot;</b> to the next student</li>
-              <li><div className="ck">✓</div>Wrong answer? AI asks leading questions to guide — never corrects directly</li>
-              <li><div className="ck">✓</div>Silence? AI invites, never shames — <b>confidence is built over time</b></li>
-              <li><div className="ck">✓</div>Every dialogue logged to track intellectual growth over the year</li>
-            </ul>
-          </div>
-          <div className="chat-wrap reveal-right">
-            <div className="bubble b-ai"><strong>AI Teacher</strong>Arjun, you said &quot;F = ma&quot;. Correct! Now — Priya, can you tell me why a heavier truck takes longer to stop than a car at the same speed?</div>
-            <div className="bubble b-student"><strong>Priya</strong>Because... it has more mass? So it needs more force to slow down?</div>
-            <div className="bubble b-ai"><strong>AI Teacher</strong>Great start, Priya! But what if the truck has much bigger brakes — does that change your answer? Ravi, what do you think?</div>
-            <div className="bubble b-student"><strong>Ravi</strong>The brakes give more force... but the mass is still bigger, so it still needs more stopping distance?</div>
-            <div className="bubble b-ai"><strong>AI Teacher</strong>Now you&apos;re thinking like a physicist! 🎯 If mass doubles and force doubles too — what happens to acceleration? Class?</div>
           </div>
         </div>
       </section>
@@ -771,118 +716,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* SURVEY STATS */}
-      {surveyStats && surveyStats.total > 0 && (
-        <section className="sv-stats-section">
-          <div className="container">
-            <div className="reveal" style={{ textAlign: 'center', marginBottom: 52 }}>
-              <div className="section-eyebrow">Live Research Data</div>
-              <h2 className="section-title section-title-white">What {surveyStats.total} Parents Told Us</h2>
-              <p className="section-sub section-sub-white">Real insights collected directly from parents. Every bar below represents actual responses — shaping every product decision we make.</p>
-            </div>
-
-            {/* 4 chart cards */}
-            <div className="sv-chart-grid reveal">
-
-              {/* Pain Points */}
-              <div className="sv-chart-card">
-                <div className="sv-chart-header">
-                  <span className="sv-chart-icon">😤</span>
-                  <div>
-                    <div className="sv-chart-title">Biggest Pain with Tuition</div>
-                    <div className="sv-chart-sub">Q3 · {surveyStats.total} responses</div>
-                  </div>
-                </div>
-                <div className="sv-bars">
-                  {surveyStats.pain.map((item, i) => (
-                    <div key={i} className="sv-bar-row">
-                      <div className="sv-bar-label">{item.label}</div>
-                      <div className="sv-bar-track">
-                        <div className="sv-bar-fill" style={{ width: `${item.pct}%`, background: 'linear-gradient(90deg,#ef4444,#f97316)' }} />
-                      </div>
-                      <div className="sv-bar-pct">{item.pct}%</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* AI Reaction */}
-              <div className="sv-chart-card">
-                <div className="sv-chart-header">
-                  <span className="sv-chart-icon">🤖</span>
-                  <div>
-                    <div className="sv-chart-title">Reaction to AI Teaching</div>
-                    <div className="sv-chart-sub">Q9 · {surveyStats.total} responses</div>
-                  </div>
-                </div>
-                <div className="sv-bars">
-                  {surveyStats.reaction.map((item, i) => (
-                    <div key={i} className="sv-bar-row">
-                      <div className="sv-bar-label">{item.label}</div>
-                      <div className="sv-bar-track">
-                        <div className="sv-bar-fill" style={{ width: `${item.pct}%`, background: 'linear-gradient(90deg,#f5a623,#fbbf24)' }} />
-                      </div>
-                      <div className="sv-bar-pct">{item.pct}%</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* AI Fears */}
-              <div className="sv-chart-card">
-                <div className="sv-chart-header">
-                  <span className="sv-chart-icon">😨</span>
-                  <div>
-                    <div className="sv-chart-title">Biggest AI Concerns</div>
-                    <div className="sv-chart-sub">Q10 · {surveyStats.total} responses</div>
-                  </div>
-                </div>
-                <div className="sv-bars">
-                  {surveyStats.fears.map((item, i) => (
-                    <div key={i} className="sv-bar-row">
-                      <div className="sv-bar-label">{item.label}</div>
-                      <div className="sv-bar-track">
-                        <div className="sv-bar-fill" style={{ width: `${item.pct}%`, background: 'linear-gradient(90deg,#a855f7,#6366f1)' }} />
-                      </div>
-                      <div className="sv-bar-pct">{item.pct}%</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Spend + Trial */}
-              <div className="sv-chart-card">
-                <div className="sv-chart-header">
-                  <span className="sv-chart-icon">💰</span>
-                  <div>
-                    <div className="sv-chart-title">Monthly Tuition Spend</div>
-                    <div className="sv-chart-sub">Q12 · {surveyStats.total} responses</div>
-                  </div>
-                </div>
-                <div className="sv-bars">
-                  {surveyStats.spend.map((item, i) => (
-                    <div key={i} className="sv-bar-row">
-                      <div className="sv-bar-label">{item.label}</div>
-                      <div className="sv-bar-track">
-                        <div className="sv-bar-fill" style={{ width: `${item.pct}%`, background: 'linear-gradient(90deg,#22c55e,#10b981)' }} />
-                      </div>
-                      <div className="sv-bar-pct">{item.pct}%</div>
-                    </div>
-                  ))}
-                </div>
-                <div className="sv-trial-pill">✅ {surveyStats.wantTrial}% would try a free trial</div>
-              </div>
-
-            </div>
-
-            <div className="reveal sv-stats-cta">
-              <p>Add your voice to the data →</p>
-              <a href="#survey" className="btn-primary" style={{ fontSize: '.9rem', padding: '12px 28px' }}>Take the Survey (3 min)</a>
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* FOOTER */}
       <footer>
