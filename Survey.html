@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Gurukool · Role-Based Survey</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f5f0eb 0%, #e8ddd4 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem 1rem;
+        }
+
+        .survey-container {
+            max-width: 960px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(16px);
+            border-radius: 56px;
+            padding: 2.8rem 3rem 3rem;
+            box-shadow: 0 40px 80px -30px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.3);
+            border: 1px solid rgba(255, 245, 235, 0.4);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .survey-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(180, 95, 58, 0.04) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        /* header */
+        .survey-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.8rem 1.5rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        .brand i {
+            font-size: 2.4rem;
+            color: #b45f3a;
+            background: #f0e2d8;
+            padding: 0.6rem;
+            border-radius: 20px;
+            transition: transform 0.3s;
+        }
+        .brand i:hover {
+            transform: rotate(-8deg) scale(1.05);
+        }
+        .brand h1 {
+            font-size: 1.7rem;
+            font-weight: 700;
+            color: #1f130b;
+            letter-spacing: -0.3px;
+        }
+        .brand span {
+            font-weight: 400;
+            font-size: 0.8rem;
+            color: #6f5542;
+            display: block;
+        }
+
+        .step-badge {
+            background: #e6d7cc;
+            padding: 0.4rem 1.6rem;
+            border-radius: 60px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #3f2c1e;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+            transition: all 0.3s;
+        }
+        .step-badge:hover {
+            background: #dccfc4;
+            transform: scale(1.02);
+        }
+
+        /* progress */
+        .progress-track {
+            display: flex;
+            gap: 0.4rem;
+            margin-bottom: 2rem;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+        }
+        .progress-step {
+            flex: 1;
+            height: 5px;
+            border-radius: 10px;
+            background: #ddd0c4;
+            transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+            position: relative;
+        }
+        .progress-step.active {
+            background: #b45f3a;
+            box-shadow: 0 0 12px #b45f3a50;
+        }
+        .progress-step.done {
+            background: #b45f3a;
+        }
+        .progress-step:hover {
+            transform: scaleY(2);
+            cursor: pointer;
+        }
+
+        /* role selector */
+        .role-selector {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            position: relative;
+            z-index: 1;
+            flex-wrap: wrap;
+        }
+        .role-card {
+            flex: 1;
+            min-width: 140px;
+            background: #f9f6f2;
+            border: 2px solid #ddd0c4;
+            border-radius: 32px;
+            padding: 1.5rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .role-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: #b45f3a;
+            transform: scaleX(0);
+            transition: transform 0.3s;
+        }
+        .role-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            border-color: #b45f3a;
+            box-shadow: 0 12px 30px rgba(180, 95, 58, 0.12);
+        }
+        .role-card:hover::after {
+            transform: scaleX(1);
+        }
+        .role-card.active {
+            border-color: #b45f3a;
+            background: #f2e4da;
+            box-shadow: 0 8px 25px rgba(180, 95, 58, 0.15);
+        }
+        .role-card.active::after {
+            transform: scaleX(1);
+        }
+        .role-card i {
+            font-size: 2.8rem;
+            color: #b45f3a;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        .role-card h3 {
+            font-size: 1.1rem;
+            color: #1f130b;
+            font-weight: 600;
+        }
+        .role-card p {
+            font-size: 0.8rem;
+            color: #6f5542;
+            margin-top: 0.2rem;
+        }
+
+        /* fact banner */
+        .fact-banner {
+            background: linear-gradient(135deg, #f5eee9 0%, #ece2d9 100%);
+            border-radius: 40px;
+            padding: 0.8rem 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            margin-bottom: 2rem;
+            border-left: 5px solid #b45f3a;
+            transition: all 0.4s;
+            position: relative;
+            z-index: 1;
+        }
+        .fact-banner:hover {
+            transform: scale(1.01);
+            box-shadow: 0 4px 16px rgba(180, 95, 58, 0.08);
+        }
+        .fact-banner i {
+            font-size: 2rem;
+            color: #b45f3a;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .fact-banner .fact-text {
+            font-size: 0.95rem;
+            color: #2f1e14;
+            font-weight: 500;
+        }
+        .fact-banner .fact-source {
+            font-size: 0.75rem;
+            color: #6f5542;
+            font-weight: 400;
+        }
+
+        /* form sections */
+        .form-section {
+            display: none;
+            animation: slideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+            position: relative;
+            z-index: 1;
+        }
+        .form-section.active {
+            display: block;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #1f130b;
+            margin-bottom: 0.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        .section-title i {
+            color: #b45f3a;
+            font-size: 1.6rem;
+        }
+        .section-sub {
+            color: #6f5542;
+            font-size: 1rem;
+            margin-bottom: 1.8rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.6rem;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #2d1e14;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+        .form-group label .required {
+            color: #b45f3a;
+            margin-left: 0.2rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.9rem 1.4rem;
+            border-radius: 60px;
+            border: 1.5px solid #ddd0c4;
+            font-size: 1rem;
+            background: #f9f6f2;
+            transition: all 0.3s;
+            color: #1f130b;
+        }
+        .form-control:focus {
+            border-color: #b45f3a;
+            outline: none;
+            background: white;
+            box-shadow: 0 0 0 4px #b45f3a15, 0 4px 16px rgba(0,0,0,0.02);
+            transform: scale(1.01);
+        }
+        .form-control:hover {
+            border-color: #c4a695;
+        }
+        .form-control.location-field {
+            background: #f0e8e0;
+            border-color: #c4a695;
+            padding-left: 3rem;
+            position: relative;
+        }
+        .form-control.location-field::before {
+            content: '📍';
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .location-wrapper {
+            position: relative;
+        }
+        .location-wrapper .location-icon {
+            position: absolute;
+            left: 1.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.1rem;
+            color: #b45f3a;
+            z-index: 2;
+        }
+        .location-wrapper .form-control {
+            padding-left: 3.2rem;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.8rem;
+        }
+        .option-pill {
+            background: #f9f6f2;
+            padding: 0.9rem 1.2rem;
+            border-radius: 60px;
+            border: 1.5px solid #ddd0c4;
+            font-weight: 500;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+            color: #1f130b;
+            position: relative;
+        }
+        .option-pill i {
+            color: #b45f3a;
+            width: 1.6rem;
+            font-size: 1.1rem;
+            transition: transform 0.3s;
+        }
+        .option-pill:hover {
+            border-color: #b45f3a;
+            background: #fcf5ef;
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 20px rgba(180, 95, 58, 0.08);
+        }
+        .option-pill:hover i {
+            transform: scale(1.2) rotate(-5deg);
+        }
+        .option-pill.selected {
+            border-color: #b45f3a;
+            background: #f2e4da;
+            box-shadow: 0 0 0 3px #b45f3a25, 0 6px 20px rgba(180, 95, 58, 0.08);
+        }
+        .option-pill.selected i {
+            color: #9f4f2e;
+        }
+
+        .textarea-control {
+            width: 100%;
+            padding: 1rem 1.4rem;
+            border-radius: 28px;
+            border: 1.5px solid #ddd0c4;
+            font-size: 1rem;
+            background: #f9f6f2;
+            transition: all 0.3s;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 80px;
+        }
+        .textarea-control:focus {
+            border-color: #b45f3a;
+            outline: none;
+            background: white;
+            box-shadow: 0 0 0 4px #b45f3a15;
+        }
+        .textarea-control:hover {
+            border-color: #c4a695;
+        }
+
+        /* auto-advance indicator */
+        .auto-progress {
+            display: flex;
+            justify-content: center;
+            gap: 0.3rem;
+            margin: 1.5rem 0 0.5rem;
+        }
+        .auto-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #ddd0c4;
+            transition: all 0.3s;
+        }
+        .auto-dot.filled {
+            background: #b45f3a;
+        }
+        .auto-dot.active {
+            background: #b45f3a;
+            width: 20px;
+            border-radius: 10px;
+        }
+
+        .nav-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #eee3da;
+            flex-wrap: wrap;
+            gap: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn {
+            background: white;
+            border: 1.5px solid #b8a192;
+            padding: 0.7rem 2rem;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #2d1e14;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: #f6efe9;
+        }
+        .btn:hover {
+            background: #ece2d9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.04);
+        }
+        .btn-primary {
+            background: #b45f3a;
+            border-color: #b45f3a;
+            color: white;
+            box-shadow: 0 6px 14px #b45f3a40;
+        }
+        .btn-primary:hover {
+            background: #9f4f2e;
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 10px 25px #b45f3a50;
+        }
+        .btn:disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .btn-success {
+            background: #2b7a4b;
+            border-color: #2b7a4b;
+            color: white;
+            box-shadow: 0 6px 14px #2b7a4b40;
+        }
+        .btn-success:hover {
+            background: #1f633a;
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        /* thank you */
+        .thank-you {
+            text-align: center;
+            padding: 2rem 0;
+            position: relative;
+            z-index: 1;
+        }
+        .thank-you i {
+            font-size: 4.5rem;
+            color: #2b7a4b;
+            margin-bottom: 1rem;
+            animation: pulse 2s infinite;
+        }
+        .thank-you h2 {
+            font-size: 2.4rem;
+            color: #1f130b;
+        }
+        .thank-you p {
+            color: #4f3a2b;
+            font-size: 1.1rem;
+            max-width: 500px;
+            margin: 0.5rem auto 1.5rem;
+        }
+
+        .badge-insight {
+            background: #f5eee9;
+            border-radius: 60px;
+            padding: 0.6rem 1.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.8rem;
+            font-size: 0.9rem;
+            color: #2f1e14;
+            border-left: 4px solid #b45f3a;
+            margin-top: 0.5rem;
+            transition: all 0.3s;
+        }
+        .badge-insight:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 16px rgba(180, 95, 58, 0.08);
+        }
+
+        /* responsive */
+        @media (max-width: 700px) {
+            .survey-container { padding: 1.8rem 1.5rem; }
+            .role-selector { flex-direction: column; }
+            .options-grid { grid-template-columns: 1fr 1fr; }
+            .section-title { font-size: 1.4rem; }
+            .brand h1 { font-size: 1.2rem; }
+            .fact-banner { flex-direction: column; text-align: center; padding: 1.2rem; }
+        }
+        @media (max-width: 450px) {
+            .options-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="survey-container" id="surveyApp">
+    <!-- header -->
+    <div class="survey-header">
+        <div class="brand">
+            <i class="fas fa-robot"></i>
+            <div>
+                <h1>AI-Gurukool <span style="font-weight:400; font-size:0.85rem; color:#6f5542;">· Research</span></h1>
+                <span>Help us build the future of education</span>
+            </div>
+        </div>
+        <div class="step-badge" id="stepIndicator">Step 1 of 4</div>
+    </div>
+
+    <!-- progress -->
+    <div class="progress-track" id="progressTrack">
+        <span class="progress-step active" data-step="0"></span>
+        <span class="progress-step" data-step="1"></span>
+        <span class="progress-step" data-step="2"></span>
+        <span class="progress-step" data-step="3"></span>
+    </div>
+
+    <!-- Role Selector -->
+    <div class="role-selector" id="roleSelector">
+        <div class="role-card active" data-role="parent" onclick="selectRole('parent')">
+            <i class="fas fa-user-tie"></i>
+            <h3>👨‍👩‍👦 Parent</h3>
+            <p>For moms & dads</p>
+        </div>
+        <div class="role-card" data-role="student" onclick="selectRole('student')">
+            <i class="fas fa-user-graduate"></i>
+            <h3>🧑‍🎓 Student</h3>
+            <p>For learners (5+)</p>
+        </div>
+        <div class="role-card" data-role="teacher" onclick="selectRole('teacher')">
+            <i class="fas fa-chalkboard-teacher"></i>
+            <h3>👩‍🏫 Teacher</h3>
+            <p>For educators</p>
+        </div>
+    </div>
+
+    <!-- Fact Banner (dynamic) -->
+    <div class="fact-banner" id="factBanner">
+        <i class="fas fa-lightbulb"></i>
+        <div>
+            <span class="fact-text" id="factText">87% of parents want more personalised learning for their children.</span>
+            <span class="fact-source" id="factSource">— Global Education Survey 2025</span>
+        </div>
+    </div>
+
+    <!-- ====== SECTION 1: Role-specific questions ====== -->
+    <div class="form-section active" data-section="0" id="section1">
+        <div class="section-title"><i class="fas fa-user-circle"></i> <span id="section1Title">About You</span></div>
+        <div class="section-sub" id="section1Sub">Help us understand your perspective.</div>
+
+        <div id="roleQuestions">
+            <!-- injected by JS -->
+        </div>
+    </div>
+
+    <!-- ====== SECTION 2: Pain Points ====== -->
+    <div class="form-section" data-section="1">
+        <div class="section-title"><i class="fas fa-heart-circle-exclamation"></i> <span id="section2Title">Current Challenges</span></div>
+        <div class="section-sub" id="section2Sub">Tell us what frustrates you about education today.</div>
+        <div id="painQuestions">
+            <!-- injected by JS -->
+        </div>
+    </div>
+
+    <!-- ====== SECTION 3: AI & Enrollment ====== -->
+    <div class="form-section" data-section="2">
+        <div class="section-title"><i class="fas fa-robot"></i> <span id="section3Title">AI & The Future</span></div>
+        <div class="section-sub" id="section3Sub">Your thoughts on AI-powered learning.</div>
+        <div id="aiQuestions">
+            <!-- injected by JS -->
+        </div>
+    </div>
+
+    <!-- ====== SECTION 4: Final ====== -->
+    <div class="form-section" data-section="3">
+        <div class="section-title"><i class="fas fa-pen-fancy"></i> <span id="section4Title">Your Vision</span></div>
+        <div class="section-sub" id="section4Sub">One last thing — we value your perspective.</div>
+        <div id="finalQuestions">
+            <!-- injected by JS -->
+        </div>
+    </div>
+
+    <!-- auto-advance dots -->
+    <div class="auto-progress" id="autoProgress">
+        <span class="auto-dot active"></span>
+        <span class="auto-dot"></span>
+        <span class="auto-dot"></span>
+        <span class="auto-dot"></span>
+    </div>
+
+    <!-- navigation -->
+    <div class="nav-row">
+        <button class="btn" id="prevBtn" disabled><i class="fas fa-arrow-left"></i> Back</button>
+        <span style="font-size:0.8rem; color:#6f5542;" id="autoStatus">⏳ Auto-advance in 3s</span>
+        <button class="btn btn-primary" id="nextBtn">Next <i class="fas fa-arrow-right"></i></button>
+    </div>
+</div>
+
+<script>
+    // ============================================================
+    //  DATA: Role-specific questions, facts, and auto-advance logic
+    // ============================================================
+
+    const roleData = {
+        parent: {
+            label: 'Parent',
+            icon: 'fa-user-tie',
+            fact: {
+                text: '87% of parents want more personalised learning for their children.',
+                source: '— Global Education Survey 2025'
+            },
+            questions: {
+                section1: [
+                    { type: 'select', id: 'p_relation', label: 'Your relationship to the student?', options: ['Mother', 'Father', 'Guardian', 'Other'] },
+                    { type: 'select', id: 'p_childAge', label: 'Child\'s age group?', options: ['5-8', '9-12', '13-15', '16-18', '18+'] },
+                    { type: 'location', id: 'p_location', label: 'Your city / location', placeholder: 'e.g. Mumbai, India' },
+                    { type: 'multiselect', id: 'p_eduConcern', label: 'What concerns you most about your child\'s education?', options: ['Lack of personal attention', 'Slow syllabus', 'Rote learning', 'No real-time feedback', 'High costs', 'Lack of engagement', 'No career guidance'] }
+                ],
+                section2: [
+                    { type: 'select', id: 'p_satisfaction', label: 'How satisfied are you with your child\'s current school/coaching?', options: ['1 - Very dissatisfied', '2', '3', '4', '5 - Neutral', '6', '7', '8', '9', '10 - Very satisfied'] },
+                    { type: 'multiselect', id: 'p_painPoints', label: 'What are the biggest pain points?', options: ['No personal attention', 'Teacher doesn\'t explain well', 'Too much homework', 'Child is bored', 'No progress tracking', 'Too expensive'] },
+                    { type: 'text', id: 'p_changeNeeded', label: 'What\'s the single most important change needed in education today?', placeholder: 'e.g. More personalised learning...' }
+                ],
+                section3: [
+                    { type: 'select', id: 'p_aiFamiliarity', label: 'How familiar are you with AI-powered learning tools?', options: ['Very familiar', 'Somewhat familiar', 'Not familiar'] },
+                    { type: 'select', id: 'p_trustAI', label: 'Would you trust an AI Teacher to guide your child\'s learning?', options: ['Yes, completely', 'Yes, with human oversight', 'Maybe / Not sure', 'No, I don\'t trust AI'] },
+                    { type: 'multiselect', id: 'p_aiComfort', label: 'What would make you more comfortable with an AI Teacher?', options: ['Live parent portal', 'Weekly progress reports', 'Human moderator present', 'Data privacy assurance', 'Session recordings'] },
+                    { type: 'select', id: 'p_enroll', label: 'Would you enroll your child in an AI-powered school with 1:10 ratio and Socratic dialogue?', options: ['Definitely yes', 'Probably yes', 'Not sure', 'Probably not'] },
+                    { type: 'multiselect', id: 'p_reason', label: 'What would be your main reason to choose AI-Gurukool?', options: ['Personalised attention', 'Critical thinking focus', 'Faster syllabus', 'Live parent visibility', 'Hybrid flexibility', 'Weekly reports', '20+ subjects'] },
+                    { type: 'text', id: 'p_concerns', label: 'What concerns or hesitation would you have?', placeholder: 'e.g. Cost, screen time, lack of human connection...' }
+                ],
+                section4: [
+                    { type: 'select', id: 'p_price', label: 'What monthly fee would you consider reasonable?', options: ['₹2,000 – ₹4,000', '₹4,000 – ₹6,000', '₹6,000 – ₹8,000', '₹8,000 – ₹10,000', '₹10,000+'] },
+                    { type: 'select', id: 'p_value', label: 'Compared to current costs, AI-Gurukool would be:', options: ['Better value', 'About the same', 'More expensive'] },
+                    { type: 'text', id: 'p_vision', label: 'If AI could transform education, what\'s the one thing you\'d want it to do for your child?', placeholder: 'e.g. Make learning fun, build confidence...' },
+                    { type: 'select', id: 'p_recommend', label: 'Would you recommend AI-Gurukool to other parents?', options: ['Definitely', 'Maybe', 'Not sure'] },
+                    { type: 'text', id: 'p_feedback', label: 'Any other feedback or suggestions?', placeholder: 'We\'re all ears!' }
+                ]
+            }
+        },
+        student: {
+            label: 'Student',
+            icon: 'fa-user-graduate',
+            fact: {
+                text: '73% of students say they learn better when they can ask questions freely.',
+                source: '— EdTech Research 2025'
+            },
+            questions: {
+                section1: [
+                    { type: 'select', id: 's_age', label: 'Your age group?', options: ['5-8', '9-12', '13-15', '16-18', '19-22', '23-25', '25+'] },
+                    { type: 'select', id: 's_grade', label: 'Current grade / year?', options: ['Kindergarten', '1st-2nd', '3rd-5th', '6th-8th', '9th-10th', '11th-12th', 'College Year 1', 'College Year 2', 'College Year 3+', 'Other'] },
+                    { type: 'location', id: 's_location', label: 'Your city / location', placeholder: 'e.g. Delhi, India' },
+                    { type: 'multiselect', id: 's_subjects', label: 'Which subjects do you find most challenging?', options: ['Mathematics', 'Science', 'History', 'Languages', 'Computer Science', 'Commerce', 'Art', 'Music', 'Physical Education', 'Other'] }
+                ],
+                section2: [
+                    { type: 'select', id: 's_satisfaction', label: 'How satisfied are you with your current learning experience?', options: ['1 - Very dissatisfied', '2', '3', '4', '5 - Neutral', '6', '7', '8', '9', '10 - Very satisfied'] },
+                    { type: 'multiselect', id: 's_painPoints', label: 'What frustrates you most about school/college?', options: ['Boring lectures', 'Too much memorisation', 'No personal attention', 'Can\'t ask questions freely', 'Slow syllabus', 'Too much pressure', 'Lack of real-world application', 'Not enough practical learning'] },
+                    { type: 'text', id: 's_idealClass', label: 'Describe your ideal learning environment in 3 words:', placeholder: 'e.g. Interactive, personalised, engaging' }
+                ],
+                section3: [
+                    { type: 'select', id: 's_aiFamiliarity', label: 'Have you used any AI learning tools before?', options: ['Yes, regularly', 'Yes, a few times', 'No, but I want to', 'No, not interested'] },
+                    { type: 'select', id: 's_trustAI', label: 'Would you trust an AI Teacher to help you learn?', options: ['Yes, I\'d love that', 'Yes, with human support', 'Maybe', 'No, I prefer human teachers'] },
+                    { type: 'multiselect', id: 's_aiBenefits', label: 'What would you want an AI Teacher to help you with?', options: ['Explaining difficult concepts', 'Practice questions', 'Personalised study plans', 'Instant feedback', 'Career guidance', 'Making learning fun'] },
+                    { type: 'select', id: 's_enroll', label: 'Would you want to study at an AI-powered school like AI-Gurukool?', options: ['Definitely yes', 'Probably yes', 'Not sure', 'Probably not'] },
+                    { type: 'text', id: 's_concerns', label: 'Any concerns about learning with an AI Teacher?', placeholder: 'e.g. I might miss human interaction...' }
+                ],
+                section4: [
+                    { type: 'select', id: 's_price', label: 'What monthly fee would you consider fair?', options: ['₹2,000 – ₹4,000', '₹4,000 – ₹6,000', '₹6,000 – ₹8,000', '₹8,000 – ₹10,000', '₹10,000+'] },
+                    { type: 'text', id: 's_vision', label: 'What\'s the biggest change you\'d like to see in education?', placeholder: 'e.g. More interactive learning...' },
+                    { type: 'select', id: 's_recommend', label: 'Would you recommend AI-Gurukool to your friends?', options: ['Definitely', 'Maybe', 'Not sure'] },
+                    { type: 'text', id: 's_feedback', label: 'Any other feedback or suggestions?', placeholder: 'We\'re all ears!' }
+                ]
+            }
+        },
+        teacher: {
+            label: 'Teacher',
+            icon: 'fa-chalkboard-teacher',
+            fact: {
+                text: '82% of teachers believe AI can help personalise learning at scale.',
+                source: '— Educator Survey 2025'
+            },
+            questions: {
+                section1: [
+                    { type: 'select', id: 't_experience', label: 'Years of teaching experience?', options: ['0-2', '3-5', '6-10', '10-15', '15+'] },
+                    { type: 'select', id: 't_level', label: 'What level do you teach?', options: ['Primary (K-5)', 'Middle (6-8)', 'High School (9-12)', 'College / University', 'Coaching / Tutoring', 'Special Education'] },
+                    { type: 'location', id: 't_location', label: 'Your city / location', placeholder: 'e.g. Bangalore, India' },
+                    { type: 'multiselect', id: 't_subjects', label: 'Which subjects do you teach?', options: ['Mathematics', 'Science', 'English', 'History', 'Computer Science', 'Languages', 'Commerce', 'Art', 'Music', 'Physical Education', 'Other'] }
+                ],
+                section2: [
+                    { type: 'select', id: 't_satisfaction', label: 'How satisfied are you with the current education system?', options: ['1 - Very dissatisfied', '2', '3', '4', '5 - Neutral', '6', '7', '8', '9', '10 - Very satisfied'] },
+                    { type: 'multiselect', id: 't_painPoints', label: 'What challenges do you face as a teacher?', options: ['Large class sizes', 'Lack of resources', 'Student disengagement', 'Administrative burden', 'Slow curriculum', 'Parent expectations', 'Assessment pressure', 'Lack of professional development'] },
+                    { type: 'text', id: 't_changeNeeded', label: 'What\'s the one thing that would make teaching more effective?', placeholder: 'e.g. Smaller class sizes...' }
+                ],
+                section3: [
+                    { type: 'select', id: 't_aiFamiliarity', label: 'How familiar are you with AI in education?', options: ['Very familiar', 'Somewhat familiar', 'Not familiar'] },
+                    { type: 'select', id: 't_trustAI', label: 'Would you trust an AI Teacher to assist in your classroom?', options: ['Yes, as a co-teacher', 'Yes, for admin tasks', 'Maybe', 'No, I don\'t trust AI'] },
+                    { type: 'multiselect', id: 't_aiUse', label: 'How would you like to use AI in your teaching?', options: ['Personalised lesson plans', 'Auto-grading', 'Student progress tracking', 'Generating practice questions', 'Explaining concepts', 'Classroom management'] },
+                    { type: 'select', id: 't_enroll', label: 'Would you recommend AI-Gurukool to your students\' parents?', options: ['Definitely yes', 'Probably yes', 'Not sure', 'Probably not'] },
+                    { type: 'text', id: 't_concerns', label: 'What concerns would you have about AI in the classroom?', placeholder: 'e.g. Job displacement, loss of human touch...' }
+                ],
+                section4: [
+                    { type: 'select', id: 't_price', label: 'What monthly fee do you think parents would find reasonable?', options: ['₹2,000 – ₹4,000', '₹4,000 – ₹6,000', '₹6,000 – ₹8,000', '₹8,000 – ₹10,000', '₹10,000+'] },
+                    { type: 'text', id: 't_vision', label: 'What\'s the biggest opportunity AI brings to education?', placeholder: 'e.g. Personalised learning at scale...' },
+                    { type: 'select', id: 't_recommend', label: 'Would you recommend AI-Gurukool to other educators?', options: ['Definitely', 'Maybe', 'Not sure'] },
+                    { type: 'text', id: 't_feedback', label: 'Any other feedback or suggestions?', placeholder: 'We\'re all ears!' }
+                ]
+            }
+        }
+    };
+
+    // ============================================================
+    //  APP STATE
+    // ============================================================
+    let currentRole = 'parent';
+    let currentSection = 0;
+    const totalSections = 4;
+    let autoAdvanceTimer = null;
+    let autoAdvanceDelay = 3000;
+    let isAutoAdvancing = true;
+
+    // ============================================================
+    //  DOM REFS
+    // ============================================================
+    const sections = document.querySelectorAll('.form-section');
+    const steps = document.querySelectorAll('.progress-step');
+    const stepIndicator = document.getElementById('stepIndicator');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const roleCards = document.querySelectorAll('.role-card');
+    const factText = document.getElementById('factText');
+    const factSource = document.getElementById('factSource');
+    const autoDots = document.querySelectorAll('.auto-dot');
+    const autoStatus = document.getElementById('autoStatus');
+
+    // ============================================================
+    //  LOCATION AUTO-FILL
+    // ============================================================
+    function autoFillLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                async function(position) {
+                    try {
+                        const { latitude, longitude } = position.coords;
+                        const response = await fetch(
+                            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&zoom=10`
+                        );
+                        const data = await response.json();
+                        const address = data.display_name || '';
+                        // Extract city, state, country
+                        const parts = address.split(',').map(s => s.trim());
+                        let location = '';
+                        if (parts.length >= 3) {
+                            location = `${parts[parts.length - 3]}, ${parts[parts.length - 2]}, ${parts[parts.length - 1]}`;
+                        } else {
+                            location = address;
+                        }
+                        // Find all location fields and fill them
+                        document.querySelectorAll('.location-field').forEach(field => {
+                            if (!field.value || field.value.trim() === '') {
+                                field.value = location;
+                                field.style.borderColor = '#2b7a4b';
+                                field.style.background = '#eaf5ef';
+                                // Trigger auto-advance check
+                                checkAutoAdvance();
+                            }
+                        });
+                    } catch (error) {
+                        console.log('Location reverse lookup failed:', error);
+                        // Try IP-based fallback
+                        fallbackLocation();
+                    }
+                },
+                function(error) {
+                    console.log('Geolocation error:', error);
+                    fallbackLocation();
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        } else {
+            fallbackLocation();
+        }
+    }
+
+    async function fallbackLocation() {
+        try {
+            // IP-based fallback using freegeoip or similar
+            const response = await fetch('https://ipapi.co/json/');
+            const data = await response.json();
+            if (data && data.city && data.region && data.country_name) {
+                const location = `${data.city}, ${data.region}, ${data.country_name}`;
+                document.querySelectorAll('.location-field').forEach(field => {
+                    if (!field.value || field.value.trim() === '') {
+                        field.value = location;
+                        field.style.borderColor = '#2b7a4b';
+                        field.style.background = '#eaf5ef';
+                        checkAutoAdvance();
+                    }
+                });
+            }
+        } catch (error) {
+            console.log('IP fallback failed:', error);
+        }
+    }
+
+    // ============================================================
+    //  RENDER FUNCTIONS
+    // ============================================================
+    function renderQuestions(role, sectionIndex) {
+        const data = roleData[role];
+        const sectionKey = `section${sectionIndex + 1}`;
+        const questions = data.questions[sectionKey];
+        if (!questions) return '';
+
+        let html = '';
+        questions.forEach(q => {
+            if (q.type === 'text') {
+                html += `
+                    <div class="form-group">
+                        <label>${q.label}</label>
+                        <input type="text" class="form-control" id="${q.id}" placeholder="${q.placeholder || ''}">
+                    </div>
+                `;
+            } else if (q.type === 'location') {
+                html += `
+                    <div class="form-group">
+                        <label>${q.label} <span class="required">*</span> <span style="font-size:0.75rem; color:#6f5542; font-weight:400;">(auto-detected)</span></label>
+                        <div class="location-wrapper">
+                            <span class="location-icon"><i class="fas fa-map-marker-alt"></i></span>
+                            <input type="text" class="form-control location-field" id="${q.id}" placeholder="${q.placeholder || 'Detecting your location...'}" autocomplete="off">
+                        </div>
+                    </div>
+                `;
+            } else if (q.type === 'select') {
+                html += `
+                    <div class="form-group">
+                        <label>${q.label} <span class="required">*</span></label>
+                        <div class="options-grid" id="${q.id}">
+                            ${q.options.map(opt => `
+                                <span class="option-pill" onclick="selectOption(this, '${q.id}')">${opt}</span>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } else if (q.type === 'multiselect') {
+                html += `
+                    <div class="form-group">
+                        <label>${q.label} <span class="required">*</span></label>
+                        <div class="options-grid" id="${q.id}">
+                            ${q.options.map(opt => `
+                                <span class="option-pill option-pill-sm" onclick="selectOption(this, '${q.id}')"><i class="fas fa-plus-circle"></i> ${opt}</span>
+                            `).join('')}
+                        </div>
+                        <span style="font-size:0.75rem; color:#6f5542; margin-top:0.3rem; display:block;">Click multiple to select all that apply</span>
+                    </div>
+                `;
+            }
+        });
+        return html;
+    }
+
+    function renderAll(role) {
+        const data = roleData[role];
+
+        // Update fact
+        factText.textContent = data.fact.text;
+        factSource.textContent = data.fact.source;
+
+        // Update titles
+        document.getElementById('section1Title').textContent = `About ${data.label}s`;
+        document.getElementById('section2Title').textContent = `${data.label} Challenges`;
+        document.getElementById('section3Title').textContent = `${data.label}s & AI`;
+        document.getElementById('section4Title').textContent = `${data.label} Vision`;
+
+        document.getElementById('section1Sub').textContent = `Help us understand your perspective as a ${data.label.toLowerCase()}.`;
+        document.getElementById('section2Sub').textContent = `Tell us what frustrates you about education today.`;
+        document.getElementById('section3Sub').textContent = `Your thoughts on AI-powered learning.`;
+        document.getElementById('section4Sub').textContent = `One last thing — we value your perspective.`;
+
+        // Render questions for each section
+        for (let i = 0; i < 4; i++) {
+            const container = document.getElementById(['roleQuestions', 'painQuestions', 'aiQuestions', 'finalQuestions'][i]);
+            if (container) {
+                container.innerHTML = renderQuestions(role, i);
+            }
+        }
+
+        // Re-bind option clicks
+        document.querySelectorAll('.option-pill').forEach(el => {
+            el.addEventListener('click', function() {
+                const parentId = this.closest('.options-grid')?.id;
+                if (parentId) {
+                    const isMulti = this.querySelector('.fa-plus-circle') !== null;
+                    if (!isMulti) {
+                        const parent = this.closest('.options-grid');
+                        parent.querySelectorAll('.option-pill').forEach(p => p.classList.remove('selected'));
+                    }
+                    this.classList.toggle('selected');
+                    checkAutoAdvance();
+                }
+            });
+        });
+
+        // Bind text inputs for auto-advance
+        document.querySelectorAll('.form-control, .textarea-control').forEach(el => {
+            el.addEventListener('input', checkAutoAdvance);
+            el.addEventListener('change', checkAutoAdvance);
+        });
+
+        // Auto-fill location after rendering
+        setTimeout(autoFillLocation, 500);
+    }
+
+    // ============================================================
+    //  ROLE SELECTION
+    // ============================================================
+    window.selectRole = function(role) {
+        if (role === currentRole) return;
+        currentRole = role;
+
+        roleCards.forEach(card => {
+            card.classList.toggle('active', card.dataset.role === role);
+        });
+
+        renderAll(role);
+        goToSection(0);
+        resetAutoAdvance();
+    };
+
+    // ============================================================
+    //  NAVIGATION
+    // ============================================================
+    function goToSection(index) {
+        if (index < 0 || index >= totalSections) return;
+
+        sections.forEach((s, i) => {
+            s.classList.toggle('active', i === index);
+        });
+
+        steps.forEach((s, i) => {
+            s.classList.remove('active', 'done');
+            if (i === index) s.classList.add('active');
+            else if (i < index) s.classList.add('done');
+        });
+
+        autoDots.forEach((d, i) => {
+            d.classList.remove('active', 'filled');
+            if (i === index) d.classList.add('active');
+            else if (i < index) d.classList.add('filled');
+        });
+
+        stepIndicator.textContent = `Step ${index + 1} of ${totalSections}`;
+        prevBtn.disabled = index === 0;
+
+        if (index === totalSections - 1) {
+            nextBtn.innerHTML = '<i class="fas fa-check-circle"></i> Submit Survey';
+            nextBtn.className = 'btn btn-success';
+        } else {
+            nextBtn.innerHTML = 'Next <i class="fas fa-arrow-right"></i>';
+            nextBtn.className = 'btn btn-primary';
+        }
+
+        currentSection = index;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // Re-trigger location auto-fill when switching sections
+        if (index === 0) {
+            setTimeout(autoFillLocation, 300);
+        }
+
+        resetAutoAdvance();
+    }
+
+    // ============================================================
+    //  AUTO-ADVANCE LOGIC
+    // ============================================================
+    function checkAutoAdvance() {
+        if (!isAutoAdvancing) return;
+
+        const section = sections[currentSection];
+        const containerId = ['roleQuestions', 'painQuestions', 'aiQuestions', 'finalQuestions'][currentSection];
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        const inputs = container.querySelectorAll('.form-control, .textarea-control');
+        const selectGroups = container.querySelectorAll('.options-grid');
+
+        let allFilled = true;
+
+        // Check text inputs (skip location fields if they're still detecting)
+        inputs.forEach(input => {
+            // Skip location fields that might still be loading
+            if (input.classList.contains('location-field') && input.value.trim() === '') {
+                // Allow location fields to be empty during detection
+                return;
+            }
+            if (input.value.trim() === '') allFilled = false;
+        });
+
+        // Check select groups (at least one selected)
+        selectGroups.forEach(group => {
+            const selected = group.querySelectorAll('.selected');
+            if (selected.length === 0) allFilled = false;
+        });
+
+        if (allFilled) {
+            autoStatus.textContent = '✅ All filled! Auto-advancing...';
+            if (!autoAdvanceTimer) {
+                autoAdvanceTimer = setTimeout(() => {
+                    if (currentSection === totalSections - 1) {
+                        submitSurvey();
+                    } else {
+                        goToSection(currentSection + 1);
+                    }
+                    autoAdvanceTimer = null;
+                }, autoAdvanceDelay);
+            }
+        } else {
+            autoStatus.textContent = '⏳ Please fill all fields to auto-advance';
+            if (autoAdvanceTimer) {
+                clearTimeout(autoAdvanceTimer);
+                autoAdvanceTimer = null;
+            }
+        }
+    }
+
+    function resetAutoAdvance() {
+        if (autoAdvanceTimer) {
+            clearTimeout(autoAdvanceTimer);
+            autoAdvanceTimer = null;
+        }
+        autoStatus.textContent = '⏳ Auto-advance in 3s';
+        setTimeout(checkAutoAdvance, 400);
+    }
+
+    // ============================================================
+    //  HELPER: SELECT OPTION
+    // ============================================================
+    window.selectOption = function(el, groupId) {
+        const parent = el.closest('.options-grid');
+        if (!parent) return;
+        const isMulti = el.querySelector('.fa-plus-circle') !== null;
+        if (!isMulti) {
+            parent.querySelectorAll('.option-pill').forEach(p => p.classList.remove('selected'));
+        }
+        el.classList.toggle('selected');
+        checkAutoAdvance();
+    };
+
+    // ============================================================
+    //  SUBMIT
+    // ============================================================
+    function submitSurvey() {
+        const data = collectData();
+        if (!data.role) {
+            alert('Please select a role (Parent, Student, or Teacher).');
+            return;
+        }
+
+        let summary = '📊 AI-Gurukool Survey Summary\n\n';
+        summary += `👤 Role: ${data.role}\n`;
+        Object.entries(data).forEach(([key, val]) => {
+            if (key !== 'role' && val) {
+                summary += `\n${key}: ${Array.isArray(val) ? val.join(', ') : val}`;
+            }
+        });
+
+        alert(summary);
+        console.log('Survey Data:', data);
+
+        // Show thank you
+        const container = document.querySelector('.survey-container');
+        container.innerHTML = `
+            <div class="thank-you">
+                <i class="fas fa-check-circle"></i>
+                <h2>Thank You! 🙏</h2>
+                <p>Your insights are invaluable. You're helping us build the future of education — one that's personalised, engaging, and built for every learner.</p>
+                <div style="margin-top:1.5rem; display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
+                    <span class="badge-insight"><i class="fas fa-users"></i> 1:10 teacher-student ratio</span>
+                    <span class="badge-insight"><i class="fas fa-brain"></i> Socratic dialogue</span>
+                    <span class="badge-insight"><i class="fas fa-chart-line"></i> Weekly Vitality Report</span>
+                </div>
+                <p style="margin-top:2rem; font-size:0.9rem; color:#6f5542;">We'll keep you updated on our progress. Together, we're reimagining education.</p>
+                <button class="btn btn-primary" onclick="location.reload()" style="margin-top:1.5rem;"><i class="fas fa-redo"></i> Take Survey Again</button>
+            </div>
+        `;
+    }
+
+    function collectData() {
+        const role = currentRole;
+        const data = { role: roleData[role].label };
+
+        document.querySelectorAll('.form-control, .textarea-control').forEach(el => {
+            if (el.value.trim()) {
+                data[el.id] = el.value.trim();
+            }
+        });
+
+        document.querySelectorAll('.options-grid').forEach(grid => {
+            const selected = grid.querySelectorAll('.selected');
+            if (selected.length > 0) {
+                const values = Array.from(selected).map(el => el.innerText.trim());
+                data[grid.id] = values.length === 1 ? values[0] : values;
+            }
+        });
+
+        return data;
+    }
+
+    // ============================================================
+    //  EVENT LISTENERS
+    // ============================================================
+    prevBtn.addEventListener('click', () => {
+        if (currentSection > 0) goToSection(currentSection - 1);
+    });
+
+    nextBtn.addEventListener('click', () => {
+        if (currentSection === totalSections - 1) {
+            submitSurvey();
+        } else {
+            goToSection(currentSection + 1);
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === 'Enter') {
+            if (currentSection === totalSections - 1) {
+                submitSurvey();
+            } else {
+                goToSection(currentSection + 1);
+            }
+        } else if (e.key === 'ArrowLeft') {
+            if (currentSection > 0) goToSection(currentSection - 1);
+        }
+    });
+
+    // ============================================================
+    //  INIT
+    // ============================================================
+    renderAll('parent');
+    goToSection(0);
+
+    // Hover effects
+    document.querySelector('.fact-banner').addEventListener('mouseenter', function() {
+        this.style.transform = 'scale(1.02)';
+        this.style.boxShadow = '0 8px 30px rgba(180, 95, 58, 0.1)';
+    });
+    document.querySelector('.fact-banner').addEventListener('mouseleave', function() {
+        this.style.transform = 'scale(1)';
+        this.style.boxShadow = 'none';
+    });
+
+    document.querySelectorAll('.progress-step').forEach(step => {
+        step.addEventListener('mouseenter', function() {
+            this.style.transform = 'scaleY(2)';
+        });
+        step.addEventListener('mouseleave', function() {
+            this.style.transform = 'scaleY(1)';
+        });
+    });
+
+    console.log('🚀 AI-Gurukool Survey loaded! Location auto-fill active.');
+</script>
+
+</body>
+</html>

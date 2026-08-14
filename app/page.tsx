@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import SurveyFormComponent from '@/components/SurveyForm'
+import SurveyModal from '@/components/SurveyModal'
 
 const STORE_KEY = 'aig_phase0_v2'
 
@@ -43,6 +43,7 @@ export default function HomePage() {
   const [counters, setCounters] = useState({ c1: 0, c2: 0, c3: 0 })
   const [surveyStats, setSurveyStats] = useState<SurveyStats | null>(null)
   const [mobileNav, setMobileNav] = useState(false)
+  const [showSurvey, setShowSurvey] = useState(false)
 
   // Scroll reveal
   useEffect(() => {
@@ -217,15 +218,6 @@ export default function HomePage() {
     })
   }, [])
 
-  // Load survey stats from API
-  useEffect(() => {
-    fetch('/api/survey')
-      .then(r => r.json())
-      .then(data => {
-        if (data.total > 0) setSurveyStats(data)
-      })
-      .catch(() => {})
-  }, [])
 
   return (
     <>
@@ -330,9 +322,28 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Right: Embedded survey */}
+            {/* Right: Survey intro card */}
             <div className="survey-hero-right reveal-right">
-              <SurveyFormComponent />
+              <div className="survey-intro-card">
+                <div className="sic-brand">
+                  <div className="nav-logo-mark" style={{ width: 36, height: 36, fontSize: '1rem', flexShrink: 0 }}>🏛️</div>
+                  <div>
+                    <div className="sic-brand-name">AI-Gurukool</div>
+                    <div className="sic-brand-sub">Research Survey · 2026</div>
+                  </div>
+                </div>
+                <h3 className="sic-title">Help Shape the Future of Learning</h3>
+                <p className="sic-desc">15 questions · 3 minutes · Your voice shapes what we build for 1000s of students.</p>
+                <div className="sic-badges">
+                  <span className="sic-badge">📝 15 Questions</span>
+                  <span className="sic-badge">⏱ 3 Minutes</span>
+                  <span className="sic-badge">🔒 Anonymous</span>
+                </div>
+                <button className="btn-primary sic-btn" onClick={() => setShowSurvey(true)} style={{ border: 'none', cursor: 'pointer', width: '100%', justifyContent: 'center' }}>
+                  Start Survey →
+                </button>
+                <p className="sic-footer-text">Your responses help us build a better AI teacher.</p>
+              </div>
             </div>
           </div>
         </div>
@@ -751,6 +762,8 @@ export default function HomePage() {
         <span className="mobile-cta-txt">Ready to see AI-Gurukool live?</span>
         <a href="#trial" className="btn-primary" style={{ padding: '10px 22px', fontSize: '.82rem' }}>Book Trial</a>
       </div>
+
+      <SurveyModal isOpen={showSurvey} onClose={() => setShowSurvey(false)} />
     </>
   )
 }

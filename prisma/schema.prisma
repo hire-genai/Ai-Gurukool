@@ -1,5 +1,5 @@
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -8,22 +8,11 @@ generator client {
 }
 
 model SurveyResponse {
-  id        Int     @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
-
-  q1  String?
-  q2  String?
-  q3  String?
-  q4  String?
-  q5  String?
-  q6  String?
-  q7  String?
-  q8  String?
-  q9  String?
-  q10 String?
-  q11 String?
-  q12 String?
-  q13 String?
-  q14 String?
-  q15 String?
+  role      String
+  answers   String
+  name      String   @default("")
+  email     String   @default("")
+  phone     String   @default("")
 }
