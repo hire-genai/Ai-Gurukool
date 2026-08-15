@@ -104,7 +104,6 @@ export default function HomePage() {
       const y = e.clientY - rect.top
       const cx = rect.width / 2
       const cy = rect.height / 2
-      // tilt max 12 degrees
       const rx = ((y - cy) / cy) * -10
       const ry = ((x - cx) / cx) * 10
       const mx = (x / rect.width) * 100
@@ -237,12 +236,12 @@ export default function HomePage() {
           <li><a href="#reports" onClick={() => setMobileNav(false)}>Reports</a></li>
           <li><a href="#hybrid" onClick={() => setMobileNav(false)}>Hybrid</a></li>
         </ul>
-        <a href="#survey" className="nav-cta">📋 Take Survey</a>
+        <button className="nav-cta" onClick={() => setShowSurvey(true)}>📋 Book a Class</button>
       </nav>
 
       {/* HERO */}
       <section className="hero">
-        <div ref={heroBgRef} className="hero-bg" style={{ backgroundImage: "url('/hero-bg.png')" }} />
+        <div ref={heroBgRef} className="hero-bg" style={{ backgroundImage: "url('/hero-bg.png')", backgroundPosition: '68% center' }} />
         <div className="hero-grad" />
         <div className="hero-orb orb-1" />
         <div className="hero-orb orb-2" />
@@ -250,100 +249,19 @@ export default function HomePage() {
           <div className="hero-content">
             <div className="hero-chip reveal"><span className="chip-dot" />🏛️ &nbsp;Inspired by the Ancient Gurukul System</div>
             <h1 className="reveal delay-1">
-              Ancient Wisdom.<br />
-              <span className="grad-text">Future Intelligence.</span><br />
-              For Every Child.
+              One AI Teacher. Ten Curious Minds.<br />
+              <span className="grad-text">The Gurukul, Reimagined.</span>
             </h1>
-            <p className="hero-sub reveal delay-2">10 students. One AI Teacher. Infinite dialogue. The Gurukul spirit of open discussion — now inside a world-class, AI-powered roundtable.</p>
-            <div className="hero-btns reveal delay-3">
-              <a href="#trial" className="btn-primary">🎯 Book a Roundtable Trial</a>
-              <a href="#classroom" className="btn-ghost">▶ See How It Works</a>
+            <div className="hero-img-wrap reveal delay-2">
+              <img src="/hero-bg.png" alt="AI Classroom" className="hero-inline-img" />
             </div>
-            <div className="hero-stats reveal delay-4">
+            <div className="hero-stats reveal delay-3">
               {[['1:10','Teacher–Student Ratio'],['2×','Faster Syllabus'],['20+','Subjects Covered'],['100%','Parent Visibility']].map(([n,l]) => (
                 <div key={n} className="hstat-pill">
                   <div className="hstat-n">{n}</div>
                   <div className="hstat-l">{l}</div>
                 </div>
               ))}
-            </div>
-          </div>
-        </div>
-        <div className="scroll-ind"><span>Scroll</span><div className="scroll-arrow" /></div>
-      </section>
-
-      {/* MARQUEE */}
-      <div className="marquee-wrap">
-        <div className="marquee-track">
-          {['Socratic Dialogue AI','1:10 Teacher Ratio','Live Parent Portal','Weekly Vitality Report','Hybrid via Teams & Zoom','24/7 Knowledge Vault','Ink-Based AI Board','Critical Thinking First','20+ Subjects Covered',
-            'Socratic Dialogue AI','1:10 Teacher Ratio','Live Parent Portal','Weekly Vitality Report','Hybrid via Teams & Zoom','24/7 Knowledge Vault','Ink-Based AI Board','Critical Thinking First','20+ Subjects Covered'
-          ].map((t, i) => (
-            <div key={i} className="mitem"><span>{t}</span><span className="mdot" /></div>
-          ))}
-        </div>
-      </div>
-
-      {/* ═════ EMBEDDED SURVEY SECTION ═════ */}
-      <section id="survey" className="survey-hero-section">
-        <div className="container">
-          <div className="survey-hero-grid">
-            {/* Left: Pitch */}
-            <div className="survey-hero-left reveal-left">
-              <div className="section-eyebrow">Help Us Build Better</div>
-              <h2 className="survey-hero-title">
-                Frustrated That Your Child<br />
-                <span className="grad-text">Isn't Getting Personalised Attention?</span>
-              </h2>
-              <p className="survey-hero-sub">
-                Answer 15 quick questions to shape the AI teacher your child deserves — and get a peek at what we're building.
-              </p>
-              <div className="survey-hero-features">
-                <div className="shf-item">
-                  <div className="shf-icon">🎯</div>
-                  <div>
-                    <strong>Share your struggles</strong>
-                    <span>Real pain points — real product decisions</span>
-                  </div>
-                </div>
-                <div className="shf-item">
-                  <div className="shf-icon">📊</div>
-                  <div>
-                    <strong>See live insights</strong>
-                    <span>Your response joins the data pool below</span>
-                  </div>
-                </div>
-                <div className="shf-item">
-                  <div className="shf-icon">⏱️</div>
-                  <div>
-                    <strong>Only 3 minutes</strong>
-                    <span>15 multiple-choice questions, that's it</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Right: Survey intro card */}
-            <div className="survey-hero-right reveal-right">
-              <div className="survey-intro-card">
-                <div className="sic-brand">
-                  <div className="nav-logo-mark" style={{ width: 36, height: 36, fontSize: '1rem', flexShrink: 0 }}>🏛️</div>
-                  <div>
-                    <div className="sic-brand-name">AI-Gurukool</div>
-                    <div className="sic-brand-sub">Research Survey · 2026</div>
-                  </div>
-                </div>
-                <h3 className="sic-title">Help Shape the Future of Learning</h3>
-                <p className="sic-desc">15 questions · 3 minutes · Your voice shapes what we build for 1000s of students.</p>
-                <div className="sic-badges">
-                  <span className="sic-badge">📝 15 Questions</span>
-                  <span className="sic-badge">⏱ 3 Minutes</span>
-                  <span className="sic-badge">🔒 Anonymous</span>
-                </div>
-                <button className="btn-primary sic-btn" onClick={() => setShowSurvey(true)} style={{ border: 'none', cursor: 'pointer', width: '100%', justifyContent: 'center' }}>
-                  Start Survey →
-                </button>
-                <p className="sic-footer-text">Your responses help us build a better AI teacher.</p>
-              </div>
             </div>
           </div>
         </div>
@@ -429,30 +347,30 @@ export default function HomePage() {
               <p style={{ fontSize: '.93rem', color: 'var(--muted)', marginBottom: 24, maxWidth: 520, marginLeft: 'auto', marginRight: 'auto' }}>We are actively speaking to parents, students, and educators. Join our focus group or take a 5-minute survey — your input shapes what we build.</p>
               <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
                 <a href="#trial" className="btn-primary" style={{ fontSize: '.9rem', padding: '12px 26px' }}>🎯 Join a Focus Group</a>
-                <a href="#survey" className="btn-ghost" style={{ fontSize: '.9rem', padding: '12px 26px' }}>📋 Take the Survey</a>
+                <button className="btn-ghost" onClick={() => setShowSurvey(true)} style={{ fontSize: '.9rem', padding: '12px 26px', border: '1px solid rgba(255,255,255,.22)' }}>📋 Take the Survey</button>
               </div>
             </div>
           </div>
         </section>
       )}
 
-      {/* ROUNDTABLE */}
+      {/* CLASSROOM */}
       <section id="classroom" className="pad bg-dark">
         <div className="container">
           <div className="two-col-adv">
             <div className="tc-heading reveal-left">
-              <div className="section-eyebrow">Section A — The Roundtable</div>
+              <div className="section-eyebrow">The Classroom</div>
               <h2 className="section-title section-title-white">From Chalk &amp; Talk<br />to Dialogue &amp; Discovery</h2>
               <div className="divider" />
             </div>
             <div className="tc-visual reveal-right">
               <div className="photo-frame" style={{ height: 500 }}>
-                <img src="/roundtable.png" alt="Students at AI roundtable" style={{ height: '100%', objectFit: 'cover' }} />
+                <img src="/roundtable.png" alt="Students at AI classroom" style={{ height: '100%', objectFit: 'cover' }} />
                 <div className="photo-badge"><span className="live-dot" /> Live — Class 7B · Science</div>
               </div>
             </div>
             <div className="tc-body reveal-left">
-              <p style={{ color: 'rgba(255,255,255,.6)', fontSize: '.95rem' }}>We have eliminated the &quot;front of the classroom.&quot; By placing students in a roundtable setup, we remove hierarchy and fear. The AI Teacher acts as a moderator — ensuring every voice is heard.</p>
+              <p style={{ color: 'rgba(255,255,255,.6)', fontSize: '.95rem' }}>We have eliminated the &quot;front of the classroom.&quot; By placing students in a circular classroom setup, we remove hierarchy and fear. The AI Teacher acts as a moderator — ensuring every voice is heard.</p>
               <ul className="checklist">
                 <li><div className="ck">✓</div><span>Students learn to look each other in the eye and <b>debate solutions</b></span></li>
                 <li><div className="ck">✓</div><span>Ink-based digital board draws <b>live alongside</b> the student&apos;s thinking</span></li>
@@ -464,24 +382,12 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* STATS */}
-      <div className="stats-band">
-        <div className="container">
-          <div className="stats-inner">
-            <div className="stat-cell reveal"><div className="stat-n"><span id="counter-c1">{counters.c1}</span><span className="stat-u">:10</span></div><div className="stat-l">Golden Teacher Ratio</div></div>
-            <div className="stat-cell reveal delay-1"><div className="stat-n"><span id="counter-c2">{counters.c2}</span><span className="stat-u">×</span></div><div className="stat-l">Faster Syllabus Completion</div></div>
-            <div className="stat-cell reveal delay-2"><div className="stat-n"><span id="counter-c3">{counters.c3}</span><span className="stat-u">+</span></div><div className="stat-l">Subjects Covered</div></div>
-            <div className="stat-cell reveal delay-3"><div className="stat-n">0</div><div className="stat-l">Students Left Behind</div></div>
-          </div>
-        </div>
-      </div>
-
       {/* SUBJECTS */}
       <section id="subjects" className="pad subjects-section">
         <div className="container">
           <div className="reveal" style={{ textAlign: 'center' }}>
             <div className="section-eyebrow">What We Teach</div>
-            <h2 className="section-title section-title-white">20+ Subjects. One Roundtable.<br /><span className="grad-text">Infinite Curiosity.</span></h2>
+            <h2 className="section-title section-title-white">20+ Subjects. One Classroom.<br /><span className="grad-text">Infinite Curiosity.</span></h2>
             <p className="section-sub section-sub-white" style={{ margin: '14px auto 0' }}>From foundational Mathematics to JEE, NEET, and CLAT entrance prep — every subject taught through real-world Socratic dialogue.</p>
           </div>
           {(() => {
@@ -555,13 +461,13 @@ export default function HomePage() {
         <div className="container">
           <div className="two-col-adv flip">
             <div className="tc-heading reveal-right">
-              <div className="section-eyebrow">Section B — The AI Co-Pilot</div>
+              <div className="section-eyebrow">The AI Co-Pilot</div>
               <h2 className="section-title section-title-white">Subject Mastery Through<br />Application, Not Memorisation</h2>
               <div className="divider" />
             </div>
             <div className="tc-visual reveal-left">
               <div className="photo-frame" style={{ height: 480 }}>
-                <img src="/math.png" alt="Math Applications at roundtable" style={{ height: '100%', objectFit: 'cover' }} />
+                <img src="/math.png" alt="Math Applications at classroom" style={{ height: '100%', objectFit: 'cover' }} />
                 <div className="photo-badge">📐 Math Applications — Real-World Problems</div>
               </div>
             </div>
@@ -583,7 +489,7 @@ export default function HomePage() {
         <div className="container">
           <div className="two-col-adv">
             <div className="tc-heading reveal-left">
-              <div className="section-eyebrow">Section C — The Golden Rule</div>
+              <div className="section-eyebrow">The Golden Rule</div>
               <h2 className="section-title section-title-white">Maximum Attention.<br />Maximum Understanding.</h2>
               <div className="divider" />
             </div>
@@ -594,7 +500,7 @@ export default function HomePage() {
               </div>
             </div>
             <div className="tc-body reveal-left">
-              <p style={{ color: 'rgba(255,255,255,.6)', fontSize: '.95rem' }}>The teacher-student ratio is strictly 1:10. This allows our AI and human moderators to track the engagement of every student — not as a group, but as individuals.</p>
+              <p style={{ color: 'rgba(255,255,255,.6)', fontSize: '.95rem' }}>The teacher-student ratio is strictly 1:10. This allows our AI and human moderators to track the engagement of every student in the classroom — not as a group, but as individuals.</p>
               <ul className="checklist">
                 <li><div className="ck">✓</div><span>AI identifies confusion in real-time and <b>rephrases immediately</b></span></li>
                 <li><div className="ck">✓</div><span>No student moves forward until <b>mastery is confirmed</b></span></li>
@@ -611,7 +517,7 @@ export default function HomePage() {
         <div className="container">
           <div className="two-col-adv flip">
             <div className="tc-heading reveal-right">
-              <div className="section-eyebrow">Section D — Glass Classroom</div>
+              <div className="section-eyebrow">Glass Classroom</div>
               <h2 className="section-title section-title-white">Watch Them Grow, Live.</h2>
               <div className="divider" />
             </div>
@@ -633,7 +539,7 @@ export default function HomePage() {
               </div>
             </div>
             <div className="tc-body reveal-right">
-              <p style={{ color: 'rgba(255,255,255,.6)', fontSize: '.95rem' }}>Why wait for a yearly parent-teacher meeting? Our portal allows parents to livestream their child&apos;s roundtable discussion from anywhere in the world via secure login.</p>
+              <p style={{ color: 'rgba(255,255,255,.6)', fontSize: '.95rem' }}>Why wait for a yearly parent-teacher meeting? Our portal allows parents to livestream their child&apos;s classroom session from anywhere in the world via secure login.</p>
               <ul className="checklist">
                 <li><div className="ck">✓</div><span>You don&apos;t just see their grades — you <b>see how they think</b></span></li>
                 <li><div className="ck">✓</div><span>Watch your child debate, contribute, and collaborate in real-time</span></li>
@@ -650,7 +556,7 @@ export default function HomePage() {
         <div className="container">
           <div className="two-col-adv">
             <div className="tc-heading reveal-left">
-              <div className="section-eyebrow">Section E — Vitality Report</div>
+              <div className="section-eyebrow">Vitality Report</div>
               <h2 className="section-title section-title-white">Real-Time Feedback,<br />Not Yearly Surprises.</h2>
               <div className="divider" />
             </div>
@@ -668,7 +574,7 @@ export default function HomePage() {
                   </div>
                   <div className="rc-insights">
                     <div className="ri"><span className="ri-ic">✅</span>Correctly answered 3 Socratic follow-up questions in Physics this week</div>
-                    <div className="ri"><span className="ri-ic">💡</span>Proposed an original solution during History roundtable — flagged for gifted programme</div>
+                    <div className="ri"><span className="ri-ic">💡</span>Proposed an original solution during History classroom session — flagged for gifted programme</div>
                     <div className="ri"><span className="ri-ic">📌</span>Focus area: algebraic word problems — AI has scheduled extra dialogue sessions</div>
                     <div className="ri"><span className="ri-ic">🎯</span>Next week: Chapter 9 · Quadratic Equations · Estimated mastery in 2 sessions</div>
                   </div>
@@ -693,7 +599,7 @@ export default function HomePage() {
         <div className="container">
           <div className="two-col-adv flip">
             <div className="tc-heading reveal-right">
-              <div className="section-eyebrow">Section F — Hybrid Learning</div>
+              <div className="section-eyebrow">Hybrid Learning</div>
               <h2 className="section-title section-title-white">Never Miss a Day.<br />Join from Anywhere.</h2>
               <div className="divider" />
             </div>
@@ -704,9 +610,9 @@ export default function HomePage() {
               </div>
             </div>
             <div className="tc-body reveal-right">
-              <p style={{ color: 'rgba(255,255,255,.6)', fontSize: '.95rem' }}>Sick day? Family vacation? No problem. Students join the live roundtable via Teams or Zoom. The AI seamlessly integrates remote students — same engagement, same report.</p>
+              <p style={{ color: 'rgba(255,255,255,.6)', fontSize: '.95rem' }}>Sick day? Family vacation? No problem. Students join the live classroom via Teams or Zoom. The AI seamlessly integrates remote students — same engagement, same report.</p>
               <ul className="checklist">
-                <li><div className="ck">✓</div><span>Remote student&apos;s voice <b>projected to the full roundtable</b> in real-time</span></li>
+                <li><div className="ck">✓</div><span>Remote student&apos;s voice <b>projected to the full classroom</b> in real-time</span></li>
                 <li><div className="ck">✓</div><span>AI calls on remote students equally to in-person participants</span></li>
                 <li><div className="ck">✓</div><span>No penalty to participation score for hybrid attendance</span></li>
                 <li><div className="ck">✓</div><span>Works on any device — laptop, tablet, or phone</span></li>
@@ -721,9 +627,9 @@ export default function HomePage() {
         <div className="cta-inner">
           <div className="reveal">
             <div style={{ display: 'inline-block', fontSize: '.7rem', fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--gold)', background: 'rgba(245,166,35,.12)', border: '1px solid rgba(245,166,35,.3)', padding: '6px 16px', borderRadius: 40, marginBottom: 20 }}>Limited Seats Available</div>
-            <h2>Experience the Roundtable — <span className="grad-text">Live.</span></h2>
-            <p>Book a free 20-minute trial session. Sit your child at the roundtable, watch the AI in action, and feel the difference before you decide.</p>
-            <a href="#survey" className="btn-primary" style={{ fontSize: '1rem', padding: '17px 38px' }}>📋 &nbsp;Take the Parent Survey</a>
+            <h2>Experience the Classroom — <span className="grad-text">Live.</span></h2>
+            <p>Book a free 20-minute trial session. Sit your child in the AI classroom, watch the AI Teacher in action, and feel the difference before you decide.</p>
+            <button className="btn-primary" onClick={() => setShowSurvey(true)} style={{ fontSize: '1rem', padding: '17px 38px', border: 'none' }}>📋 &nbsp;Book a Class</button>
           </div>
         </div>
       </section>
@@ -738,7 +644,7 @@ export default function HomePage() {
             </div>
             <div className="footer-col">
               <h5>Experience</h5>
-              <ul><li><a href="#classroom">The Roundtable</a></li><li><a href="#aiteacher">AI Co-Pilot</a></li><li><a href="#ratio">1:10 Ratio</a></li><li><a href="#hybrid">Hybrid Learning</a></li></ul>
+              <ul><li><a href="#classroom">The Classroom</a></li><li><a href="#aiteacher">AI Co-Pilot</a></li><li><a href="#ratio">1:10 Ratio</a></li><li><a href="#hybrid">Hybrid Learning</a></li></ul>
             </div>
             <div className="footer-col">
               <h5>For Parents</h5>
@@ -751,7 +657,7 @@ export default function HomePage() {
           </div>
           <div className="footer-bottom">
             <p>© 2026 AI-Gurukool. All rights reserved.</p>
-            <p>Ancient Wisdom · Future Intelligence · Personalized for Every Child</p>
+            <p>AI Teacher · Infinite Dialogues · GuruKul Spirit of Open Discussion</p>
             <a href="/admin" style={{ fontSize: '.7rem', color: 'rgba(255,255,255,.1)' }}>⚙</a>
           </div>
         </div>
@@ -760,7 +666,7 @@ export default function HomePage() {
       {/* MOBILE STICKY */}
       <div className="mobile-cta">
         <span className="mobile-cta-txt">Ready to see AI-Gurukool live?</span>
-        <a href="#trial" className="btn-primary" style={{ padding: '10px 22px', fontSize: '.82rem' }}>Book Trial</a>
+        <button className="btn-primary" onClick={() => setShowSurvey(true)} style={{ padding: '10px 22px', fontSize: '.82rem', border: 'none' }}>Book a Class</button>
       </div>
 
       <SurveyModal isOpen={showSurvey} onClose={() => setShowSurvey(false)} />
