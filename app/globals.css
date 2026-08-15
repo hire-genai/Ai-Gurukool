@@ -126,8 +126,12 @@ nav.main-nav {
   transform: scale(1.04);
   transition: transform 8s ease-out;
 }
-@media(max-width:860px){
-  .hero-bg { background-position: center center !important; transform: none !important; }
+/* Desktop: background image ON */
+.hero-bg {
+  position: absolute; inset: 0; z-index: 0;
+  background-size: cover; background-position: 68% center;
+  transform: scale(1.04);
+  transition: transform 8s ease-out;
 }
 .hero-bg.loaded { transform: scale(1); }
 .hero-grad {
@@ -136,12 +140,40 @@ nav.main-nav {
     linear-gradient(90deg, rgba(5,13,26,.95) 0%, rgba(5,13,26,.7) 55%, rgba(5,13,26,.3) 100%),
     linear-gradient(0deg, rgba(5,13,26,.7) 0%, transparent 40%);
 }
+
+/* Desktop hero layout unchanged */
+.hero-content { position: relative; z-index: 2; padding-top: 68px; max-width: 680px; }
+
+/* Desktop: hide inline image, show scroll indicator */
+.hero-img-wrap { display: none; }
+.hero-inline-img { display: none; }
+
+/* Mobile: hide background, show inline image */
 @media(max-width:860px){
-  .hero-grad {
-    background: linear-gradient(180deg, rgba(5,13,26,.88) 0%, rgba(5,13,26,.75) 60%, rgba(5,13,26,.92) 100%);
+  .hero-bg { display: none !important; }
+  .hero-grad { display: none; }
+  .hero {
+    min-height: auto;
+    flex-direction: column;
+    align-items: stretch;
+    padding-bottom: 0;
   }
-  .hero-bg {
-    filter: brightness(0.45) saturate(0.6);
+  .hero-content { padding-top: 88px; max-width: 100%; }
+  .scroll-ind { display: none; }
+  .hero-img-wrap {
+    display: block;
+    width: 100%;
+    margin: 24px 0 28px;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 16px 40px rgba(0,0,0,.5);
+    border: 1px solid rgba(255,255,255,.08);
+  }
+  .hero-inline-img {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: cover;
   }
 }
 .hero-orb {
@@ -240,6 +272,10 @@ nav.main-nav {
 section { position: relative; }
 .pad  { padding: 100px 0; }
 .pad-sm { padding: 72px 0; }
+@media(max-width:640px){
+  .pad { padding: 64px 0; }
+  .pad-sm { padding: 48px 0; }
+}
 .section-eyebrow {
   display: inline-block;
   font-size: .7rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
@@ -327,7 +363,10 @@ section { position: relative; }
   border-radius: 24px; overflow: hidden; position: relative;
   box-shadow: 0 30px 80px rgba(0,0,0,.6);
 }
-.photo-frame img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s ease; }
+.photo-frame img { width: 100%; height: 100%; object-fit: cover; object-position: center; transition: transform .5s ease; }
+@media(max-width:640px){
+  .photo-frame { border-radius: 16px; }
+}
 .photo-frame:hover img { transform: scale(1.03); }
 .photo-badge {
   position: absolute; bottom: 20px; left: 20px;
@@ -498,11 +537,21 @@ section { position: relative; }
 }
 .live-red { width: 7px; height: 7px; border-radius: 50%; background: #ef4444; animation: blink 1s infinite; }
 .portal-thumb { border-radius: 10px; overflow: hidden; border: 1px solid rgba(245,166,35,.18); margin-bottom: 18px; }
-.portal-thumb img { width: 100%; height: 190px; object-fit: cover; }
+.portal-thumb img { width: 100%; height: auto; object-fit: contain; }
 .portal-metrics { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+@media(max-width:640px){ .portal-metrics { grid-template-columns: repeat(3,1fr); gap: 8px; } }
 .pm { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07); border-radius: 9px; padding: 13px; text-align: center; }
 .pm-n { font-size: 1.3rem; font-weight: 900; color: var(--gold); }
 .pm-l { font-size: .62rem; color: rgba(255,255,255,.38); text-transform: uppercase; letter-spacing: .08em; margin-top: 3px; }
+@media(max-width:540px){
+  .portal-card { border-radius: 16px; }
+  .portal-topbar { padding: 10px 16px; font-size: .65rem; }
+  .portal-body { padding: 16px; }
+  .portal-thumb { margin-bottom: 12px; }
+  .pm { padding: 10px; }
+  .pm-n { font-size: 1.1rem; }
+  .pm-l { font-size: .55rem; }
+}
 
 /* ══ REPORT CARD ══ */
 .report-card { border-radius: 22px; overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,.5); background: #fff; }
