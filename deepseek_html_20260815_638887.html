@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gurkool AI · Weekly Report</title>
+  <!-- Font Awesome Icons (free) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(145deg, #f6f9fc 0%, #eef2f7 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    /* ----- CARD CONTAINER (A4 / letter friendly) ----- */
+    .report-card {
+      max-width: 1000px;
+      width: 100%;
+      background: #ffffff;
+      border-radius: 48px 48px 40px 40px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 8px 20px -8px rgba(0, 20, 40, 0.1);
+      padding: 32px 36px 28px;
+      transition: all 0.2s;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(2px);
+    }
+
+    /* ----- HEADER: student + week + badge ----- */
+    .header-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 22px;
+      border-bottom: 2px solid #f0f4fe;
+      padding-bottom: 18px;
+    }
+
+    .student-box {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .avatar-icon {
+      background: linear-gradient(135deg, #4f7df3, #6c5ce7);
+      width: 60px;
+      height: 60px;
+      border-radius: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 28px;
+      box-shadow: 0 8px 14px -6px rgba(79, 125, 243, 0.35);
+    }
+
+    .student-details h2 {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+      color: #0b1e3a;
+      margin-bottom: 2px;
+    }
+
+    .student-details .grade-badge {
+      background: #eef3ff;
+      padding: 4px 14px 4px 12px;
+      border-radius: 40px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #2a4b8d;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .week-badge {
+      background: #f0f3f8;
+      padding: 8px 20px;
+      border-radius: 60px;
+      font-size: 15px;
+      font-weight: 500;
+      color: #1c355a;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .week-badge i {
+      color: #4f7df3;
+    }
+
+    /* ----- SKILL GRID (modern cards) ----- */
+    .skill-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin: 18px 0 22px;
+    }
+
+    .skill-card {
+      background: #fafcff;
+      border-radius: 28px;
+      padding: 14px 22px 14px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 8px rgba(0, 20, 40, 0.02), 0 1px 2px rgba(0,0,0,0.02);
+      border: 1px solid #edf2f9;
+      transition: all 0.15s;
+    }
+
+    .skill-card:hover {
+      background: #ffffff;
+      border-color: #d9e2f0;
+      box-shadow: 0 8px 16px -8px rgba(40, 70, 120, 0.08);
+    }
+
+    /* left part : skill name + evidence */
+    .skill-info {
+      flex: 2 1 300px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 8px 18px;
+    }
+
+    .skill-name {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 17px;
+      color: #142b4b;
+      min-width: 140px;
+    }
+
+    .skill-name i {
+      font-size: 18px;
+      color: #4f7df3;
+      width: 24px;
+      text-align: center;
+    }
+
+    .evidence {
+      font-size: 14px;
+      color: #2e4b74;
+      background: #eef6ff;
+      padding: 4px 14px 4px 14px;
+      border-radius: 60px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 450;
+      letter-spacing: -0.2px;
+      line-height: 1.4;
+    }
+
+    .evidence i {
+      font-size: 12px;
+      color: #4f7df3;
+      opacity: 0.7;
+    }
+
+    /* right part: stars + change */
+    .skill-metrics {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 14px 24px;
+      flex: 1 0 auto;
+      justify-content: flex-end;
+    }
+
+    .stars-container {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .star {
+      color: #d4dfeb;
+      font-size: 22px;
+      transition: 0.1s;
+      letter-spacing: 0px;
+    }
+
+    .star.filled {
+      color: #fbbf24;
+      text-shadow: 0 2px 6px rgba(251, 191, 36, 0.3);
+    }
+
+    .star.half-filled {
+      color: #fbbf24;
+      opacity: 0.7;
+    }
+
+    .change-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 14px;
+      font-weight: 600;
+      background: #f0f4fe;
+      padding: 4px 12px 4px 10px;
+      border-radius: 60px;
+      min-width: 60px;
+      justify-content: center;
+    }
+
+    .change-badge.up {
+      color: #0b7e4b;
+      background: #e2f3e9;
+    }
+
+    .change-badge.same {
+      color: #5b6f8a;
+      background: #edf1f7;
+    }
+
+    .change-badge.down {
+      color: #b13e4b;
+      background: #fce9eb;
+    }
+
+    .change-badge i {
+      font-size: 13px;
+    }
+
+    /* ----- QUICK LOOK + AI PLAN (two columns) ----- */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 20px;
+      margin: 22px 0 18px;
+      align-items: stretch;
+    }
+
+    .strength-box, .ai-box {
+      background: #f8faff;
+      border-radius: 28px;
+      padding: 18px 22px 20px;
+      border: 1px solid #eef3fd;
+    }
+
+    .strength-box h4, .ai-box h4 {
+      font-size: 15px;
+      font-weight: 600;
+      color: #2a4b7a;
+      letter-spacing: 0.3px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .strength-box h4 i, .ai-box h4 i {
+      color: #4f7df3;
+      font-size: 18px;
+    }
+
+    .strength-tag {
+      background: #e0f0fa;
+      padding: 6px 16px 6px 16px;
+      border-radius: 60px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #0d3d66;
+      display: inline-block;
+      margin-bottom: 8px;
+    }
+
+    .growth-tag {
+      background: #fef0e6;
+      padding: 6px 16px 6px 16px;
+      border-radius: 60px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #a64d2a;
+      display: inline-block;
+      margin-bottom: 4px;
+    }
+
+    .ai-box p {
+      font-size: 15px;
+      line-height: 1.5;
+      color: #1e385b;
+      margin-top: 4px;
+    }
+
+    .ai-box .highlight {
+      background: #ddeeff;
+      padding: 2px 10px;
+      border-radius: 60px;
+      font-weight: 600;
+      color: #0047a0;
+      display: inline-block;
+    }
+
+    .ai-goal {
+      margin-top: 12px;
+      background: #e5efff;
+      border-radius: 60px;
+      padding: 6px 18px 6px 18px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #00337a;
+      display: inline-block;
+    }
+
+    /* ----- PARENT TIP + FOOTER ----- */
+    .parent-tip {
+      background: #f2f6fe;
+      border-radius: 60px;
+      padding: 12px 24px;
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px 24px;
+      border: 1px solid #dce6f5;
+    }
+
+    .parent-tip i {
+      color: #4f7df3;
+      font-size: 20px;
+    }
+
+    .parent-tip span {
+      font-size: 15px;
+      color: #17345c;
+      font-weight: 450;
+    }
+
+    .parent-tip strong {
+      background: white;
+      padding: 2px 14px;
+      border-radius: 60px;
+      font-weight: 600;
+      color: #00337a;
+    }
+
+    .footer-note {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 18px;
+      font-size: 13px;
+      color: #62748e;
+      border-top: 1px solid #e8eef6;
+      padding-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .footer-note i {
+      color: #4f7df3;
+      margin-right: 4px;
+    }
+
+    /* ----- responsive (mobile) ----- */
+    @media (max-width: 740px) {
+      .report-card { padding: 20px 16px; border-radius: 32px; }
+      .header-row { flex-direction: column; align-items: start; gap: 12px; }
+      .week-badge { align-self: flex-start; }
+      .skill-card { flex-direction: column; align-items: stretch; gap: 8px; }
+      .skill-metrics { justify-content: flex-start; }
+      .bottom-grid { grid-template-columns: 1fr; }
+      .evidence { font-size: 13px; padding: 2px 12px; }
+      .student-details h2 { font-size: 22px; }
+    }
+
+    @media (max-width: 480px) {
+      .stars-container .star { font-size: 18px; }
+    }
+
+    /* small polish */
+    .badge-ai {
+      background: #2d4f8f;
+      color: white;
+      padding: 0px 12px;
+      border-radius: 40px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+<div class="report-card">
+
+  <!-- HEADER -->
+  <div class="header-row">
+    <div class="student-box">
+      <div class="avatar-icon"><i class="fas fa-child"></i></div>
+      <div class="student-details">
+        <h2>Ahmed <span style="font-weight:400; color:#3b5f8a;">Khan</span></h2>
+        <div class="grade-badge"><i class="fas fa-star" style="color:#fbbf24;"></i> Grade 2 · Section B</div>
+      </div>
+    </div>
+    <div class="week-badge">
+      <i class="fas fa-calendar-alt"></i> Week ending 15 Aug 2026
+      <span style="background:#dce6f5; padding:0 10px; border-radius:40px; font-weight:600; margin-left:4px;">📅</span>
+    </div>
+  </div>
+
+  <!-- SKILL GRID : each card = skill + evidence + stars + change -->
+  <div class="skill-grid">
+
+    <!-- 1. Talking with friends -->
+    <div class="skill-card">
+      <div class="skill-info">
+        <div class="skill-name"><i class="fas fa-users"></i> Talking with friends</div>
+        <div class="evidence"><i class="fas fa-eye"></i> Talked to Zain during group work · plays alone at break</div>
+      </div>
+      <div class="skill-metrics">
+        <div class="stars-container">
+          <span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">★</span><span class="star">★</span>
+        </div>
+        <div class="change-badge up"><i class="fas fa-arrow-up"></i> +1</div>
+      </div>
+    </div>
+
+    <!-- 2. Asking teacher questions -->
+    <div class="skill-card">
+      <div class="skill-info">
+        <div class="skill-name"><i class="fas fa-hand-paper"></i> Asking questions</div>
+        <div class="evidence"><i class="fas fa-eye"></i> Stuck on Math sum · did not raise hand for 5 min</div>
+      </div>
+      <div class="skill-metrics">
+        <div class="stars-container">
+          <span class="star filled">★</span><span class="star filled">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span>
+        </div>
+        <div class="change-badge same"><i class="fas fa-minus"></i> 0</div>
+      </div>
+    </div>
+
+    <!-- 3. Being kind -->
+    <div class="skill-card">
+      <div class="skill-info">
+        <div class="skill-name"><i class="fas fa-heart" style="color:#e45c77;"></i> Being kind</div>
+        <div class="evidence"><i class="fas fa-eye"></i> Shared crayons with Sara · said "Good job!" to Ali</div>
+      </div>
+      <div class="skill-metrics">
+        <div class="stars-container">
+          <span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">★</span>
+        </div>
+        <div class="change-badge same"><i class="fas fa-minus"></i> 0</div>
+      </div>
+    </div>
+
+    <!-- 4. Trying new things (curiosity) -->
+    <div class="skill-card">
+      <div class="skill-info">
+        <div class="skill-name"><i class="fas fa-lightbulb" style="color:#f5a623;"></i> Trying new things</div>
+        <div class="evidence"><i class="fas fa-eye"></i> Finished worksheet · didn't try the "Challenge Star"</div>
+      </div>
+      <div class="skill-metrics">
+        <div class="stars-container">
+          <span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">★</span><span class="star">★</span>
+        </div>
+        <div class="change-badge same"><i class="fas fa-minus"></i> 0</div>
+      </div>
+    </div>
+
+    <!-- 5. Not giving up (resilience) -->
+    <div class="skill-card">
+      <div class="skill-info">
+        <div class="skill-name"><i class="fas fa-rocket" style="color:#2d7a9b;"></i> Not giving up</div>
+        <div class="evidence"><i class="fas fa-eye"></i> BIG WIN: erased & tried again twice (no crumpled paper!)</div>
+      </div>
+      <div class="skill-metrics">
+        <div class="stars-container">
+          <span class="star filled">★</span><span class="star filled">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span>
+        </div>
+        <div class="change-badge up"><i class="fas fa-arrow-up"></i> +1</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM: strengths + AI plan -->
+  <div class="bottom-grid">
+    <!-- left: quick look -->
+    <div class="strength-box">
+      <h4><i class="fas fa-bolt"></i> Quick look</h4>
+      <div class="strength-tag"><i class="fas fa-check-circle" style="color:#1f8b4c;"></i> Great at being kind & sharing</div>
+      <div style="margin-top:10px;"></div>
+      <div class="growth-tag"><i class="fas fa-arrow-right" style="color:#b13e4b;"></i> Needs help raising his hand</div>
+      <div style="margin-top:12px; font-size:14px; color:#29507a; background:#e6edfa; padding:6px 16px; border-radius:60px; display:inline-block;">
+        <i class="fas fa-chart-line"></i> 2 skills improved this week
+      </div>
+    </div>
+
+    <!-- right: AI verdict + plan -->
+    <div class="ai-box">
+      <h4><i class="fas fa-robot"></i> AI’s plan for Ahmed <span class="badge-ai">active</span></h4>
+      <p><span class="highlight">🤖 “Braver Question Asker”</span> — when Ahmed is stuck for 2 minutes, a friendly robot on his tablet will say:</p>
+      <p style="background:#e9f0fe; padding:8px 16px; border-radius:40px; font-style:italic; color:#004494;">“Ahmed, let’s ask your teacher together! Click the HELP button.”</p>
+      <div class="ai-goal"><i class="fas fa-bullseye"></i> Goal: raise “Asking Questions” from ⭐⭐ → ⭐⭐⭐ by next Friday</div>
+    </div>
+  </div>
+
+  <!-- PARENT TIP + FOOTER -->
+  <div class="parent-tip">
+    <i class="fas fa-lightbulb"></i>
+    <span><strong>Parent tip:</strong> Tonight ask Ahmed: <i>“What was the hardest part of your day? Show me.”</i> — this helps him practice asking for help at home too!</span>
+  </div>
+
+  <div class="footer-note">
+    <span><i class="fas fa-check-circle" style="color:#1f8b4c;"></i> Teacher: Ms. Fatima · Report checked by human mentor</span>
+    <span><i class="fas fa-cloud-upload-alt"></i> Auto-generated · Gurkool AI School</span>
+  </div>
+
+</div>
+</body>
+</html>
