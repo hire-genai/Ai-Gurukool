@@ -389,7 +389,7 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
 
   return (
     <div className="svy-overlay" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="svy-card" onClick={e => e.stopPropagation()}>
+      <div className={`svy-card${step >= 1 ? ' svy-card-full' : ''}`} onClick={e => e.stopPropagation()}>
 
         {/* Progress bar */}
         <div className="svy-progress">

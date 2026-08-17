@@ -88,7 +88,6 @@ function HowItWorks() {
         <div className="lp-how-grid">
           {HOW_CARDS.map((c, i) => (
             <div key={c.n} className="lp-how-card reveal" style={{ transitionDelay: `${i * 0.12}s` }}>
-              <div className="lp-how-n">{c.n}</div>
               <div
                 className="lp-how-img-wrap"
                 style={{ animationDelay: c.delay }}
@@ -105,6 +104,11 @@ function HowItWorks() {
                   draggable={false}
                 />
               </div>
+              <div className="lp-how-title-row">
+                <div className="lp-how-n">{c.n}</div>
+                <h3 className="lp-how-card-title">{c.title}</h3>
+              </div>
+              <p className="lp-how-card-desc">{c.body}</p>
             </div>
           ))}
         </div>
@@ -205,12 +209,6 @@ function ReportCard() {
           <span className="rp-eyebrow">Weekly Vitality Report</span>
           <h2 className="rp-title">Every Friday —<br />A Real Window<br /><span className="rp-blue">into Your Child&apos;s Growth.</span></h2>
           <p className="rp-desc">Not just scores. How your child thinks, speaks, tries, and grows — written by the AI, verified by a human mentor.</p>
-          <ul className="rp-intro-list">
-            <li>5 social &amp; academic skills tracked every week</li>
-            <li>AI-generated focus plan for the next 7 days</li>
-            <li>One parent tip — simple, actionable, proven</li>
-            <li>Verified by a real teacher before it reaches you</li>
-          </ul>
         </div>
 
         {/* RIGHT — card */}
@@ -224,8 +222,10 @@ function ReportCard() {
               </div>
             </div>
             <div className="rp-score-pill">
-              <div className="rp-score-n">3.0<span>/5</span></div>
-              <div className="rp-score-l">Avg this week</div>
+              <div className="rp-score-inline">
+                <span className="rp-score-n">3.0<span>/5</span></span>
+                <span className="rp-score-l">Avg this week</span>
+              </div>
             </div>
           </div>
 
@@ -239,13 +239,15 @@ function ReportCard() {
                     <div className="rp-sk-top">
                       <span className="rp-sk-name">{s.name}</span>
                       <span className={`rp-delta ${up ? 'up' : dn ? 'dn' : 'eq'}`}>
-                        {up ? '↑ improved' : dn ? '↓ slipped' : '— same'}
+                        {up ? '↑ Improved' : dn ? '↓ slipped' : '— same'}
                       </span>
                     </div>
-                    <div className="rp-bar-wrap"><div className="rp-bar" style={{ width: `${(s.score / 5) * 100}%` }} /></div>
+                    <div className="rp-bar-row">
+                      <div className="rp-bar-wrap"><div className="rp-bar" style={{ width: `${(s.score / 5) * 100}%` }} /></div>
+                      <div className="rp-sk-score">{s.score}<span>/5</span></div>
+                    </div>
                     <div className="rp-evidence">&ldquo;{s.evidence}&rdquo;</div>
                   </div>
-                  <div className="rp-sk-score">{s.score}<span>/5</span></div>
                 </div>
               )
             })}
@@ -294,15 +296,17 @@ export default function HomePage() {
           <div className="nav-logo-mark">🏛️</div>
           <span className="nav-logo-text">AI-Gurukool</span>
         </a>
-        <button className="nav-toggle" onClick={() => setMobileNav(v => !v)} aria-label="menu">
-          <span /><span /><span />
-        </button>
         <ul className={`nav-links${mobileNav ? ' nav-open' : ''}`}>
           <li><a href="#classroom" onClick={() => setMobileNav(false)}>Classroom</a></li>
           <li><a href="#subjects"  onClick={() => setMobileNav(false)}>Subjects</a></li>
           <li><a href="#report"    onClick={() => setMobileNav(false)}>Reports</a></li>
         </ul>
-        <button className="nav-cta" onClick={() => setShowSurvey(true)}>Book a Class</button>
+        <div className="nav-right">
+          <button className="nav-cta" onClick={() => setShowSurvey(true)}>Book a Class</button>
+          <button className="nav-toggle" onClick={() => setMobileNav(v => !v)} aria-label="menu">
+            <span /><span /><span />
+          </button>
+        </div>
       </nav>
 
       {/* ══ HERO — Enviornment studies.png as background ══ */}
@@ -313,10 +317,6 @@ export default function HomePage() {
             <div className="lp-badge">🏛 Ancient Gurukul · Reimagined with AI</div>
             <h1 className="lp-h1">One AI Teacher.<br />Ten Curious Minds.<br /><span className="lp-accent">The Gurukul, Reimagined.</span></h1>
             <p className="lp-hero-sub lp-hero-sub-desktop">10 students. 1 AI teacher. A round table. Every child speaks, debates, and builds real understanding — no rote learning, ever.</p>
-            <div className="lp-hero-btns">
-              <button className="lp-btn-gold lp-btn-gold-desktop" onClick={() => setShowSurvey(true)}>Book a Free Trial →</button>
-              <a href="#classroom" className="lp-btn-ghost lp-btn-ghost-desktop">See the classroom ↓</a>
-            </div>
           </div>
           {/* image second in DOM → flows below heading on mobile */}
           <img src={IMG.env} alt="AI Gurukool live classroom" className="lp-hero-img" />
@@ -343,13 +343,17 @@ export default function HomePage() {
       {/* ══ FEATURE — Biology ══ */}
       <section id="classroom" className="lp-feature">
         <div className="container lp-feat-grid reveal-l">
+          <div className="lp-feat-head-mob">
+            <span className="lp-eyebrow">Inside the Classroom</span>
+            <h2 className="lp-h2-sm">Real subjects.<br /><span className="lp-gold">Real curiosity.</span></h2>
+          </div>
           <div className="lp-feat-img-big">
             <img src={IMG.biology} alt="Biology classroom" />
             <div className="lp-feat-tag">🧬 Biology · Live Dialogue Session</div>
           </div>
           <div className="lp-feat-body reveal-r">
-            <span className="lp-eyebrow">Inside the Classroom</span>
-            <h2 className="lp-h2-sm">Real subjects.<br /><span className="lp-gold">Real curiosity.</span></h2>
+            <span className="lp-eyebrow lp-feat-head-desk">Inside the Classroom</span>
+            <h2 className="lp-h2-sm lp-feat-head-desk">Real subjects.<br /><span className="lp-gold">Real curiosity.</span></h2>
             <p>Students don&apos;t just read about photosynthesis — they argue about it. The AI draws the process live on the ink board as the class figures it out together.</p>
             <ul className="lp-list">
               <li>Every diagram drawn <strong>live</strong> alongside student thinking</li>
@@ -363,11 +367,14 @@ export default function HomePage() {
       {/* ══ WIDE — Computer Science ══ */}
       <section className="lp-wide">
         <div className="lp-wide-img-wrap">
-          <img src={IMG.computer} alt="Computer Science classroom" className="lp-wide-img" />
-          <div className="lp-wide-veil" />
-          <div className="container lp-wide-content reveal">
+          <div className="lp-wide-head-mob">
             <span className="lp-eyebrow lp-eyebrow-lite">Computer Science</span>
             <h2 className="lp-h2 lp-h2-white">Build. Break.<br /><span className="lp-accent">Rebuild better.</span></h2>
+          </div>
+          <img src={IMG.computer} alt="Computer Science classroom" className="lp-wide-img" />
+          <div className="lp-wide-content reveal">
+            <span className="lp-wide-head-desk lp-eyebrow lp-eyebrow-lite">Computer Science</span>
+            <h2 className="lp-wide-head-desk lp-h2 lp-h2-white">Build. Break.<br /><span className="lp-accent">Rebuild better.</span></h2>
             <p className="lp-wide-p">From Grade 4 onwards — students write real code, design real products, and present to the class. The AI asks: <em>&ldquo;Why did you choose that approach?&rdquo;</em></p>
             <ul className="lp-wide-bullets">
               <li>Code as a creative act — not a memorisation exercise</li>
@@ -381,9 +388,13 @@ export default function HomePage() {
       {/* ══ FEATURE — History ══ */}
       <section className="lp-feature lp-feature-alt">
         <div className="container lp-feat-grid lp-feat-flip reveal-r">
-          <div className="lp-feat-body reveal-l">
+          <div className="lp-feat-head-mob">
             <span className="lp-eyebrow">History</span>
             <h2 className="lp-h2-sm">Not a story to memorise.<br /><span className="lp-gold">A debate to win.</span></h2>
+          </div>
+          <div className="lp-feat-body reveal-l">
+            <span className="lp-eyebrow lp-feat-head-desk">History</span>
+            <h2 className="lp-h2-sm lp-feat-head-desk">Not a story to memorise.<br /><span className="lp-gold">A debate to win.</span></h2>
             <p>Students argue both sides of a historical event. Mock trials. &ldquo;What would <em>you</em> have done differently?&rdquo; — and they have to defend their answer to the room.</p>
             <ul className="lp-list">
               <li>Roleplays, mock trials, debates — every lesson</li>
@@ -435,13 +446,16 @@ export default function HomePage() {
       </section>
 
       {/* ══ WIDE — Competitive Exams ══ */}
-      <section className="lp-wide">
+      <section className="lp-wide lp-wide-flip">
         <div className="lp-wide-img-wrap">
-          <img src={IMG.competitive} alt="Competitive Exam Prep" className="lp-wide-img" />
-          <div className="lp-wide-veil" />
-          <div className="container lp-wide-content reveal">
+          <div className="lp-wide-head-mob">
             <span className="lp-eyebrow lp-eyebrow-lite">JEE · NEET · CLAT</span>
             <h2 className="lp-h2 lp-h2-white">The exam isn&apos;t the goal.<br /><span className="lp-accent">Understanding is.</span></h2>
+          </div>
+          <img src={IMG.competitive} alt="Competitive Exam Prep" className="lp-wide-img" />
+          <div className="lp-wide-content reveal">
+            <span className="lp-wide-head-desk lp-eyebrow lp-eyebrow-lite">JEE · NEET · CLAT</span>
+            <h2 className="lp-wide-head-desk lp-h2 lp-h2-white">The exam isn&apos;t the goal.<br /><span className="lp-accent">Understanding is.</span></h2>
             <p className="lp-wide-p">Students who understand deeply score better than students who practice blindly. Our 1:10 pods build real comprehension — the marks follow on their own.</p>
             <ul className="lp-wide-bullets">
               <li>Dedicated entrance exam pods — 1:10 ratio always maintained</li>
@@ -465,7 +479,7 @@ export default function HomePage() {
           <div className="lp-badge lp-badge-gold">📋 2-minute Parent Survey — Open Now</div>
           <h2 className="lp-h2 lp-h2-white">Help us build the school<br /><span className="lp-accent">your child actually deserves.</span></h2>
           <p className="lp-cta-p">We&apos;re speaking to parents, students and teachers before building anything. Your answers shape what gets built. Under 2 minutes, no sign-up needed.</p>
-          <button className="lp-btn-gold lp-btn-lg" onClick={() => setShowSurvey(true)}>Start the Survey →</button>
+          <button className="lp-btn-gold lp-btn-lg" onClick={() => setShowSurvey(true)}>Register for Class →</button>
         </div>
       </section>
 
