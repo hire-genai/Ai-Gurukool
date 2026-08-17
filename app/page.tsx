@@ -366,8 +366,7 @@ export default function HomePage() {
       <section className="lp-wide">
         <div className="lp-wide-img-wrap">
           <img src={IMG.computer} alt="Computer Science classroom" className="lp-wide-img" />
-          <div className="lp-wide-veil" />
-          <div className="container lp-wide-content reveal">
+          <div className="lp-wide-content reveal">
             <span className="lp-eyebrow lp-eyebrow-lite">Computer Science</span>
             <h2 className="lp-h2 lp-h2-white">Build. Break.<br /><span className="lp-accent">Rebuild better.</span></h2>
             <p className="lp-wide-p">From Grade 4 onwards — students write real code, design real products, and present to the class. The AI asks: <em>&ldquo;Why did you choose that approach?&rdquo;</em></p>
@@ -437,11 +436,10 @@ export default function HomePage() {
       </section>
 
       {/* ══ WIDE — Competitive Exams ══ */}
-      <section className="lp-wide">
+      <section className="lp-wide lp-wide-flip">
         <div className="lp-wide-img-wrap">
           <img src={IMG.competitive} alt="Competitive Exam Prep" className="lp-wide-img" />
-          <div className="lp-wide-veil" />
-          <div className="container lp-wide-content reveal">
+          <div className="lp-wide-content reveal">
             <span className="lp-eyebrow lp-eyebrow-lite">JEE · NEET · CLAT</span>
             <h2 className="lp-h2 lp-h2-white">The exam isn&apos;t the goal.<br /><span className="lp-accent">Understanding is.</span></h2>
             <p className="lp-wide-p">Students who understand deeply score better than students who practice blindly. Our 1:10 pods build real comprehension — the marks follow on their own.</p>
