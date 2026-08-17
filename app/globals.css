@@ -45,7 +45,7 @@ img { display: block; max-width: 100%; height: auto; }
 a  { text-decoration: none; color: inherit; }
 input, textarea, select { font-family: inherit; font-size: 13px; }
 button { font-family: inherit; cursor: pointer; }
-.container { max-width: 1180px; margin: 0 auto; padding: 0 28px; }
+.container { max-width: 1380px; margin: 0 auto; padding: 0 40px; }
 
 /* ══ SCROLL REVEAL ══ */
 .reveal {
@@ -1530,9 +1530,9 @@ body { background:#07111f; color:#e8edf5; }
 }
 
 .lp-hero-fullimg {
-  max-width: 1180px;
+  max-width: 1380px;
   margin: 0 auto;
-  padding: 110px 28px 80px;
+  padding: 110px 40px 80px;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -1776,9 +1776,9 @@ body { background:#07111f; color:#e8edf5; }
 /* ── WIDE SECTIONS (Computer Science, JEE) — desktop side-by-side ── */
 .lp-wide { background:#07111f; padding: 0; }
 .lp-wide-img-wrap {
-  max-width: 1180px;
+  max-width: 1380px;
   margin: 0 auto;
-  padding: 90px 28px;
+  padding: 90px 40px;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -1896,16 +1896,19 @@ body { background:#07111f; color:#e8edf5; }
 .rp-section { padding:100px 0; background:#07111f; }
 .rp-wrap {
   display:grid; grid-template-columns:1fr 1.6fr;
-  gap:72px; align-items:start;
+  gap:72px; align-items:stretch;
 }
-.rp-intro { padding-top:40px; }
-.rp-eyebrow { font-size:.68rem; font-weight:800; letter-spacing:.18em; text-transform:uppercase; color:#4f7df3; display:block; margin-bottom:14px; }
-.rp-title { font-size:clamp(1.8rem,2.8vw,2.5rem); font-weight:900; line-height:1.12; color:#fff; margin-bottom:16px; }
+.rp-intro {
+  display:flex; flex-direction:column; justify-content:center;
+  padding-top:20px; padding-bottom:20px;
+}
+.rp-eyebrow { font-size:.68rem; font-weight:800; letter-spacing:.18em; text-transform:uppercase; color:#4f7df3; display:block; margin-bottom:18px; }
+.rp-title { font-size:clamp(2rem,3vw,2.7rem); font-weight:900; line-height:1.15; color:#fff; margin-bottom:20px; }
 .rp-blue { background:linear-gradient(90deg,#4f7df3,#6c5ce7); -webkit-background-clip:text; background-clip:text; color:transparent; }
-.rp-desc { color:rgba(255,255,255,.45); font-size:.96rem; line-height:1.65; margin-bottom:24px; }
+.rp-desc { color:rgba(255,255,255,.52); font-size:1.02rem; line-height:1.72; margin-bottom:0; }
 .rp-intro-list { list-style:none; padding:0; margin:0; }
-.rp-intro-list li { padding:10px 16px 10px 40px; margin-bottom:8px; border:1px solid rgba(255,255,255,.06); border-radius:14px; background:rgba(255,255,255,.03); color:rgba(255,255,255,.62); font-size:.9rem; line-height:1.5; position:relative; }
-.rp-intro-list li::before { content:'\2713'; position:absolute; left:11px; top:9px; width:20px; height:20px; border-radius:50%; background:linear-gradient(135deg,#4f7df3,#6c5ce7); color:#fff; font-size:.68rem; font-weight:900; display:flex; align-items:center; justify-content:center; }
+.rp-intro-list li { padding:16px 20px 16px 52px; margin-bottom:12px; border:1px solid rgba(255,255,255,.1); border-radius:16px; background:rgba(255,255,255,.05); color:rgba(255,255,255,.75); font-size:1.1rem; font-weight:600; line-height:1.65; position:relative; }
+.rp-intro-list li::before { content:'\2713'; position:absolute; left:12px; top:50%; transform:translateY(-50%); width:22px; height:22px; border-radius:50%; background:linear-gradient(135deg,#4f7df3,#6c5ce7); color:#fff; font-size:.72rem; font-weight:900; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 
 /* the card */
 .rp-card { background:#0d1d35; border:1px solid rgba(255,255,255,.07); border-radius:24px; overflow:hidden; box-shadow:0 40px 80px -20px rgba(0,0,0,.6); }
@@ -1932,21 +1935,21 @@ body { background:#07111f; color:#e8edf5; }
 .rp-delta.eq { color:rgba(255,255,255,.35); background:rgba(255,255,255,.08); }
 .rp-delta.dn { color:#f87171; background:rgba(248,113,113,.15); }
 /* bar row: bar + score side by side */
-.rp-bar-row { display:flex; align-items:center; gap:12px; }
-.rp-bar-wrap { flex:1; height:8px; border-radius:12px; background:rgba(255,255,255,.12); overflow:hidden; }
-.rp-bar { height:100%; border-radius:12px; background:linear-gradient(90deg,#4f7df3,#6c5ce7); transition:width .7s cubic-bezier(.22,1,.36,1); }
-.rp-sk-score { font-size:1.3rem; font-weight:900; color:#fbbf24; white-space:nowrap; flex-shrink:0; min-width:36px; text-align:right; line-height:1; }
-.rp-sk-score span { font-size:.6rem; color:rgba(255,255,255,.3); font-weight:500; }
-.rp-evidence { font-size:.7rem; color:rgba(255,255,255,.25); font-style:italic; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.rp-bar-row { display:flex; align-items:center; gap:10px; }
+.rp-bar-wrap { flex:1; height:7px; border-radius:11px; background:rgba(255,255,255,.12); overflow:hidden; }
+.rp-bar { height:100%; border-radius:11px; background:linear-gradient(90deg,#4f7df3,#6c5ce7); transition:width .7s cubic-bezier(.22,1,.36,1); }
+.rp-sk-score { font-size:1.2rem; font-weight:900; color:#fbbf24; white-space:nowrap; flex-shrink:0; min-width:32px; text-align:right; line-height:1; }
+.rp-sk-score span { font-size:.58rem; color:rgba(255,255,255,.28); font-weight:500; }
+.rp-evidence { font-size:.68rem; color:rgba(255,255,255,.22); font-style:italic; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
 /* BOTTOM — AI plan + parent tip side by side */
 .rp-bottom { display:grid; grid-template-columns:1fr 1fr; border-top:1px solid rgba(255,255,255,.06); }
-.rp-bot-card { padding:20px 22px; }
+.rp-bot-card { padding:18px 20px; }
 .rp-bot-card + .rp-bot-card { border-left:1px solid rgba(255,255,255,.06); }
-.rp-bot-icon { font-size:1.4rem; margin-bottom:8px; }
-.rp-bot-label { font-size:.68rem; font-weight:800; text-transform:uppercase; letter-spacing:.12em; color:#4f7df3; margin-bottom:8px; }
+.rp-bot-icon { font-size:1.3rem; margin-bottom:7px; }
+.rp-bot-label { font-size:.65rem; font-weight:800; text-transform:uppercase; letter-spacing:.12em; color:#4f7df3; margin-bottom:6px; }
 .rp-tip .rp-bot-label { color:#fbbf24; }
-.rp-bot-text { font-size:.86rem; color:rgba(255,255,255,.48); line-height:1.62; }
+.rp-bot-text { font-size:.82rem; color:rgba(255,255,255,.45); line-height:1.6; }
 .rp-bot-text em { color:rgba(255,255,255,.7); font-style:italic; }
 .rp-foot { padding:11px 24px; text-align:center; font-size:.7rem; color:rgba(255,255,255,.16); border-top:1px solid rgba(255,255,255,.04); background:rgba(0,0,0,.18); }
 
@@ -2123,7 +2126,7 @@ body { background:#07111f; color:#e8edf5; }
   .rp-sk-score { font-size: 1.05rem !important; }
   .rp-bot-card { padding: 16px 18px !important; }
   .rp-bot-text { font-size: .8rem !important; }
-  .rp-intro-list li { font-size: .85rem !important; padding: 9px 14px 9px 38px !important; }
+  .rp-intro-list li { font-size: 1rem !important; padding: 14px 18px 14px 48px !important; }
 }
 
 /* ── CTA section: reclaim vertical space on mobile ── */

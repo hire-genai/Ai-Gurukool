@@ -209,12 +209,6 @@ function ReportCard() {
           <span className="rp-eyebrow">Weekly Vitality Report</span>
           <h2 className="rp-title">Every Friday —<br />A Real Window<br /><span className="rp-blue">into Your Child&apos;s Growth.</span></h2>
           <p className="rp-desc">Not just scores. How your child thinks, speaks, tries, and grows — written by the AI, verified by a human mentor.</p>
-          <ul className="rp-intro-list">
-            <li>5 social &amp; academic skills tracked every week</li>
-            <li>AI-generated focus plan for the next 7 days</li>
-            <li>One parent tip — simple, actionable, proven</li>
-            <li>Verified by a real teacher before it reaches you</li>
-          </ul>
         </div>
 
         {/* RIGHT — card */}
