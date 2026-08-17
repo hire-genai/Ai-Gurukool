@@ -228,8 +228,10 @@ function ReportCard() {
               </div>
             </div>
             <div className="rp-score-pill">
-              <div className="rp-score-n">3.0<span>/5</span></div>
-              <div className="rp-score-l">Avg this week</div>
+              <div className="rp-score-inline">
+                <span className="rp-score-n">3.0<span>/5</span></span>
+                <span className="rp-score-l">Avg this week</span>
+              </div>
             </div>
           </div>
 
@@ -243,13 +245,15 @@ function ReportCard() {
                     <div className="rp-sk-top">
                       <span className="rp-sk-name">{s.name}</span>
                       <span className={`rp-delta ${up ? 'up' : dn ? 'dn' : 'eq'}`}>
-                        {up ? '↑ improved' : dn ? '↓ slipped' : '— same'}
+                        {up ? '↑ Improved' : dn ? '↓ slipped' : '— same'}
                       </span>
                     </div>
-                    <div className="rp-bar-wrap"><div className="rp-bar" style={{ width: `${(s.score / 5) * 100}%` }} /></div>
+                    <div className="rp-bar-row">
+                      <div className="rp-bar-wrap"><div className="rp-bar" style={{ width: `${(s.score / 5) * 100}%` }} /></div>
+                      <div className="rp-sk-score">{s.score}<span>/5</span></div>
+                    </div>
                     <div className="rp-evidence">&ldquo;{s.evidence}&rdquo;</div>
                   </div>
-                  <div className="rp-sk-score">{s.score}<span>/5</span></div>
                 </div>
               )
             })}
