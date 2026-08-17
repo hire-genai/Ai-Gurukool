@@ -88,7 +88,6 @@ function HowItWorks() {
         <div className="lp-how-grid">
           {HOW_CARDS.map((c, i) => (
             <div key={c.n} className="lp-how-card reveal" style={{ transitionDelay: `${i * 0.12}s` }}>
-              <div className="lp-how-n">{c.n}</div>
               <div
                 className="lp-how-img-wrap"
                 style={{ animationDelay: c.delay }}
@@ -105,6 +104,11 @@ function HowItWorks() {
                   draggable={false}
                 />
               </div>
+              <div className="lp-how-title-row">
+                <div className="lp-how-n">{c.n}</div>
+                <h3 className="lp-how-card-title">{c.title}</h3>
+              </div>
+              <p className="lp-how-card-desc">{c.body}</p>
             </div>
           ))}
         </div>
@@ -294,15 +298,17 @@ export default function HomePage() {
           <div className="nav-logo-mark">🏛️</div>
           <span className="nav-logo-text">AI-Gurukool</span>
         </a>
-        <button className="nav-toggle" onClick={() => setMobileNav(v => !v)} aria-label="menu">
-          <span /><span /><span />
-        </button>
         <ul className={`nav-links${mobileNav ? ' nav-open' : ''}`}>
           <li><a href="#classroom" onClick={() => setMobileNav(false)}>Classroom</a></li>
           <li><a href="#subjects"  onClick={() => setMobileNav(false)}>Subjects</a></li>
           <li><a href="#report"    onClick={() => setMobileNav(false)}>Reports</a></li>
         </ul>
-        <button className="nav-cta" onClick={() => setShowSurvey(true)}>Book a Class</button>
+        <div className="nav-right">
+          <button className="nav-cta" onClick={() => setShowSurvey(true)}>Book a Class</button>
+          <button className="nav-toggle" onClick={() => setMobileNav(v => !v)} aria-label="menu">
+            <span /><span /><span />
+          </button>
+        </div>
       </nav>
 
       {/* ══ HERO — Enviornment studies.png as background ══ */}
@@ -313,10 +319,6 @@ export default function HomePage() {
             <div className="lp-badge">🏛 Ancient Gurukul · Reimagined with AI</div>
             <h1 className="lp-h1">One AI Teacher.<br />Ten Curious Minds.<br /><span className="lp-accent">The Gurukul, Reimagined.</span></h1>
             <p className="lp-hero-sub lp-hero-sub-desktop">10 students. 1 AI teacher. A round table. Every child speaks, debates, and builds real understanding — no rote learning, ever.</p>
-            <div className="lp-hero-btns">
-              <button className="lp-btn-gold lp-btn-gold-desktop" onClick={() => setShowSurvey(true)}>Book a Free Trial →</button>
-              <a href="#classroom" className="lp-btn-ghost lp-btn-ghost-desktop">See the classroom ↓</a>
-            </div>
           </div>
           {/* image second in DOM → flows below heading on mobile */}
           <img src={IMG.env} alt="AI Gurukool live classroom" className="lp-hero-img" />
