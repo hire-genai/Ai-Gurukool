@@ -345,13 +345,17 @@ export default function HomePage() {
       {/* ══ FEATURE — Biology ══ */}
       <section id="classroom" className="lp-feature">
         <div className="container lp-feat-grid reveal-l">
+          <div className="lp-feat-head-mob">
+            <span className="lp-eyebrow">Inside the Classroom</span>
+            <h2 className="lp-h2-sm">Real subjects.<br /><span className="lp-gold">Real curiosity.</span></h2>
+          </div>
           <div className="lp-feat-img-big">
             <img src={IMG.biology} alt="Biology classroom" />
             <div className="lp-feat-tag">🧬 Biology · Live Dialogue Session</div>
           </div>
           <div className="lp-feat-body reveal-r">
-            <span className="lp-eyebrow">Inside the Classroom</span>
-            <h2 className="lp-h2-sm">Real subjects.<br /><span className="lp-gold">Real curiosity.</span></h2>
+            <span className="lp-eyebrow lp-feat-head-desk">Inside the Classroom</span>
+            <h2 className="lp-h2-sm lp-feat-head-desk">Real subjects.<br /><span className="lp-gold">Real curiosity.</span></h2>
             <p>Students don&apos;t just read about photosynthesis — they argue about it. The AI draws the process live on the ink board as the class figures it out together.</p>
             <ul className="lp-list">
               <li>Every diagram drawn <strong>live</strong> alongside student thinking</li>
@@ -365,10 +369,14 @@ export default function HomePage() {
       {/* ══ WIDE — Computer Science ══ */}
       <section className="lp-wide">
         <div className="lp-wide-img-wrap">
-          <img src={IMG.computer} alt="Computer Science classroom" className="lp-wide-img" />
-          <div className="lp-wide-content reveal">
+          <div className="lp-wide-head-mob">
             <span className="lp-eyebrow lp-eyebrow-lite">Computer Science</span>
             <h2 className="lp-h2 lp-h2-white">Build. Break.<br /><span className="lp-accent">Rebuild better.</span></h2>
+          </div>
+          <img src={IMG.computer} alt="Computer Science classroom" className="lp-wide-img" />
+          <div className="lp-wide-content reveal">
+            <span className="lp-wide-head-desk lp-eyebrow lp-eyebrow-lite">Computer Science</span>
+            <h2 className="lp-wide-head-desk lp-h2 lp-h2-white">Build. Break.<br /><span className="lp-accent">Rebuild better.</span></h2>
             <p className="lp-wide-p">From Grade 4 onwards — students write real code, design real products, and present to the class. The AI asks: <em>&ldquo;Why did you choose that approach?&rdquo;</em></p>
             <ul className="lp-wide-bullets">
               <li>Code as a creative act — not a memorisation exercise</li>
@@ -382,9 +390,13 @@ export default function HomePage() {
       {/* ══ FEATURE — History ══ */}
       <section className="lp-feature lp-feature-alt">
         <div className="container lp-feat-grid lp-feat-flip reveal-r">
-          <div className="lp-feat-body reveal-l">
+          <div className="lp-feat-head-mob">
             <span className="lp-eyebrow">History</span>
             <h2 className="lp-h2-sm">Not a story to memorise.<br /><span className="lp-gold">A debate to win.</span></h2>
+          </div>
+          <div className="lp-feat-body reveal-l">
+            <span className="lp-eyebrow lp-feat-head-desk">History</span>
+            <h2 className="lp-h2-sm lp-feat-head-desk">Not a story to memorise.<br /><span className="lp-gold">A debate to win.</span></h2>
             <p>Students argue both sides of a historical event. Mock trials. &ldquo;What would <em>you</em> have done differently?&rdquo; — and they have to defend their answer to the room.</p>
             <ul className="lp-list">
               <li>Roleplays, mock trials, debates — every lesson</li>
@@ -438,10 +450,14 @@ export default function HomePage() {
       {/* ══ WIDE — Competitive Exams ══ */}
       <section className="lp-wide lp-wide-flip">
         <div className="lp-wide-img-wrap">
-          <img src={IMG.competitive} alt="Competitive Exam Prep" className="lp-wide-img" />
-          <div className="lp-wide-content reveal">
+          <div className="lp-wide-head-mob">
             <span className="lp-eyebrow lp-eyebrow-lite">JEE · NEET · CLAT</span>
             <h2 className="lp-h2 lp-h2-white">The exam isn&apos;t the goal.<br /><span className="lp-accent">Understanding is.</span></h2>
+          </div>
+          <img src={IMG.competitive} alt="Competitive Exam Prep" className="lp-wide-img" />
+          <div className="lp-wide-content reveal">
+            <span className="lp-wide-head-desk lp-eyebrow lp-eyebrow-lite">JEE · NEET · CLAT</span>
+            <h2 className="lp-wide-head-desk lp-h2 lp-h2-white">The exam isn&apos;t the goal.<br /><span className="lp-accent">Understanding is.</span></h2>
             <p className="lp-wide-p">Students who understand deeply score better than students who practice blindly. Our 1:10 pods build real comprehension — the marks follow on their own.</p>
             <ul className="lp-wide-bullets">
               <li>Dedicated entrance exam pods — 1:10 ratio always maintained</li>
@@ -465,7 +481,7 @@ export default function HomePage() {
           <div className="lp-badge lp-badge-gold">📋 2-minute Parent Survey — Open Now</div>
           <h2 className="lp-h2 lp-h2-white">Help us build the school<br /><span className="lp-accent">your child actually deserves.</span></h2>
           <p className="lp-cta-p">We&apos;re speaking to parents, students and teachers before building anything. Your answers shape what gets built. Under 2 minutes, no sign-up needed.</p>
-          <button className="lp-btn-gold lp-btn-lg" onClick={() => setShowSurvey(true)}>Start the Survey →</button>
+          <button className="lp-btn-gold lp-btn-lg" onClick={() => setShowSurvey(true)}>Register for Class →</button>
         </div>
       </section>
 
