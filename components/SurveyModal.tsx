@@ -39,7 +39,7 @@ const parentSections: Section[] = [
   {
     title: 'Challenges',
     questions: [
-      { key:'p_satisfaction', type:'select', label:'How satisfied are you with your child\'s current schooling? (1 = Very dissatisfied, 10 = Very satisfied)', required:true,
+      { key:'p_satisfaction', type:'select', label:"How satisfied are you with your child's current schooling?", required:true,
         options: SCALE_OPTIONS },
       { key:'p_painPoints',   type:'multi',  label:'What are the biggest pain points? (select all that apply)', required:true,
         options:['No personal attention','Teacher doesn\'t explain well','Too much homework','Child is bored','No progress tracking','Too expensive'] },
@@ -69,7 +69,8 @@ const parentSections: Section[] = [
         options: PRICE_OPTIONS },
       { key:'p_value',     type:'select', label:'How does that compare to your current spend?', required:true,
         options:['Better value','About the same','More expensive'] },
-      { key:'p_vision',    type:'text',   label:'What is your vision for your child\'s education? (optional)', placeholder:'e.g. Make learning fun, build confidence...' },
+      { key:'p_vision',    type:'multi',  label:'What is your vision for your child\'s education?', required:true,
+        options:['Build confidence and communication skills','Excel in academics and exams','Develop critical thinking','Prepare for a strong career','Foster creativity and curiosity','Holistic all-round development','Other'] },
       { key:'p_recommend', type:'select', label:'Would you recommend AI-Gurukool to other parents?', required:true,
         options:['Definitely','Maybe','Not sure'] },
       { key:'p_feedback',  type:'text',   label:'Any other thoughts or suggestions? (optional)', placeholder:'We\'re all ears!' },
@@ -93,7 +94,7 @@ const studentSections: Section[] = [
   {
     title: 'Challenges',
     questions: [
-      { key:'s_satisfaction', type:'select', label:'How satisfied are you with your current schooling? (1 = Very dissatisfied, 10 = Very satisfied)', required:true,
+      { key:'s_satisfaction', type:'select', label:'How satisfied are you with your current schooling?', required:true,
         options: SCALE_OPTIONS },
       { key:'s_painPoints',   type:'multi',  label:'What are the biggest problems with how you learn now? (select all that apply)', required:true,
         options:['Boring lectures','Too much memorisation','No personal attention','Can\'t ask questions freely','Slow syllabus','Too much pressure','Lack of real-world application','Not enough practical learning'] },
@@ -143,7 +144,7 @@ const teacherSections: Section[] = [
   {
     title: 'Challenges',
     questions: [
-      { key:'t_satisfaction', type:'select', label:'How satisfied are you with your current teaching environment? (1 = Very dissatisfied, 10 = Very satisfied)', required:true,
+      { key:'t_satisfaction', type:'select', label:'How satisfied are you with your current teaching environment?', required:true,
         options: SCALE_OPTIONS },
       { key:'t_painPoints',   type:'multi',  label:'What are the biggest challenges you face? (select all that apply)', required:true,
         options:['Large class sizes','Lack of resources','Student disengagement','Administrative burden','Slow curriculum','Parent expectations','Assessment pressure','Lack of professional development'] },
@@ -188,7 +189,6 @@ function isScale(q: SelectQ) {
   return q.options.length === 10 && q.options[0] === '1' && q.options[9] === '10'
 }
 
-// Steps: 0=role, 1-4=sections, 5=contact, 6=success
 function progressPct(step: number): number {
   if (step === 0) return 0
   if (step === 6) return 100
@@ -200,10 +200,13 @@ function isValidEmail(val: string) {
 }
 
 /* ─── Sub-components ─────────────────────────────────────────────────────── */
-function ChipSelect({ q, value, onChange }: {
+function ChipSelect({ q, value, onChange, otherValue, onOtherChange, otherError }: {
   q: SelectQ
   value: string
   onChange: (v: string) => void
+  otherValue?: string
+  onOtherChange?: (v: string) => void
+  otherError?: string
 }) {
   if (isScale(q)) {
     return (
@@ -223,35 +226,70 @@ function ChipSelect({ q, value, onChange }: {
       </div>
     )
   }
+
+  const hasOther = q.options.includes('Other')
   return (
-    <div className="svy-chips">
-      {q.options.map(o => (
-        <button key={o} type="button"
-          className={`svy-chip${value === o ? ' active' : ''}`}
-          onClick={() => onChange(o)}
-        >{o}</button>
-      ))}
+    <div>
+      <div className="svy-chips">
+        {q.options.map(o => (
+          <button key={o} type="button"
+            className={`svy-chip${value === o ? ' active' : ''}`}
+            onClick={() => onChange(o)}
+          >{o}</button>
+        ))}
+      </div>
+      {hasOther && value === 'Other' && (
+        <div style={{ marginTop: 8 }}>
+          <input
+            className="svy-input"
+            type="text"
+            placeholder="Please specify... *"
+            value={otherValue || ''}
+            onChange={e => onOtherChange?.(e.target.value)}
+          />
+          {otherError && <div className="svy-error">{otherError}</div>}
+        </div>
+      )}
     </div>
   )
 }
 
-function ChipMulti({ q, value, onChange }: {
+function ChipMulti({ q, value, onChange, otherValue, onOtherChange, otherError }: {
   q: MultiQ
   value: string[]
   onChange: (v: string[]) => void
+  otherValue?: string
+  onOtherChange?: (v: string) => void
+  otherError?: string
 }) {
   const toggle = (opt: string) => {
     if (value.includes(opt)) onChange(value.filter(x => x !== opt))
     else onChange([...value, opt])
   }
+
+  const hasOther = q.options.includes('Other')
   return (
-    <div className="svy-chips">
-      {q.options.map(o => (
-        <button key={o} type="button"
-          className={`svy-chip${value.includes(o) ? ' active' : ''}`}
-          onClick={() => toggle(o)}
-        >{o}</button>
-      ))}
+    <div>
+      <div className="svy-chips">
+        {q.options.map(o => (
+          <button key={o} type="button"
+            className={`svy-chip${value.includes(o) ? ' active' : ''}`}
+            onClick={() => toggle(o)}
+          >{o}</button>
+        ))}
+      </div>
+      {hasOther && value.includes('Other') && (
+        <div style={{ marginTop: 8 }}>
+          <input
+            className="svy-input"
+            type="text"
+            placeholder="Please specify... *"
+            value={otherValue || ''}
+            onChange={e => onOtherChange?.(e.target.value)}
+          />
+          {otherError && <div className="svy-error">{otherError}</div>}
+        </div>
+      )}
     </div>
   )
 }
@@ -305,7 +343,12 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
 
   function setAnswer(key: string, val: AnswerValue) {
     setAnswers(prev => ({ ...prev, [key]: val }))
-    setErrors(prev => { const e = { ...prev }; delete e[key]; return e })
+    setErrors(prev => { const e = { ...prev }; delete e[key]; delete e[key + '_other']; return e })
+  }
+
+  function setOtherAnswer(key: string, val: string) {
+    setAnswers(prev => ({ ...prev, [key + '_other']: val }))
+    setErrors(prev => { const e = { ...prev }; delete e[key + '_other']; return e })
   }
 
   function setContactField(field: keyof Contact, val: string) {
@@ -320,9 +363,19 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
       if (!q.required) continue
       const val = answers[q.key]
       if (q.type === 'multi') {
-        if (!val || (val as string[]).length === 0) errs[q.key] = 'Please select at least one option.'
+        if (!val || (val as string[]).length === 0) {
+          errs[q.key] = 'Please select at least one option.'
+        } else if ((val as string[]).includes('Other')) {
+          const otherText = (answers[q.key + '_other'] as string || '').trim()
+          if (!otherText) errs[q.key + '_other'] = 'Please specify your other option.'
+        }
       } else if (q.type === 'select') {
-        if (!val) errs[q.key] = 'Please select an option.'
+        if (!val) {
+          errs[q.key] = 'Please select an option.'
+        } else if (val === 'Other') {
+          const otherText = (answers[q.key + '_other'] as string || '').trim()
+          if (!otherText) errs[q.key + '_other'] = 'Please specify your other option.'
+        }
       }
     }
     setErrors(errs)
@@ -442,6 +495,9 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
                       q={q}
                       value={(answers[q.key] as string) || ''}
                       onChange={v => setAnswer(q.key, v)}
+                      otherValue={(answers[q.key + '_other'] as string) || ''}
+                      onOtherChange={v => setOtherAnswer(q.key, v)}
+                      otherError={errors[q.key + '_other']}
                     />
                   )}
 
@@ -450,6 +506,9 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
                       q={q}
                       value={(answers[q.key] as string[]) || []}
                       onChange={v => setAnswer(q.key, v)}
+                      otherValue={(answers[q.key + '_other'] as string) || ''}
+                      onOtherChange={v => setOtherAnswer(q.key, v)}
+                      otherError={errors[q.key + '_other']}
                     />
                   )}
 
