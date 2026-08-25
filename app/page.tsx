@@ -318,8 +318,8 @@ export default function HomePage() {
             <h1 className="lp-h1">One AI Teacher.<br />Ten Curious Minds.<br /><span className="lp-accent">The Gurukul, Reimagined.</span></h1>
             <p className="lp-hero-sub lp-hero-sub-desktop">10 students. 1 AI teacher. A round table. Every child speaks, debates, and builds real understanding — no rote learning, ever.</p>
           </div>
-          {/* image second in DOM → flows below heading on mobile */}
-          <img src={IMG.env} alt="AI Gurukool live classroom" className="lp-hero-img" />
+          {/* video second in DOM → flows below heading on mobile */}
+          <video src="/hero.mp4" autoPlay loop muted playsInline className="lp-hero-img" />
           <div className="lp-hero-veil" />
           {/* mobile-only description, sits AFTER image */}
           <p className="lp-hero-sub-mobile">10 students. 1 AI teacher. A round table. Every child speaks, debates, and builds real understanding — no rote learning, ever.</p>
