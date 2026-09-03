@@ -166,11 +166,17 @@ export default function ClassRoomPage() {
 
         case 'input_audio_buffer.speech_started':
           setStudentSpeaking(true)
-          if (
-            aiSpeakingRef.current &&
-            Date.now() - aiSpeakStartRef.current > 800
-          ) {
+          // Interrupt the AI IMMEDIATELY whenever the student starts speaking,
+          // even mid-sentence. No 800ms grace — the video and the audio must
+          // both switch to the student the moment they begin talking.
+          if (turnActiveRef.current || aiSpeakingRef.current) {
             sendEvent({ type: 'response.cancel' })
+            // Mark the AI turn as ended locally so response.cancelled arriving
+            // later is a no-op for the avatar (student mode is already active).
+            turnActiveRef.current = false
+            aiSpeakingRef.current = false
+            audioPlayingRef.current = false
+            setAiSpeaking(false)
           }
           // Switch avatar to student video — only on first start of a student turn
           if (currentAvatarModeRef.current !== 'student') {
@@ -326,28 +332,73 @@ export default function ClassRoomPage() {
           break
         }
 
-        case 'response.created':
-          // NEW logical turn: mark active. Audio-rise from analyser will reset video to 0.
+        case 'response.created': {
+          // NEW logical turn — start AI video immediately so it's never delayed by
+          // AudioContext state or RTP/SCTP ordering. The analyser still handles hiding.
           currentTurnIdRef.current += 1
+          const newTurn = currentTurnIdRef.current
           turnActiveRef.current = true
           aiSpeakStartRef.current = Date.now()
           aiSpeakingRef.current = true
           setAiSpeaking(true)
-          console.log('[AVATAR] NEW AI TURN turn=' + currentTurnIdRef.current + ' ts=' + Date.now())
+          console.log('[AVATAR] NEW AI TURN turn=' + newTurn + ' ts=' + Date.now())
+          if (currentAvatarModeRef.current !== 'student') {
+            const v = videoElRef.current
+            if (v) {
+              videoStartedForTurnRef.current = newTurn
+              currentAvatarModeRef.current = 'ai'
+              const sv = studentVideoRef.current
+              if (sv) { sv.style.display = 'none'; try { sv.pause() } catch {} }
+              v.style.display = 'block'
+              v.currentTime = 0
+              v.play().catch(() => {})
+              console.log('[AVATAR] VIDEO START on response.created turn=' + newTurn)
+            }
+          }
           break
+        }
         case 'response.done':
         case 'response.completed':
         case 'response.cancelled':
-          // Turn ended — pause AI video; student video is unaffected.
-          console.log('[AVATAR] TURN END ' + evt.type + ' turn=' + currentTurnIdRef.current)
+          // Turn ended on SCTP data channel — but audio (RTP) may still be draining
+          // from the WebRTC jitter buffer. DO NOT hide the video here; let onAudioActiveStop
+          // do it once the analyser confirms 180ms of true silence.
+          console.log('[AVATAR] TURN END ' + evt.type + ' turn=' + currentTurnIdRef.current +
+            ' mode=' + currentAvatarModeRef.current + ' audioActive=' + audioActiveRef.current)
           turnActiveRef.current = false
           aiSpeakingRef.current = false
-          audioPlayingRef.current = false
+          // Don't set audioPlayingRef=false here — audio may still be draining.
+          // onAudioActiveStop will do it when waveform goes silent.
           setAiSpeaking(false)
-          if (currentAvatarModeRef.current === 'ai') currentAvatarModeRef.current = 'idle'
-          if (videoElRef.current) {
-            try { videoElRef.current.pause() } catch {}
-            console.log('[AVATAR] VIDEO PAUSED currentTime=' + videoElRef.current.currentTime.toFixed(2))
+          // If student interrupted, leave student mode alone.
+          // If we're in AI mode, leave the video PLAYING until analyser calls onAudioActiveStop.
+          if (currentAvatarModeRef.current === 'ai') {
+            if (!audioActiveRef.current) {
+              // Analyser already declared silence before response.done arrived — hide now.
+              currentAvatarModeRef.current = 'student'
+              const v = videoElRef.current
+              if (v) { try { v.pause() } catch {}; v.style.display = 'none' }
+              console.log('[AVATAR] VIDEO HIDDEN immediately (audio already silent)')
+              // AI finished — automatically show student video (no speech_started needed)
+              const sv = studentVideoRef.current
+              if (sv) {
+                sv.style.display = 'block'
+                try { sv.currentTime = 0 } catch {}
+                sv.play().catch(() => {
+                  const onReady = () => {
+                    sv.removeEventListener('canplay', onReady)
+                    if (currentAvatarModeRef.current !== 'student') return
+                    try { sv.currentTime = 0 } catch {}
+                    sv.play().catch(() => {})
+                  }
+                  sv.addEventListener('canplay', onReady)
+                })
+                console.log('[AVATAR] student video AUTO-START (AI complete, immediate)')
+              }
+            } else {
+              // Audio still flowing — defer hide to onAudioActiveStop.
+              console.log('[AVATAR] deferring video hide to analyser (audio still active)')
+            }
           }
           break
 
@@ -396,6 +447,11 @@ export default function ClassRoomPage() {
 
     // If student is actively speaking, do not override their video with AI video.
     if (currentAvatarModeRef.current === 'student') return
+    // NOTE: do NOT gate on turnActiveRef here. Audio arrives on the WebRTC RTP path
+    // and response.created arrives on the SCTP data channel — they aren't ordered.
+    // If we required response.created first, audio could start before we allow the
+    // video, causing "AI is talking but video is frozen." Micro-pauses are already
+    // handled by the STOP path (see onAudioActiveStop's turnActiveRef guard).
 
     const v = videoElRef.current
     if (!v) return
@@ -420,20 +476,40 @@ export default function ClassRoomPage() {
 
   const onAudioActiveStop = useCallback(() => {
     // Waveform dipped silent. If the AI turn is still active (no response.done yet),
-    // this is just a natural gap between words/sentences — DO NOT pause the video.
-    // The video will pause when response.done/cancelled arrives, not on micro-silence.
+    // this is a natural gap between words/sentences — DO NOT hide the video.
     if (turnActiveRef.current) {
       console.log('[AVATAR] micro-silence ignored (turn still active)')
       return
     }
-    console.log('[AVATAR] AUDIO PAUSED ts=' + Date.now())
+    // Turn has ended AND audio has truly gone silent — now safe to hide AI video.
+    console.log('[AVATAR] AUDIO STOPPED ts=' + Date.now() + ' mode=' + currentAvatarModeRef.current)
     aiSpeakingRef.current = false
     audioPlayingRef.current = false
     setAiSpeaking(false)
-    const v = videoElRef.current
-    if (v) {
-      try { v.pause() } catch {}
-      console.log('[AVATAR] VIDEO PAUSED currentTime=' + v.currentTime.toFixed(2))
+    if (currentAvatarModeRef.current === 'ai') {
+      currentAvatarModeRef.current = 'student'
+      const v = videoElRef.current
+      if (v) {
+        try { v.pause() } catch {}
+        v.style.display = 'none'
+        console.log('[AVATAR] VIDEO HIDDEN at currentTime=' + v.currentTime.toFixed(2))
+      }
+      // AI finished and audio truly silent — automatically show student video
+      const sv = studentVideoRef.current
+      if (sv) {
+        sv.style.display = 'block'
+        try { sv.currentTime = 0 } catch {}
+        sv.play().catch(() => {
+          const onReady = () => {
+            sv.removeEventListener('canplay', onReady)
+            if (currentAvatarModeRef.current !== 'student') return
+            try { sv.currentTime = 0 } catch {}
+            sv.play().catch(() => {})
+          }
+          sv.addEventListener('canplay', onReady)
+        })
+        console.log('[AVATAR] student video AUTO-START (AI complete, analyser confirmed)')
+      }
     }
   }, [])
 
@@ -442,6 +518,10 @@ export default function ClassRoomPage() {
     try {
       const AC = (window.AudioContext || (window as any).webkitAudioContext)
       const ctx: AudioContext = new AC()
+      // AudioContext created in an async callback has no user-gesture context,
+      // so Chrome starts it suspended. Resume it immediately so the analyser
+      // can actually read audio data.
+      ctx.resume().catch(() => {})
       audioCtxRef.current = ctx
       const src = ctx.createMediaStreamSource(stream)
       analyserSrcRef.current = src
