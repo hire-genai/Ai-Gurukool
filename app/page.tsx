@@ -297,7 +297,7 @@ export default function HomePage() {
           <span className="nav-logo-text">AI-Gurukool</span>
         </a>
         <ul className={`nav-links${mobileNav ? ' nav-open' : ''}`}>
-          <li><a href="#classroom" onClick={() => setMobileNav(false)}>Classroom</a></li>
+          <li><a href="/class-room" onClick={() => setMobileNav(false)}>Classroom</a></li>
           <li><a href="#subjects"  onClick={() => setMobileNav(false)}>Subjects</a></li>
           <li><a href="#report"    onClick={() => setMobileNav(false)}>Reports</a></li>
         </ul>
