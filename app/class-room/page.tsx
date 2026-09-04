@@ -16,18 +16,14 @@ type Status =
   | 'requesting-mic'
   | 'connecting'
   | 'active'
+  | 'reconnecting'
   | 'ended'
   | 'error'
 
 const INITIAL_KICKOFF =
-  "LANGUAGE LOCK — CRITICAL: You MUST speak ONLY in English. " +
-  "Not Korean, not Hindi, not Spanish, not any other language. English only. " +
-  "Your FIRST word MUST be an English greeting like 'Hi' or 'Hello' or 'Hey'. " +
-  "Begin the class now. " +
-  "Greet the student warmly in ONE short sentence in English. " +
-  "Then ask ONE simple question in English: what subject or topic would they like to learn today? " +
-  "DO NOT ask about their grade, age, or class — never ask this. " +
-  "Keep the greeting very short — one or two sentences total. Then STOP and wait for the student to answer."
+  "Begin the class now. Follow STEP 1 from your instructions exactly: " +
+  "say 'Hi there! This is your AI-Gurukool teacher — what subject would you like to study today?' " +
+  "Say nothing else after that. Go completely silent and wait for the student to answer."
 
 export default function ClassRoomPage() {
   const [status, setStatus] = useState<Status>('idle')
@@ -40,6 +36,10 @@ export default function ClassRoomPage() {
   const [startedAt, setStartedAt] = useState<number | null>(null)
   const [endedAt, setEndedAt] = useState<number | null>(null)
   const [transcriptOpen, setTranscriptOpen] = useState(false)
+  const [processingResponse, setProcessingResponse] = useState(false)
+  const [currentSubject, setCurrentSubject] = useState<string | null>(null)
+  const [sessionExpiresAt, setSessionExpiresAt] = useState<number | null>(null)
+  const [expiryWarning, setExpiryWarning] = useState(false)
 
   const pcRef = useRef<RTCPeerConnection | null>(null)
   const dcRef = useRef<RTCDataChannel | null>(null)
@@ -55,6 +55,9 @@ export default function ClassRoomPage() {
 
   const aiSpeakStartRef = useRef<number>(0)
   const kickoffSentRef = useRef<boolean>(false)
+  const reconnectAttemptsRef = useRef<number>(0)
+  const skipTranscriptResetRef = useRef<boolean>(false)
+  const startClassRef = useRef<() => void>(() => {})
 
   // Buffered teacher transcript text — only revealed when audio is actually playing,
   // so what the student SEES matches what they HEAR (no more transcript-ahead-of-voice).
@@ -272,6 +275,7 @@ export default function ClassRoomPage() {
         case 'input_audio_buffer.speech_stopped':
           traceVideo('EVENT: speech_stopped (student ended)')
           setStudentSpeaking(false)
+          setProcessingResponse(true)
           // Pause student video; wait for AI to start before showing AI video
           if (currentAvatarModeRef.current === 'student') {
             currentAvatarModeRef.current = 'idle'
@@ -300,11 +304,18 @@ export default function ClassRoomPage() {
           const cleaned = finalText.trim()
           const hasNonLatin = /[^\x00-\x7F]/.test(cleaned)
           const hasAsciiLetter = /[a-zA-Z]/.test(cleaned)
+          const NOISE_PHRASES = [
+            'thank you', 'thank you for watching', 'thanks for watching',
+            'please subscribe', 'subscribe', 'music playing', 'applause',
+            'background music', 'inaudible', 'laughter',
+          ]
+          const isKnownHallucination = NOISE_PHRASES.some(p => cleaned.toLowerCase() === p)
           const looksLikeNoise =
             cleaned.length < 4 ||
             (!/\s/.test(cleaned) && cleaned.length < 8) ||
             hasNonLatin ||
-            !hasAsciiLetter
+            !hasAsciiLetter ||
+            isKnownHallucination
           if (looksLikeNoise) {
             itemsRef.current.delete(id)
             setTranscript((prev) => prev.filter((p) => p.id !== id))
@@ -316,6 +327,23 @@ export default function ClassRoomPage() {
             text: cleaned || prev.text,
             final: true,
           }))
+          // Detect subject from early student messages (first 3 exchanges only)
+          setCurrentSubject(prev => {
+            if (prev) return prev
+            const SUBJECTS_MAP: Record<string, string> = {
+              math: 'Math', maths: 'Math', mathematics: 'Math',
+              science: 'Science', physics: 'Physics', chemistry: 'Chemistry',
+              biology: 'Biology', english: 'English', grammar: 'English Grammar',
+              history: 'History', geography: 'Geography',
+              computer: 'Computer Science', coding: 'Computer Science',
+              jee: 'JEE Prep', neet: 'NEET Prep', clat: 'CLAT Prep',
+            }
+            const words = cleaned.toLowerCase().split(/\W+/)
+            for (const w of words) {
+              if (SUBJECTS_MAP[w]) return SUBJECTS_MAP[w]
+            }
+            return prev
+          })
           break
         }
         case 'conversation.item.input_audio_transcription.failed': {
@@ -366,6 +394,7 @@ export default function ClassRoomPage() {
           aiSpeakStartRef.current = Date.now()
           aiSpeakingRef.current = true
           setAiSpeaking(true)
+          setProcessingResponse(false)
           traceVideo('EVENT: response.created → trigger AI video', { newTurn })
           if (currentAvatarModeRef.current !== 'student') {
             const v = videoElRef.current
@@ -637,8 +666,13 @@ export default function ClassRoomPage() {
 
   const startClass = useCallback(async () => {
     setErrorMsg('')
-    setTranscript([])
-    itemsRef.current.clear()
+    if (!skipTranscriptResetRef.current) {
+      setTranscript([])
+      itemsRef.current.clear()
+      setCurrentSubject(null)
+      reconnectAttemptsRef.current = 0
+    }
+    skipTranscriptResetRef.current = false
     kickoffSentRef.current = false
     teacherBufferRef.current.clear()
 
@@ -680,6 +714,8 @@ export default function ClassRoomPage() {
 
     const ephemeralKey: string | undefined = sessionInfo?.client_secret?.value
     const model: string | undefined = sessionInfo?.model
+    const expiresAtRaw: number | undefined = sessionInfo?.client_secret?.expires_at
+    if (expiresAtRaw) setSessionExpiresAt(expiresAtRaw * 1000)
 
     if (!ephemeralKey || !model) {
       setStatus('error')
@@ -733,7 +769,18 @@ export default function ClassRoomPage() {
         setStartedAt((v) => v ?? Date.now())
       }
       if (state === 'failed' || state === 'disconnected' || state === 'closed') {
-        if (statusRef.current !== 'ended') setAiSpeaking(false)
+        if (statusRef.current !== 'ended') {
+          setAiSpeaking(false)
+          setProcessingResponse(false)
+          if (state !== 'closed' && reconnectAttemptsRef.current < 2) {
+            reconnectAttemptsRef.current += 1
+            setStatus('reconnecting')
+            skipTranscriptResetRef.current = true
+            setTimeout(() => {
+              if (statusRef.current !== 'ended') startClassRef.current()
+            }, 2000)
+          }
+        }
       }
     }
 
@@ -764,6 +811,9 @@ export default function ClassRoomPage() {
     }
   }, [handleRealtimeEvent, sendEvent, cleanupMedia, cleanupAll])
 
+  // Keep ref current so reconnect timeout can call it without a stale closure
+  useEffect(() => { startClassRef.current = startClass }, [startClass])
+
   const toggleMute = useCallback(() => {
     const stream = micStreamRef.current
     if (!stream) return
@@ -792,6 +842,15 @@ export default function ClassRoomPage() {
     transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [transcript])
 
+  // Session expiry warning — show banner 5 minutes before key expires
+  useEffect(() => {
+    if (!sessionExpiresAt || status !== 'active') return
+    const msUntilWarning = sessionExpiresAt - Date.now() - 5 * 60 * 1000
+    if (msUntilWarning <= 0) { setExpiryWarning(true); return }
+    const t = setTimeout(() => setExpiryWarning(true), msUntilWarning)
+    return () => clearTimeout(t)
+  }, [sessionExpiresAt, status])
+
   // The HTML audio element is only a sink for the WebRTC MediaStream — it plays the
   // sound. It does NOT drive AI-speaking state (that comes from the waveform analyser).
   const attachAudioListeners = useCallback((el: HTMLAudioElement | null) => {
@@ -810,11 +869,15 @@ export default function ClassRoomPage() {
   const statusPill =
     status === 'requesting-mic' || status === 'connecting'
       ? 'Connecting'
+      : status === 'reconnecting'
+      ? 'Reconnecting'
       : status === 'active'
       ? aiSpeaking
         ? 'Teacher speaking'
         : studentSpeaking
         ? 'Listening'
+        : processingResponse
+        ? 'Thinking…'
         : muted
         ? 'Muted'
         : 'Live'
@@ -948,6 +1011,13 @@ export default function ClassRoomPage() {
               <span className="rm-chip-sep">·</span>
               <span className="rm-chip-value">Teacher</span>
             </div>
+            {currentSubject && (
+              <div className="rm-chip rm-chip-subject">
+                <span className="rm-chip-label">📚</span>
+                <span className="rm-chip-sep">·</span>
+                <span className="rm-chip-value">{currentSubject}</span>
+              </div>
+            )}
             {statusPill && (
               <div
                 className={
@@ -1002,6 +1072,19 @@ export default function ClassRoomPage() {
         {errorMsg && (
           <div className="rm-error" role="alert">
             {errorMsg}
+          </div>
+        )}
+
+        {expiryWarning && (
+          <div className="rm-expiry-warn" role="status">
+            ⏱ Session expires soon — your class will auto-renew shortly.
+          </div>
+        )}
+
+        {status === 'reconnecting' && (
+          <div className="rm-reconnect-overlay" role="status">
+            <div className="rm-reconnect-spinner" />
+            <span>Reconnecting your teacher…</span>
           </div>
         )}
       </section>
