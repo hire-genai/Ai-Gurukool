@@ -25,15 +25,52 @@ app/
   globals.css                 — ALL CSS for entire project (variables, animations, components)
   admin/
     page.tsx                  — admin research tracker ("use client")
+  why-trust-us/
+    page.tsx                  — trust marketing page (dark theme, uses lp-* tokens)
+  insights/
+    page.tsx                  — live survey insights dashboard (Chart.js via CDN)
+  api/
+    survey/route.ts           — POST /api/survey → writes SurveyResponse via Prisma
+    insights/route.ts         — GET /api/insights → aggregated survey buckets
+    …                          (realtime-session, etc.)
 public/
   hero.mp4                    — hero section video (classroom demo)
   hero-bg.png, roundtable.png, math.png, biology.png, etc.
   subjects/                   — 17 subject category images
 components/
-  SurveyModal.tsx             — email capture modal (imported in page.tsx)
+  SurveyModal.tsx             — full multi-step survey inside a popup/modal
+                                (opens from "Book a Class" and Why-Trust-Us CTAs)
+prisma/
+  schema.prisma               — SurveyResponse model (Postgres)
+ai-gurukool-survey.html       — reference HTML for the survey (mirrored in SurveyModal.tsx)
+ai-gurukool-landing.html      — reference HTML for the Why-Trust-Us marketing page
 CLAUDE.md                     — this file
 package.json, tsconfig.json, next.config.ts
 ```
+
+## Survey Modal
+`components/SurveyModal.tsx` is the single source of truth for the survey. It replicates `ai-gurukool-survey.html` verbatim and always renders inside the `svy-overlay` popup. Opened from the "Book a Class" nav CTA in `app/page.tsx` and from every CTA on `/why-trust-us`.
+
+Flow (dynamic step count = 3 + numCategories + 2):
+1. **Welcome + video** — /hero.mp4 with mute toggle
+2. **Comprehension check** — one radio question about the video
+3. **Role picker** — Parent / Student / Teacher
+4. **Category screens** — grouped from the role-specific question bank (radio / checkbox / scale). Checkbox `max` caps enforced; Next disabled until all required questions answered.
+5. **Contact** — email required, name/phone optional, interview Yes/No required
+6. **Success** — thank-you card (auto-fits content; not full-screen on mobile)
+
+Full-screen mobile mode (`.svy-card-full`) is applied only for form steps (1 through contact); the welcome and success steps stay as auto-sized centered cards.
+
+### Survey payload → `/api/survey`
+```json
+{
+  "role": "parent|student|teacher",
+  "comprehension": "...",
+  "answers": { "p_relation": "Mother", "p_age": ["9-12"], ... },
+  "contact": { "email": "...", "name": "...", "phone": "...", "interview": "Yes|No" }
+}
+```
+The API packs `comprehension` and `interview` into the JSON `answers` blob under `__comprehension` / `__interview` and stores it in `SurveyResponse.answers` (string). The Prisma schema is unchanged.
 
 ## How It Works: Admin ↔ Public Data Flow
 - **Admin writes** task results + public content + testimonials → stored in `localStorage[aig_phase0_v2]`
@@ -140,4 +177,5 @@ For every feature requested, follow this sequence:
 
 ---
 
-*Last updated: 2026-09-04. Phase 0 ongoing. MVP planning once segment validation complete.*
+*Last updated: 2026-09-16. Phase 0 ongoing. MVP planning once segment validation complete.*
+*Recent additions: full-survey modal (`SurveyModal.tsx`), `/why-trust-us` marketing page, `/insights` dashboard (Chart.js CDN, backed by extended `/api/insights` aggregator over the new question keys). Sample data fallback in the client so charts render even with 0 responses.*

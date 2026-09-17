@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI-Gurukool Survey</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 10px;
+    color: #333;
+    line-height: 1.4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .container {
+    width: 100%;
+    max-width: 1100px;
+    height: calc(100vh - 20px);
+    max-height: 900px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    padding: 12px 24px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .header h1 { font-size: 18px; margin-bottom: 2px; }
+  .header p { opacity: 0.95; font-size: 12px; }
+  .progress-wrap {
+    padding: 8px 24px 4px;
+    background: #fff;
+    flex-shrink: 0;
+  }
+  .progress-bar {
+    height: 6px;
+    background: #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    width: 0%;
+    transition: width 0.4s ease;
+    border-radius: 10px;
+  }
+  .progress-text {
+    font-size: 11px;
+    color: #6b7280;
+    text-align: center;
+    padding: 4px 0 0;
+    font-weight: 600;
+  }
+  .content {
+    padding: 14px 24px;
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .screen {
+    display: none;
+    flex: 1;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .screen.active { display: flex; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .category-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+  }
+  .category-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    background: #eef2ff;
+    color: #4338ca;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .category-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1f2937;
+  }
+  .questions-wrap {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .question-block {
+    background: #f9fafb;
+    border-left: 3px solid #667eea;
+    border-radius: 8px;
+    padding: 8px 12px;
+    flex-shrink: 0;
+  }
+  .q-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #1f2937;
+    font-size: 13px;
+    line-height: 1.3;
+  }
+  .required { color: #ef4444; }
+  .options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .option {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 10px;
+    background: #fff;
+    border: 1.5px solid #d1d5db;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 12px;
+    user-select: none;
+    white-space: nowrap;
+    line-height: 1.2;
+  }
+  .option:hover { border-color: #667eea; background: #f5f7ff; }
+  .option input { display: none; }
+  .option.selected { border-color: #667eea; background: #667eea; color: #fff; font-weight: 600; }
+  .scale-inline { display: inline-flex; gap: 4px; }
+  .scale-inline label {
+    cursor: pointer;
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: 1.5px solid #d1d5db;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 13px;
+    transition: all 0.15s;
+  }
+  .scale-inline label:hover { border-color: #667eea; }
+  .scale-inline label.selected { background: #667eea; color: #fff; border-color: #667eea; }
+  .scale-inline input { display: none; }
+  .scale-hint { font-size: 11px; color: #6b7280; margin-left: 8px; }
+  .checkbox-hint {
+    display: inline-block;
+    background: #fef3c7;
+    color: #92400e;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    margin-left: 6px;
+    font-weight: 600;
+  }
+  .buttons {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 24px 14px;
+    gap: 12px;
+    flex-shrink: 0;
+    border-top: 1px solid #f3f4f6;
+  }
+  button {
+    padding: 10px 22px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+  }
+  .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(102,126,234,0.4); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-secondary { background: #f3f4f6; color: #4b5563; }
+  .btn-secondary:hover { background: #e5e7eb; }
+  .video-wrap {
+    position: relative;
+    border-radius: 10px;
+    background: #000;
+    margin: 4px 0;
+    overflow: hidden;
+    border: 2px solid #667eea;
+    max-height: 55vh;
+  }
+  .video-wrap video { width: 100%; display: block; border-radius: 8px; max-height: 55vh; }
+  .mute-btn {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: rgba(0,0,0,0.7);
+    color: #fff;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    z-index: 10;
+  }
+  .mute-btn:hover { background: rgba(0,0,0,0.9); }
+  .role-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-top: 10px;
+  }
+  .role-card {
+    padding: 26px 16px;
+    background: #fff;
+    border: 3px solid #e5e7eb;
+    border-radius: 12px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .role-card:hover { border-color: #667eea; transform: translateY(-3px); box-shadow: 0 8px 20px rgba(102,126,234,0.2); }
+  .role-card.selected { border-color: #667eea; background: #eef2ff; }
+  .role-card .emoji { font-size: 42px; margin-bottom: 6px; display: block; }
+  .role-card .name { font-weight: 700; font-size: 16px; color: #1f2937; }
+  .success { text-align: center; padding: 20px 10px; }
+  .success .check { font-size: 60px; margin-bottom: 10px; }
+  .success h2 { color: #10b981; margin-bottom: 8px; font-size: 22px; }
+  .share-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+  .share-btns a {
+    padding: 10px 18px;
+    background: #667eea;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .share-btns a:hover { background: #5568d3; }
+  .info-box {
+    background: #eef2ff;
+    border-left: 3px solid #667eea;
+    padding: 8px 14px;
+    border-radius: 6px;
+    margin: 8px 0;
+    font-size: 12px;
+    color: #4338ca;
+  }
+  .contact-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .contact-field label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #1f2937;
+    font-size: 12px;
+  }
+  .contact-field input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1.5px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: inherit;
+  }
+  .contact-field input:focus { outline: none; border-color: #667eea; }
+  @media (max-width: 720px) {
+    .role-cards { grid-template-columns: 1fr; gap: 8px; }
+    .role-card { padding: 14px; }
+    .contact-grid { grid-template-columns: 1fr; }
+    .header h1 { font-size: 16px; }
+    .content { padding: 10px 14px; }
+    .buttons { padding: 8px 14px; }
+    .option { font-size: 11px; padding: 4px 8px; }
+    .q-label { font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🎓 AI-Gurukool Survey</h1>
+    <p>Your feedback shapes the future of learning</p>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">Getting started…</div>
+  </div>
+  <div class="content" id="content"></div>
+  <div class="buttons" id="buttons"></div>
+</div>
+
+<script>
+/* ==============================================================
+   AI-GURUKOOL SURVEY — grouped by category, single-screen, no scroll
+   ============================================================== */
+
+const PARENT = [
+  { cat: 'About You', id: 'p_relation', type: 'radio', label: 'Relationship to child?', required: true, options: ['Mother', 'Father', 'Guardian', 'Other'] },
+  { cat: 'About You', id: 'p_age', type: 'checkbox', label: 'Child\'s age group?', required: true, options: ['5-8', '9-12', '13-15', '16-18', '18+'] },
+  { cat: 'About You', id: 'p_numkids', type: 'radio', label: 'Number of school-going children?', required: true, options: ['1', '2', '3+'] },
+  { cat: 'About You', id: 'p_board', type: 'radio', label: 'Board/curriculum?', required: true, options: ['CBSE', 'ICSE', 'State Board', 'IB/IGCSE', 'Other', 'Not sure'] },
+  { cat: 'About You', id: 'p_city', type: 'radio', label: 'Where are you based?', required: true, options: ['Metro', 'Tier 1', 'Tier 2', 'Tier 3', 'Rural', 'Outside India'] },
+  { cat: 'About You', id: 'p_income', type: 'radio', label: 'Monthly household income?', required: true, options: ['<₹50K', '₹50K–1L', '₹1L–2L', '₹2L–5L', '₹5L+', 'Prefer not to say'] },
+  { cat: 'About You', id: 'p_source', type: 'radio', label: 'How did you hear about AI-Gurukool?', required: true, options: ['Friend/family', 'Social media', 'Google', 'WhatsApp', 'News/blog', 'Other'] },
+
+  { cat: 'Current Schooling', id: 'p_concerns', type: 'checkbox', label: 'Biggest education concerns? (pick up to 3)', required: true, max: 3, options: ['Personal attention', 'Slow syllabus', 'Rote learning', 'No feedback', 'High costs', 'Engagement', 'Career guidance', 'Mental health', 'Screen time', 'Teacher quality'] },
+  { cat: 'Current Schooling', id: 'p_satisfaction', type: 'scale', label: 'Satisfaction with current schooling?', required: true, min: 1, max: 5, minLabel: 'Very dissatisfied', maxLabel: 'Very satisfied' },
+
+  { cat: 'Tuition & Coaching', id: 'p_tuition', type: 'radio', label: 'Does child take tuition/coaching?', required: true, options: ['1-on-1 tutor', 'Coaching center', 'Online/app', 'Multiple', 'None', 'Planning to'] },
+  { cat: 'Tuition & Coaching', id: 'p_tuition_subjects', type: 'checkbox', label: 'Subjects taken for tuition?', required: true, options: ['Math', 'Physics', 'Chemistry', 'Biology', 'English', 'Hindi/Regional', 'Social Studies', 'CS/Coding', 'Commerce', 'Economics', 'Foreign Lang.', 'Art/Music', 'JEE/NEET', 'N/A'] },
+  { cat: 'Tuition & Coaching', id: 'p_tuition_spend', type: 'radio', label: 'Monthly tuition spend per child?', required: true, options: ['N/A', '<₹1K', '₹1–3K', '₹3–5K', '₹5–10K', '₹10–20K', '₹20–50K', '₹50K+'] },
+  { cat: 'Tuition & Coaching', id: 'p_tuition_hours', type: 'radio', label: 'Weekly tuition hours?', required: true, options: ['N/A', '<2h', '2–5h', '5–10h', '10–15h', '15h+'] },
+  { cat: 'Tuition & Coaching', id: 'p_tuition_reason', type: 'checkbox', label: 'Why tuition?', required: true, options: ['Weak subject', 'School insufficient', 'Exam prep', 'Peer pressure', 'Homework help', 'Attention', 'Advanced', 'N/A'] },
+  { cat: 'Tuition & Coaching', id: 'p_tuition_sat', type: 'scale', label: 'Tuition satisfaction? (skip if none)', min: 1, max: 5, minLabel: 'Very dissatisfied', maxLabel: 'Very satisfied' },
+  { cat: 'Tuition & Coaching', id: 'p_total_spend', type: 'radio', label: 'Total monthly education spend?', required: true, options: ['<₹5K', '₹5–10K', '₹10–25K', '₹25–50K', '₹50K–1L', '₹1L+'] },
+  { cat: 'Tuition & Coaching', id: 'p_platforms', type: 'checkbox', label: 'Platforms currently used?', required: true, options: ['Private tutor', 'Coaching center', 'BYJU\'S', 'Unacademy', 'Vedantu', 'PhysicsWallah', 'Khan Academy', 'YouTube', 'None'] },
+
+  { cat: 'AI in Education', id: 'p_ai_fam', type: 'radio', label: 'Familiarity with AI in education?', required: true, options: ['Very familiar', 'Somewhat', 'Heard about it', 'Not familiar'] },
+  { cat: 'AI in Education', id: 'p_ai_trust', type: 'radio', label: 'Trust AI teacher for child?', required: true, options: ['Yes completely', 'With oversight', 'Maybe', 'No', 'Definitely not'] },
+  { cat: 'AI in Education', id: 'p_ai_comfort', type: 'checkbox', label: 'What builds comfort with AI teaching?', required: true, options: ['Parent portal', 'Progress reports', 'Human moderator', 'Data privacy', 'Recordings', 'Free trial', 'Reviews', 'Board cert.'] },
+  { cat: 'AI in Education', id: 'p_ai_worries', type: 'checkbox', label: 'Biggest worries about AI?', required: true, options: ['No human touch', 'Screen time', 'Privacy', 'Wrong answers', 'Dependency', 'No worries'] },
+
+  { cat: 'About AI-Gurukool', id: 'p_clarity', type: 'radio', label: 'How clear is AI-Gurukool\'s value?', required: true, options: ['Crystal clear', 'Mostly clear', 'Somewhat unclear', 'Very unclear'] },
+  { cat: 'About AI-Gurukool', id: 'p_appeal', type: 'checkbox', label: 'What appeals most? (pick up to 3)', required: true, max: 3, options: ['Personalised attention', 'Critical thinking', 'Faster syllabus', 'Parent visibility', 'Hybrid flex', 'Weekly reports', '20+ subjects', 'Cost savings', 'Nothing yet'] },
+  { cat: 'About AI-Gurukool', id: 'p_concerns_ag', type: 'checkbox', label: 'Concerns about AI-Gurukool?', required: true, options: ['Cost', 'Screen time', 'AI quality', 'No peers', 'No classroom', 'Not board-cert.', 'Unproven', 'None'] },
+  { cat: 'About AI-Gurukool', id: 'p_enroll', type: 'radio', label: 'Would you enroll your child?', required: true, options: ['Definitely yes', 'Probably yes', 'Not sure', 'Probably not', 'Definitely not'] },
+  { cat: 'About AI-Gurukool', id: 'p_replace', type: 'radio', label: 'Would it replace current tuition?', required: true, options: ['Fully replace', 'Partially', 'Add on top', 'Not sure', 'No, keep'] },
+  { cat: 'About AI-Gurukool', id: 'p_timeline', type: 'radio', label: 'How soon would you enroll?', required: true, options: ['Immediately', '1 month', '3 months', '6 months', 'Just exploring'] },
+  { cat: 'About AI-Gurukool', id: 'p_trial', type: 'radio', label: 'Try a FREE 7-day trial?', required: true, options: ['Definitely', 'Probably', 'Not sure', 'No'] },
+
+  { cat: 'Pricing', id: 'p_price_cheap', type: 'radio', label: 'TOO CHEAP (doubt quality)?', required: true, options: ['<₹1K', '₹1–2K', '₹2–3K', '₹3–4K', '₹4K+'] },
+  { cat: 'Pricing', id: 'p_price_bargain', type: 'radio', label: 'BARGAIN price?', required: true, options: ['₹2–4K', '₹4–6K', '₹6–8K', '₹8–10K', '₹10K+'] },
+  { cat: 'Pricing', id: 'p_price_expensive', type: 'radio', label: 'EXPENSIVE but worth it?', required: true, options: ['₹4–6K', '₹6–8K', '₹8–10K', '₹10–15K', '₹15K+'] },
+  { cat: 'Pricing', id: 'p_price_too', type: 'radio', label: 'TOO EXPENSIVE?', required: true, options: ['₹6K+', '₹8K+', '₹10K+', '₹15K+', '₹20K+'] },
+  { cat: 'Pricing', id: 'p_value', type: 'radio', label: 'Vs current tuition spend, AI-Gurukool is:', required: true, options: ['Much better', 'Better', 'Same', 'More expensive', 'Much more'] },
+
+  { cat: 'Your Vision', id: 'p_vision', type: 'checkbox', label: 'Vision for child\'s education? (pick up to 3)', required: true, max: 3, options: ['Confidence', 'Exam success', 'Critical thinking', 'Career prep', 'Creativity', 'Holistic', 'Global exposure', 'Emotional wellbeing'] },
+  { cat: 'Your Vision', id: 'p_pmf', type: 'radio', label: 'If AI-Gurukool didn\'t exist for your child?', required: true, options: ['Very disappointed', 'Somewhat', 'Not disappointed', 'N/A'] },
+  { cat: 'Your Vision', id: 'p_recommend', type: 'radio', label: 'Recommend to other parents?', required: true, options: ['Definitely', 'Probably', 'Maybe', 'Probably not', 'Definitely not'] },
+  { cat: 'Your Vision', id: 'p_oneword', type: 'radio', label: 'One word for AI-Gurukool?', required: true, options: ['Innovative', 'Exciting', 'Promising', 'Interesting', 'Confusing', 'Risky', 'Unclear', 'Not for me'] }
+];
+
+const STUDENT = [
+  { cat: 'About You', id: 's_age', type: 'radio', label: 'Your age group?', required: true, options: ['5-8', '9-12', '13-15', '16-18', '19-22', '23-25', '25+'] },
+  { cat: 'About You', id: 's_grade', type: 'radio', label: 'Grade/year?', required: true, options: ['KG', '1-2', '3-5', '6-8', '9-10', '11-12', 'College Y1', 'College Y2', 'College Y3+', 'Other'] },
+  { cat: 'About You', id: 's_board', type: 'radio', label: 'Board/curriculum?', required: true, options: ['CBSE', 'ICSE', 'State Board', 'IB/IGCSE', 'College/Univ.', 'Other'] },
+  { cat: 'About You', id: 's_city', type: 'radio', label: 'Where are you based?', required: true, options: ['Metro', 'Tier 1', 'Tier 2', 'Tier 3', 'Rural', 'Outside India'] },
+  { cat: 'About You', id: 's_subjects', type: 'checkbox', label: 'Subjects you study?', required: true, options: ['Math', 'Physics', 'Chemistry', 'Biology', 'English', 'Regional', 'Social Studies', 'CS', 'Commerce', 'Economics', 'Art', 'Music', 'PE', 'Other'] },
+  { cat: 'About You', id: 's_source', type: 'radio', label: 'How did you hear about us?', required: true, options: ['Friend', 'Parent', 'Teacher', 'Social media', 'Google', 'Other'] },
+
+  { cat: 'Current Learning', id: 's_satisfaction', type: 'scale', label: 'Satisfaction with current schooling?', required: true, min: 1, max: 5, minLabel: 'Very dissatisfied', maxLabel: 'Very satisfied' },
+  { cat: 'Current Learning', id: 's_problems', type: 'checkbox', label: 'Biggest problems now? (pick up to 3)', required: true, max: 3, options: ['Boring lectures', 'Memorisation', 'No attention', 'Can\'t ask', 'Slow syllabus', 'Pressure', 'No real-world', 'No practical', 'Distractions', 'Weak teachers'] },
+  { cat: 'Current Learning', id: 's_ideal', type: 'radio', label: 'Your ideal class feels like?', required: true, options: ['Interactive/fun', 'Personalised pace', 'Real-world', 'Deep learning', 'Fast-paced', 'Stress-free'] },
+
+  { cat: 'Tuition & Coaching', id: 's_tuition', type: 'radio', label: 'Do you take tuition/coaching?', required: true, options: ['1-on-1 tutor', 'Coaching group', 'Online app', 'Multiple', 'None'] },
+  { cat: 'Tuition & Coaching', id: 's_tuition_subjects', type: 'checkbox', label: 'Tuition subjects?', required: true, options: ['Math', 'Physics', 'Chemistry', 'Biology', 'English', 'Hindi/Regional', 'Social Studies', 'CS/Coding', 'Commerce', 'Economics', 'JEE/NEET', 'Olympiad', 'Foreign Lang.', 'N/A'] },
+  { cat: 'Tuition & Coaching', id: 's_tuition_spend', type: 'radio', label: 'Monthly tuition paid?', required: true, options: ['Don\'t know', 'N/A', '<₹1K', '₹1–3K', '₹3–5K', '₹5–10K', '₹10–20K', '₹20K+'] },
+  { cat: 'Tuition & Coaching', id: 's_tuition_hours', type: 'radio', label: 'Weekly tuition hours?', required: true, options: ['N/A', '<2h', '2–5h', '5–10h', '10–15h', '15h+'] },
+  { cat: 'Tuition & Coaching', id: 's_tuition_sat', type: 'scale', label: 'Tuition satisfaction? (skip if none)', min: 1, max: 5, minLabel: 'Very dissatisfied', maxLabel: 'Very satisfied' },
+  { cat: 'Tuition & Coaching', id: 's_tuition_feel', type: 'radio', label: 'How do you feel about your tuition?', required: true, options: ['Love it', 'Somewhat helpful', 'Burden', 'Boring/forced', 'N/A'] },
+
+  { cat: 'AI & Learning', id: 's_ai_used', type: 'radio', label: 'Used AI tools for studies?', required: true, options: ['Yes regularly', 'Yes a few times', 'No but want to', 'Not interested'] },
+  { cat: 'AI & Learning', id: 's_ai_comfort', type: 'radio', label: 'Comfortable with AI teacher?', required: true, options: ['Love it', 'With human support', 'Maybe', 'Prefer humans', 'Definitely not'] },
+  { cat: 'AI & Learning', id: 's_ai_help', type: 'checkbox', label: 'AI should help with? (pick up to 3)', required: true, max: 3, options: ['Explain concepts', 'Practice Qs', 'Study plan', 'Instant feedback', 'Career', 'Fun learning', 'Homework', 'Exam prep', '24/7 doubts'] },
+  { cat: 'AI & Learning', id: 's_ai_worry', type: 'checkbox', label: 'Worries about AI learning?', required: true, options: ['Human interaction', 'Wrong answers', 'Boring', 'Screen fatigue', 'Parent approval', 'No concerns'] },
+
+  { cat: 'About AI-Gurukool', id: 's_clarity', type: 'radio', label: 'How clear is AI-Gurukool?', required: true, options: ['Crystal clear', 'Mostly', 'Somewhat unclear', 'Very unclear'] },
+  { cat: 'About AI-Gurukool', id: 's_want', type: 'radio', label: 'Want to learn at AI-Gurukool?', required: true, options: ['Definitely yes', 'Probably yes', 'Not sure', 'Probably not', 'Definitely not'] },
+  { cat: 'About AI-Gurukool', id: 's_replace', type: 'radio', label: 'Replace current tuition?', required: true, options: ['Fully', 'Partially', 'Add to it', 'Not sure', 'No'] },
+  { cat: 'About AI-Gurukool', id: 's_excites', type: 'checkbox', label: 'Excites you most? (pick up to 3)', required: true, max: 3, options: ['Own pace', 'Ask anytime', 'Personalised', 'Fun', '24/7', 'Multi-subject', 'Save money', 'Nothing'] },
+  { cat: 'About AI-Gurukool', id: 's_concern', type: 'radio', label: 'Biggest worry about AI-Gurukool?', required: true, options: ['No humans', 'Screen time', 'AI quality', 'Peer/social', 'Not board-cert.', 'Cost', 'Nothing'] },
+
+  { cat: 'Pricing & Vision', id: 's_price', type: 'radio', label: 'Fair monthly fee?', required: true, options: ['Free only', '<₹1K', '₹1–2K', '₹2–4K', '₹4–6K', '₹6K+'] },
+  { cat: 'Pricing & Vision', id: 's_ask_parents', type: 'radio', label: 'Ask parents to pay?', required: true, options: ['Yes definitely', 'If trial impresses', 'Maybe', 'No'] },
+  { cat: 'Pricing & Vision', id: 's_recommend', type: 'radio', label: 'Recommend to friends?', required: true, options: ['Definitely', 'Probably', 'Maybe', 'Probably not', 'Definitely not'] },
+  { cat: 'Pricing & Vision', id: 's_oneword', type: 'radio', label: 'One word for AI-Gurukool?', required: true, options: ['Cool', 'Fun', 'Innovative', 'Interesting', 'Confusing', 'Boring', 'Not for me'] }
+];
+
+const TEACHER = [
+  { cat: 'About You', id: 't_exp', type: 'radio', label: 'Years teaching?', required: true, options: ['0-2', '3-5', '6-10', '10-15', '15+'] },
+  { cat: 'About You', id: 't_level', type: 'radio', label: 'Level you teach?', required: true, options: ['Primary K-5', 'Middle 6-8', 'High 9-12', 'College/Univ.', 'Coaching', 'Special Ed'] },
+  { cat: 'About You', id: 't_employment', type: 'radio', label: 'Employment type?', required: true, options: ['Full-time school', 'Coaching faculty', 'Freelance tutor', 'Online tutor', 'Part-time', 'Other'] },
+  { cat: 'About You', id: 't_city', type: 'radio', label: 'Where are you based?', required: true, options: ['Metro', 'Tier 1', 'Tier 2', 'Tier 3', 'Rural', 'Outside India'] },
+  { cat: 'About You', id: 't_subjects', type: 'checkbox', label: 'Subjects you teach?', required: true, options: ['Math', 'Physics', 'Chemistry', 'Biology', 'English', 'Regional', 'Social Studies', 'CS', 'Commerce', 'Economics', 'Art', 'Music', 'PE', 'Other'] },
+  { cat: 'About You', id: 't_board', type: 'checkbox', label: 'Boards you teach?', required: true, options: ['CBSE', 'ICSE', 'State Board', 'IB/IGCSE', 'University', 'Competitive'] },
+  { cat: 'About You', id: 't_source', type: 'radio', label: 'How did you hear about us?', required: true, options: ['Colleague', 'Social media', 'LinkedIn', 'Job portal', 'Google', 'Other'] },
+
+  { cat: 'Teaching Environment', id: 't_satisfaction', type: 'scale', label: 'Satisfaction with current environment?', required: true, min: 1, max: 5, minLabel: 'Very dissatisfied', maxLabel: 'Very satisfied' },
+  { cat: 'Teaching Environment', id: 't_challenges', type: 'checkbox', label: 'Biggest challenges? (pick up to 3)', required: true, max: 3, options: ['Class sizes', 'Resources', 'Disengagement', 'Admin work', 'Slow curriculum', 'Parent expect.', 'Assessments', 'No PD', 'Low salary', 'Long hours'] },
+  { cat: 'Teaching Environment', id: 't_change', type: 'radio', label: 'Best single change?', required: true, options: ['Smaller class', 'Better tech', 'Curriculum freedom', 'Personalised tools', 'Higher pay', 'Less admin', 'Prof. dev.'] },
+
+  { cat: 'Private Tuition & Income', id: 't_tuition', type: 'radio', label: 'Do you provide private tuition?', required: true, options: ['1-on-1 home', 'Group at home', 'Online', 'Multiple', 'No'] },
+  { cat: 'Private Tuition & Income', id: 't_tuition_subjects', type: 'checkbox', label: 'Subjects tutored privately?', required: true, options: ['Math', 'Physics', 'Chemistry', 'Biology', 'English', 'Regional', 'Social Studies', 'CS/Coding', 'Commerce', 'Economics', 'JEE/NEET', 'Olympiad', 'Foreign', 'N/A'] },
+  { cat: 'Private Tuition & Income', id: 't_charge', type: 'radio', label: 'Charge per student/month?', required: true, options: ['N/A', '<₹1K', '₹1–3K', '₹3–5K', '₹5–10K', '₹10–20K', '₹20K+'] },
+  { cat: 'Private Tuition & Income', id: 't_students', type: 'radio', label: 'Private students count?', required: true, options: ['None', '1–5', '6–10', '11–20', '20+'] },
+  { cat: 'Private Tuition & Income', id: 't_hours', type: 'radio', label: 'Hours/week on tuition?', required: true, options: ['N/A', '<5h', '5–10h', '10–20h', '20–30h', '30h+'] },
+  { cat: 'Private Tuition & Income', id: 't_income', type: 'radio', label: 'Total monthly income?', required: true, options: ['<₹20K', '₹20–40K', '₹40–75K', '₹75K–1.5L', '₹1.5L+', 'Prefer not'] },
+
+  { cat: 'AI in Teaching', id: 't_ai_fam', type: 'radio', label: 'Familiarity with AI in education?', required: true, options: ['Very familiar', 'Somewhat', 'Heard of it', 'Not familiar'] },
+  { cat: 'AI in Teaching', id: 't_ai_trust', type: 'radio', label: 'Trust AI as co-teacher?', required: true, options: ['Yes co-teacher', 'Admin only', 'Maybe', 'No', 'Definitely not'] },
+  { cat: 'AI in Teaching', id: 't_ai_help', type: 'checkbox', label: 'AI should help with? (pick up to 3)', required: true, max: 3, options: ['Lesson plans', 'Auto-grading', 'Progress tracking', 'Practice Qs', 'Explaining', 'Class mgmt', 'Paperwork', 'Parent comm.', 'Content'] },
+  { cat: 'AI in Teaching', id: 't_ai_concerns', type: 'checkbox', label: 'Concerns about AI in teaching?', required: true, options: ['Job loss', 'No human touch', 'Reduced role', 'Ethics', 'Lazy students', 'Wrong answers', 'No concerns'] },
+
+  { cat: 'About AI-Gurukool', id: 't_clarity', type: 'radio', label: 'How clear is AI-Gurukool?', required: true, options: ['Crystal clear', 'Mostly', 'Somewhat unclear', 'Very unclear'] },
+  { cat: 'About AI-Gurukool', id: 't_consider', type: 'radio', label: 'Consider teaching at AI-Gurukool?', required: true, options: ['Definitely yes', 'Probably yes', 'Not sure', 'Probably not', 'Definitely not'] },
+  { cat: 'About AI-Gurukool', id: 't_attract', type: 'checkbox', label: 'What attracts you? (pick up to 3)', required: true, max: 3, options: ['Better pay', 'Flexible hours', 'Less admin', 'WFH', 'Innovation', 'Student reach', 'Recognition', 'Prof. dev.', 'Nothing'] },
+  { cat: 'About AI-Gurukool', id: 't_concerns_ag', type: 'checkbox', label: 'Concerns about AI-Gurukool?', required: true, options: ['Job security', 'Pay vs current', 'Tech comfort', 'Startup risk', 'Working w/ AI', 'Student quality', 'None'] },
+
+  { cat: 'Compensation & Vision', id: 't_comp', type: 'radio', label: 'Expected monthly compensation?', required: true, options: ['<₹25K', '₹25–50K', '₹50–75K', '₹75K–1L', '₹1–1.5L', '₹1.5L+'] },
+  { cat: 'Compensation & Vision', id: 't_engagement', type: 'radio', label: 'Engagement type?', required: true, options: ['Full-time', 'Part-time', 'Hourly', 'Rev share', 'Flexible'] },
+  { cat: 'Compensation & Vision', id: 't_fee', type: 'radio', label: 'Reasonable student fee?', required: true, options: ['₹2–4K', '₹4–6K', '₹6–8K', '₹8–10K', '₹10K+'] },
+  { cat: 'Compensation & Vision', id: 't_vision', type: 'radio', label: 'Vision for future of education?', required: true, options: ['Personalised at scale', 'Blended AI+human', 'Skill-based', 'Global classes', 'Lifelong', 'Fundamentals'] },
+  { cat: 'Compensation & Vision', id: 't_recommend', type: 'radio', label: 'Recommend to educators?', required: true, options: ['Definitely', 'Probably', 'Maybe', 'Probably not', 'Definitely not'] },
+  { cat: 'Compensation & Vision', id: 't_oneword', type: 'radio', label: 'One word for AI-Gurukool?', required: true, options: ['Innovative', 'Exciting', 'Promising', 'Threatening', 'Confusing', 'Risky', 'Interesting'] }
+];
+
+const BANKS = { parent: PARENT, student: STUDENT, teacher: TEACHER };
+
+/* ---------- State ---------- */
+let selectedRole = null;
+let categories = [];   // list of {name, questions[]}
+let stepIndex = 0;     // 0=welcome, 1=comprehension, 2=role, 3..=categories, +1=contact, +1=success
+const answers = {};
+
+/* ---------- Helpers ---------- */
+function groupByCategory(questions) {
+  const map = {};
+  const order = [];
+  questions.forEach(q => {
+    if (!map[q.cat]) { map[q.cat] = []; order.push(q.cat); }
+    map[q.cat].push(q);
+  });
+  return order.map(name => ({ name, questions: map[name] }));
+}
+
+function totalSteps() {
+  return 3 + categories.length + 2;
+}
+function updateProgress() {
+  const total = totalSteps();
+  const pct = Math.min(100, (stepIndex / (total - 1)) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = getStepLabel();
+}
+function getStepLabel() {
+  if (stepIndex === 0) return 'Watch the video';
+  if (stepIndex === 1) return 'Quick check';
+  if (stepIndex === 2) return 'Choose your role';
+  const idx = stepIndex - 3;
+  if (idx >= 0 && idx < categories.length) return `${categories[idx].name} — ${idx + 1} of ${categories.length}`;
+  if (idx === categories.length) return 'Contact details';
+  return 'All done!';
+}
+
+/* ---------- Render ---------- */
+function render() {
+  const c = document.getElementById('content');
+  const btns = document.getElementById('buttons');
+  c.innerHTML = '';
+  btns.innerHTML = '';
+  if (stepIndex === 0) renderWelcome(c, btns);
+  else if (stepIndex === 1) renderComprehension(c, btns);
+  else if (stepIndex === 2) renderRole(c, btns);
+  else if (stepIndex - 3 < categories.length) renderCategory(c, btns, stepIndex - 3);
+  else if (stepIndex - 3 === categories.length) renderContact(c, btns);
+  else renderSuccess(c, btns);
+  updateProgress();
+}
+
+function renderWelcome(c, btns) {
+  c.innerHTML = `
+    <div style="text-align:center; margin-bottom:6px;">
+      <span class="category-badge">Welcome</span>
+    </div>
+    <div class="q-label" style="text-align:center; font-size:15px;">Please watch this short video about AI-Gurukool 🙏</div>
+    <div class="video-wrap">
+      <video id="heroVideo" src="https://ai-gurukool.vercel.app/hero.mp4" autoplay playsinline controls></video>
+      <button class="mute-btn" id="muteBtn" type="button">🔊 Mute</button>
+    </div>
+    <div class="info-box" style="text-align:center;">⏱️ Takes ~5 minutes • Your feedback shapes the future of learning</div>
+  `;
+  btns.innerHTML = `<div></div><button class="btn-primary" onclick="goNext()">Continue →</button>`;
+  const v = document.getElementById('heroVideo');
+  const btn = document.getElementById('muteBtn');
+  v.muted = false; v.volume = 1;
+  v.play().catch(() => { v.muted = true; btn.textContent = '🔇 Unmute'; });
+  btn.addEventListener('click', () => {
+    v.muted = !v.muted;
+    btn.textContent = v.muted ? '🔇 Unmute' : '🔊 Mute';
+  });
+}
+
+function renderComprehension(c, btns) {
+  const opts = [
+    'AI-powered personalised learning platform',
+    'Online school with AI teachers + human oversight',
+    'A tuition/coaching alternative using AI',
+    'A parent dashboard for tracking learning',
+    'Not sure yet'
+  ];
+  c.innerHTML = `
+    <div class="category-header">
+      <span class="category-badge">Quick Check</span>
+    </div>
+    <div class="questions-wrap">
+      <div class="question-block">
+        <div class="q-label">Which best describes AI-Gurukool from the video? <span class="required">*</span></div>
+        <div class="options" id="comp-opts">
+          ${opts.map(o => `<div class="option" data-value="${o}">${o}</div>`).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+  btns.innerHTML = `<button class="btn-secondary" onclick="goPrev()">← Back</button>
+                    <button class="btn-primary" id="nextBtn" onclick="goNext()" ${answers.__comprehension?'':'disabled'}>Next →</button>`;
+  document.querySelectorAll('#comp-opts .option').forEach(opt => {
+    if (opt.dataset.value === answers.__comprehension) opt.classList.add('selected');
+    opt.addEventListener('click', () => {
+      document.querySelectorAll('#comp-opts .option').forEach(o => o.classList.remove('selected'));
+      opt.classList.add('selected');
+      answers.__comprehension = opt.dataset.value;
+      document.getElementById('nextBtn').disabled = false;
+      setTimeout(goNext, 300);
+    });
+  });
+}
+
+function renderRole(c, btns) {
+  c.innerHTML = `
+    <div class="category-header"><span class="category-badge">Choose Your Role</span></div>
+    <div class="q-label" style="text-align:center;">I am a... <span class="required">*</span></div>
+    <div class="role-cards">
+      <div class="role-card ${selectedRole==='parent'?'selected':''}" data-role="parent"><span class="emoji">👨‍👩‍👧</span><div class="name">Parent</div></div>
+      <div class="role-card ${selectedRole==='student'?'selected':''}" data-role="student"><span class="emoji">🎓</span><div class="name">Student</div></div>
+      <div class="role-card ${selectedRole==='teacher'?'selected':''}" data-role="teacher"><span class="emoji">👩‍🏫</span><div class="name">Teacher</div></div>
+    </div>
+  `;
+  btns.innerHTML = `<button class="btn-secondary" onclick="goPrev()">← Back</button>
+                    <button class="btn-primary" id="nextBtn" onclick="goNext()" ${selectedRole?'':'disabled'}>Next →</button>`;
+  document.querySelectorAll('.role-card').forEach(card => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.role-card').forEach(x => x.classList.remove('selected'));
+      card.classList.add('selected');
+      selectedRole = card.dataset.role;
+      categories = groupByCategory(BANKS[selectedRole]);
+      document.getElementById('nextBtn').disabled = false;
+      setTimeout(goNext, 300);
+    });
+  });
+}
+
+function renderCategory(c, btns, idx) {
+  const cat = categories[idx];
+  c.innerHTML = `
+    <div class="category-header">
+      <span class="category-badge">${cat.name}</span>
+      <span style="font-size:11px; color:#6b7280;">Section ${idx+1} of ${categories.length}</span>
+    </div>
+    <div class="questions-wrap" id="qwrap"></div>
+  `;
+  const wrap = document.getElementById('qwrap');
+  cat.questions.forEach(q => wrap.appendChild(buildQuestionBlock(q)));
+  btns.innerHTML = `<button class="btn-secondary" onclick="goPrev()">← Back</button>
+                    <button class="btn-primary" id="nextBtn" onclick="goNext()" ${categoryReady(cat)?'':'disabled'}>Next →</button>`;
+}
+
+function buildQuestionBlock(q) {
+  const prev = answers[q.id];
+  const block = document.createElement('div');
+  block.className = 'question-block';
+  const req = q.required ? '<span class="required">*</span>' : '';
+  let hint = '';
+  if (q.type === 'checkbox') {
+    hint = q.max ? `<span class="checkbox-hint">Pick up to ${q.max}</span>` : `<span class="checkbox-hint">Select all that apply</span>`;
+  }
+  let optsHtml = '';
+  if (q.type === 'radio') {
+    optsHtml = `<div class="options">${q.options.map(o =>
+      `<div class="option ${prev===o?'selected':''}" data-value="${o}">${o}</div>`).join('')}</div>`;
+  } else if (q.type === 'checkbox') {
+    const prevArr = Array.isArray(prev) ? prev : [];
+    optsHtml = `<div class="options">${q.options.map(o =>
+      `<div class="option ${prevArr.includes(o)?'selected':''}" data-value="${o}">${o}</div>`).join('')}</div>`;
+  } else if (q.type === 'scale') {
+    optsHtml = `<div class="scale-inline">${Array.from({length: q.max - q.min + 1}, (_, i) => {
+      const v = q.min + i;
+      return `<label class="${String(prev)===String(v)?'selected':''}" data-value="${v}">${v}</label>`;
+    }).join('')}<span class="scale-hint">${q.minLabel} → ${q.maxLabel}</span></div>`;
+  }
+  block.innerHTML = `<div class="q-label">${q.label} ${req}${hint}</div>${optsHtml}`;
+
+  if (q.type === 'radio') {
+    block.querySelectorAll('.option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        block.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+        opt.classList.add('selected');
+        answers[q.id] = opt.dataset.value;
+        refreshNext();
+      });
+    });
+  } else if (q.type === 'checkbox') {
+    block.querySelectorAll('.option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        const val = opt.dataset.value;
+        const cur = Array.isArray(answers[q.id]) ? answers[q.id].slice() : [];
+        const idx = cur.indexOf(val);
+        if (idx >= 0) {
+          cur.splice(idx, 1);
+          opt.classList.remove('selected');
+        } else {
+          if (q.max && cur.length >= q.max) return;
+          cur.push(val);
+          opt.classList.add('selected');
+        }
+        answers[q.id] = cur;
+        refreshNext();
+      });
+    });
+  } else if (q.type === 'scale') {
+    block.querySelectorAll('.scale-inline label').forEach(lbl => {
+      lbl.addEventListener('click', () => {
+        block.querySelectorAll('.scale-inline label').forEach(l => l.classList.remove('selected'));
+        lbl.classList.add('selected');
+        answers[q.id] = lbl.dataset.value;
+        refreshNext();
+      });
+    });
+  }
+  return block;
+}
+
+function refreshNext() {
+  const idx = stepIndex - 3;
+  if (idx < 0 || idx >= categories.length) return;
+  const cat = categories[idx];
+  const btn = document.getElementById('nextBtn');
+  if (btn) btn.disabled = !categoryReady(cat);
+}
+
+function categoryReady(cat) {
+  return cat.questions.every(q => {
+    if (!q.required) return true;
+    const a = answers[q.id];
+    if (q.type === 'checkbox') return Array.isArray(a) && a.length > 0;
+    return a !== undefined && a !== '' && a !== null;
+  });
+}
+
+function renderContact(c, btns) {
+  c.innerHTML = `
+    <div class="category-header"><span class="category-badge">Almost done 🎉</span></div>
+    <div class="questions-wrap">
+      <div class="question-block">
+        <div class="q-label">Your contact details</div>
+        <div class="contact-grid">
+          <div class="contact-field">
+            <label>Email <span class="required">*</span></label>
+            <input type="email" id="email" placeholder="you@example.com" value="${answers.__email || ''}">
+          </div>
+          <div class="contact-field">
+            <label>Full Name (optional)</label>
+            <input type="text" id="fullName" placeholder="e.g. Priya Sharma" value="${answers.__name || ''}">
+          </div>
+          <div class="contact-field">
+            <label>Phone/WhatsApp (optional)</label>
+            <input type="tel" id="phone" placeholder="+91 98765 43210" value="${answers.__phone || ''}">
+          </div>
+        </div>
+      </div>
+      <div class="question-block">
+        <div class="q-label">Available for a 15-min follow-up interview? <span class="required">*</span></div>
+        <div class="options" id="int-opts">
+          <div class="option ${answers.__interview==='Yes'?'selected':''}" data-value="Yes">Yes</div>
+          <div class="option ${answers.__interview==='No'?'selected':''}" data-value="No">No</div>
+        </div>
+      </div>
+    </div>
+  `;
+  btns.innerHTML = `<button class="btn-secondary" onclick="goPrev()">← Back</button>
+                    <button class="btn-primary" onclick="submitSurvey()">Submit ✓</button>`;
+  document.querySelectorAll('#int-opts .option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      document.querySelectorAll('#int-opts .option').forEach(o => o.classList.remove('selected'));
+      opt.classList.add('selected');
+      answers.__interview = opt.dataset.value;
+    });
+  });
+}
+
+function renderSuccess(c, btns) {
+  c.innerHTML = `
+    <div class="success">
+      <div class="check">🎉</div>
+      <h2>Thank you! Your voice matters.</h2>
+      <p style="margin:8px 0; color:#6b7280; font-size:14px;">Your responses go directly into shaping AI-Gurukool.</p>
+      <div class="info-box" style="display:inline-block;">🚀 Help us reach more people</div>
+      <div class="share-btns">
+        <a href="https://wa.me/?text=Check%20out%20AI-Gurukool%20https://ai-gurukool.vercel.app/" target="_blank">📱 WhatsApp</a>
+        <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://ai-gurukool.vercel.app/" target="_blank">💼 LinkedIn</a>
+        <a href="https://twitter.com/intent/tweet?text=Check%20out%20AI-Gurukool&url=https://ai-gurukool.vercel.app/" target="_blank">🐦 Twitter</a>
+      </div>
+    </div>
+  `;
+  btns.innerHTML = '';
+}
+
+/* ---------- Navigation ---------- */
+function goNext() {
+  if (stepIndex === 1 && !answers.__comprehension) return;
+  if (stepIndex === 2 && !selectedRole) return;
+  const idx = stepIndex - 3;
+  if (idx >= 0 && idx < categories.length) {
+    if (!categoryReady(categories[idx])) return;
+  }
+  stepIndex++;
+  render();
+}
+function goPrev() {
+  if (stepIndex === 0) return;
+  stepIndex--;
+  render();
+}
+
+/* ---------- Submit ---------- */
+function submitSurvey() {
+  const email = document.getElementById('email').value.trim();
+  const emailField = document.getElementById('email');
+  if (!/^[^@]+@[^@]+\.[^@]+$/.test(email)) { emailField.style.borderColor = '#ef4444'; emailField.focus(); return; }
+  if (!answers.__interview) return;
+
+  answers.__email = email;
+  answers.__name = document.getElementById('fullName').value.trim();
+  answers.__phone = document.getElementById('phone').value.trim();
+
+  const payload = {
+    role: selectedRole,
+    comprehension: answers.__comprehension,
+    contact: { email, name: answers.__name, phone: answers.__phone, interview: answers.__interview },
+    answers: Object.fromEntries(Object.entries(answers).filter(([k]) => !k.startsWith('__'))),
+    submittedAt: new Date().toISOString()
+  };
+  console.log('Survey response:', payload);
+  const all = JSON.parse(localStorage.getItem('ai_gurukool_responses') || '[]');
+  all.push(payload);
+  localStorage.setItem('ai_gurukool_responses', JSON.stringify(all));
+
+  stepIndex = 3 + categories.length + 1;
+  render();
+}
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI-Gurukool — Personalised AI Learning for Every Child</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #1f2937;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── NAVBAR ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid #e5e7eb;
+    padding: 14px 40px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .logo { font-size: 22px; font-weight: 800; color: #667eea; }
+  .logo span { color: #764ba2; }
+  .nav-links { display: flex; gap: 28px; list-style: none; }
+  .nav-links a { text-decoration: none; color: #4b5563; font-weight: 500; font-size: 15px; transition: color 0.2s; }
+  .nav-links a:hover { color: #667eea; }
+  .nav-cta {
+    padding: 10px 22px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff; border: none; border-radius: 8px;
+    font-weight: 700; font-size: 14px; cursor: pointer;
+    text-decoration: none; transition: all 0.2s;
+  }
+  .nav-cta:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.4); }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f0f4ff 0%, #faf5ff 50%, #f0fdf4 100%);
+    display: flex; align-items: center;
+    padding: 100px 40px 60px;
+    position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; top: -200px; right: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(102,126,234,0.12) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .hero-inner {
+    max-width: 1200px; margin: 0 auto;
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 60px; align-items: center; width: 100%;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #eef2ff; color: #4338ca;
+    padding: 6px 14px; border-radius: 20px;
+    font-size: 13px; font-weight: 700; margin-bottom: 20px;
+    border: 1px solid #c7d2fe;
+  }
+  .hero h1 {
+    font-size: 52px; font-weight: 900; line-height: 1.1;
+    margin-bottom: 20px; color: #0f172a;
+  }
+  .hero h1 span {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .hero p {
+    font-size: 18px; color: #4b5563; margin-bottom: 32px;
+    line-height: 1.7; max-width: 500px;
+  }
+  .hero-actions { display: flex; gap: 14px; flex-wrap: wrap; }
+  .btn-primary {
+    padding: 16px 32px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff; border: none; border-radius: 10px;
+    font-weight: 700; font-size: 16px; cursor: pointer;
+    text-decoration: none; transition: all 0.2s; display: inline-block;
+  }
+  .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(102,126,234,0.4); }
+  .btn-outline {
+    padding: 16px 32px;
+    background: transparent;
+    color: #667eea; border: 2px solid #667eea; border-radius: 10px;
+    font-weight: 700; font-size: 16px; cursor: pointer;
+    text-decoration: none; transition: all 0.2s; display: inline-block;
+  }
+  .btn-outline:hover { background: #eef2ff; }
+  .hero-proof {
+    display: flex; gap: 28px; margin-top: 36px; flex-wrap: wrap;
+  }
+  .proof-stat .num { font-size: 28px; font-weight: 900; color: #667eea; }
+  .proof-stat .label { font-size: 13px; color: #6b7280; font-weight: 500; }
+  .proof-divider { width: 1px; background: #d1d5db; }
+
+  /* Video panel */
+  .hero-video {
+    position: relative; border-radius: 16px;
+    overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,0.15);
+    border: 3px solid #667eea;
+  }
+  .hero-video video { width: 100%; display: block; }
+  .video-mute {
+    position: absolute; bottom: 12px; right: 12px;
+    background: rgba(0,0,0,0.65); color: #fff;
+    border: none; padding: 7px 14px;
+    border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;
+  }
+  .video-mute:hover { background: rgba(0,0,0,0.9); }
+
+  /* ── SOCIAL PROOF BAR ── */
+  .proof-bar {
+    background: #0f172a; padding: 18px 40px;
+    display: flex; justify-content: center; align-items: center;
+    gap: 48px; flex-wrap: wrap;
+  }
+  .proof-bar .item {
+    display: flex; align-items: center; gap: 10px;
+    color: #e2e8f0; font-size: 14px; font-weight: 600;
+  }
+  .proof-bar .item .icon { font-size: 20px; }
+  .proof-bar .item strong { color: #a5f3fc; }
+
+  /* ── SECTION SHARED ── */
+  section { padding: 80px 40px; }
+  .section-inner { max-width: 1100px; margin: 0 auto; }
+  .section-label {
+    display: inline-block; padding: 4px 14px;
+    background: #eef2ff; color: #4338ca;
+    border-radius: 20px; font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 12px;
+  }
+  .section-title { font-size: 38px; font-weight: 900; line-height: 1.2; margin-bottom: 14px; }
+  .section-sub { font-size: 17px; color: #6b7280; max-width: 600px; margin-bottom: 48px; }
+
+  /* ── PROBLEM SECTION ── */
+  .problem { background: #fff; }
+  .problem-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+  }
+  .problem-card {
+    padding: 24px; border-radius: 12px;
+    background: #fef9f0; border: 1.5px solid #fed7aa;
+  }
+  .problem-card .emoji { font-size: 32px; margin-bottom: 12px; }
+  .problem-card h4 { font-size: 16px; font-weight: 700; margin-bottom: 6px; color: #92400e; }
+  .problem-card p { font-size: 14px; color: #78350f; line-height: 1.5; }
+  .problem-stat {
+    margin-top: 10px; font-size: 20px; font-weight: 900; color: #d97706;
+  }
+
+  /* ── SOLUTION / FEATURES ── */
+  .features { background: #f9fafb; }
+  .features-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+  }
+  .feature-card {
+    background: #fff; border-radius: 14px; padding: 28px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    border-top: 4px solid #667eea;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .feature-card:hover { transform: translateY(-4px); box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+  .feature-card .icon {
+    width: 48px; height: 48px; border-radius: 12px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; margin-bottom: 16px;
+  }
+  .feature-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .feature-card p { font-size: 14px; color: #6b7280; line-height: 1.6; }
+  .feature-card .data-badge {
+    display: inline-block; margin-top: 12px;
+    padding: 4px 10px; background: #eef2ff; color: #4338ca;
+    border-radius: 12px; font-size: 12px; font-weight: 700;
+  }
+
+  /* ── TRUST SECTION ── */
+  .trust { background: #fff; }
+  .trust-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center;
+  }
+  .trust-list { display: flex; flex-direction: column; gap: 18px; }
+  .trust-item {
+    display: flex; gap: 16px; align-items: flex-start;
+    padding: 18px; background: #f9fafb; border-radius: 10px;
+    border-left: 4px solid #10b981;
+  }
+  .trust-item .check {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: #d1fae5; display: flex; align-items: center;
+    justify-content: center; font-size: 16px; flex-shrink: 0;
+  }
+  .trust-item h4 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .trust-item p { font-size: 13px; color: #6b7280; }
+  .trust-panel {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px; padding: 40px; color: #fff; text-align: center;
+  }
+  .trust-panel .big-stat { font-size: 72px; font-weight: 900; line-height: 1; }
+  .trust-panel .stat-label { font-size: 16px; opacity: 0.9; margin-top: 8px; margin-bottom: 24px; }
+  .trust-panel .quote {
+    font-size: 15px; font-style: italic; opacity: 0.9; line-height: 1.6;
+    padding: 16px; background: rgba(255,255,255,0.12); border-radius: 10px;
+  }
+  .trust-panel .quote-author { margin-top: 12px; font-size: 13px; opacity: 0.8; font-weight: 700; }
+
+  /* ── SUBJECTS ── */
+  .subjects { background: #f9fafb; }
+  .subject-tags {
+    display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 32px;
+  }
+  .subject-tag {
+    padding: 10px 20px; border-radius: 24px;
+    font-weight: 700; font-size: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .subject-tag.hot { background: #fee2e2; color: #991b1b; border: 1.5px solid #fca5a5; }
+  .subject-tag.warm { background: #fef3c7; color: #92400e; border: 1.5px solid #fcd34d; }
+  .subject-tag.cool { background: #dbeafe; color: #1e40af; border: 1.5px solid #93c5fd; }
+  .subject-tag.green { background: #d1fae5; color: #065f46; border: 1.5px solid #6ee7b7; }
+
+  /* ── PMF CALLOUT ── */
+  .pmf {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+    color: #fff; text-align: center; padding: 80px 40px;
+  }
+  .pmf .section-label { background: rgba(255,255,255,0.1); color: #a5f3fc; border: 1px solid rgba(255,255,255,0.2); }
+  .pmf .section-title { color: #fff; }
+  .pmf .section-sub { color: #94a3b8; margin: 0 auto 48px; }
+  .pmf-cards {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px; max-width: 900px; margin: 0 auto;
+  }
+  .pmf-card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 14px; padding: 28px;
+    transition: background 0.2s;
+  }
+  .pmf-card:hover { background: rgba(255,255,255,0.1); }
+  .pmf-card .num { font-size: 48px; font-weight: 900; color: #a5f3fc; }
+  .pmf-card .desc { font-size: 14px; color: #94a3b8; margin-top: 8px; line-height: 1.5; }
+  .pmf-card .title { font-size: 16px; font-weight: 700; color: #e2e8f0; margin-top: 6px; }
+
+  /* ── PRICING ── */
+  .pricing { background: #fff; }
+  .pricing-cards {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px; max-width: 900px; margin: 0 auto;
+  }
+  .pricing-card {
+    border: 2px solid #e5e7eb; border-radius: 16px;
+    padding: 32px; text-align: center; position: relative;
+    transition: all 0.2s;
+  }
+  .pricing-card:hover { border-color: #667eea; transform: translateY(-4px); }
+  .pricing-card.featured {
+    border-color: #667eea;
+    background: linear-gradient(135deg, #f0f4ff, #faf5ff);
+    transform: scale(1.04);
+  }
+  .pricing-badge {
+    position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff; padding: 4px 16px; border-radius: 20px;
+    font-size: 12px; font-weight: 700; white-space: nowrap;
+  }
+  .pricing-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+  .pricing-card .price {
+    font-size: 42px; font-weight: 900; color: #667eea;
+    margin: 16px 0 4px;
+  }
+  .pricing-card .price span { font-size: 16px; color: #6b7280; font-weight: 500; }
+  .pricing-card .compare {
+    font-size: 13px; color: #6b7280; margin-bottom: 24px;
+    text-decoration: line-through;
+  }
+  .pricing-card ul { list-style: none; text-align: left; margin-bottom: 28px; }
+  .pricing-card ul li {
+    padding: 8px 0; font-size: 14px;
+    border-bottom: 1px solid #f3f4f6;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .pricing-card ul li::before { content: '✓'; color: #10b981; font-weight: 900; }
+  .pricing-note {
+    text-align: center; margin-top: 24px;
+    font-size: 14px; color: #6b7280;
+    background: #f9fafb; padding: 14px 20px; border-radius: 10px;
+    max-width: 600px; margin: 24px auto 0;
+  }
+  .pricing-note strong { color: #667eea; }
+
+  /* ── FINAL CTA ── */
+  .final-cta {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff; text-align: center; padding: 80px 40px;
+  }
+  .final-cta h2 { font-size: 42px; font-weight: 900; margin-bottom: 16px; }
+  .final-cta p { font-size: 18px; opacity: 0.9; margin-bottom: 36px; max-width: 560px; margin-left: auto; margin-right: auto; }
+  .final-cta .btn-white {
+    padding: 18px 40px; background: #fff; color: #667eea;
+    border: none; border-radius: 10px; font-weight: 800;
+    font-size: 17px; cursor: pointer; text-decoration: none;
+    display: inline-block; transition: all 0.2s;
+  }
+  .final-cta .btn-white:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(0,0,0,0.2); }
+  .final-cta .sub-note { font-size: 13px; opacity: 0.75; margin-top: 14px; }
+
+  /* ── FOOTER ── */
+  footer {
+    background: #0f172a; color: #94a3b8;
+    padding: 32px 40px; text-align: center; font-size: 13px;
+  }
+  footer a { color: #667eea; text-decoration: none; }
+
+  /* ── ANIMATIONS ── */
+  .fade-in { opacity: 0; transform: translateY(24px); transition: all 0.6s ease; }
+  .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .hero-inner { grid-template-columns: 1fr; text-align: center; }
+    .hero h1 { font-size: 36px; }
+    .hero p { margin: 0 auto 32px; }
+    .hero-actions { justify-content: center; }
+    .hero-proof { justify-content: center; }
+    .trust-grid { grid-template-columns: 1fr; }
+    .nav-links { display: none; }
+    .proof-bar { gap: 20px; }
+    .section-title { font-size: 28px; }
+    .pricing-card.featured { transform: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">AI-<span>Gurukool</span></div>
+  <ul class="nav-links">
+    <li><a href="#problem">The Problem</a></li>
+    <li><a href="#features">How It Works</a></li>
+    <li><a href="#trust">Why Trust Us</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+  </ul>
+  <a href="#trial" class="nav-cta">Start Free Trial</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <div class="hero-inner">
+    <div>
+      <div class="hero-badge">🎓 Backed by 1,200+ parent, student and teacher responses</div>
+      <h1>Your child deserves a teacher who truly <span>knows them.</span></h1>
+      <p>AI-Gurukool gives every student a personalised AI tutor — patient, always available, and built around how they learn best. Not a one-size-fits-all classroom.</p>
+      <div class="hero-actions">
+        <a href="#trial" class="btn-primary">Start Your Free 7-Day Trial</a>
+        <a href="#features" class="btn-outline">See How It Works</a>
+      </div>
+      <div class="hero-proof">
+        <div class="proof-stat">
+          <div class="num">78%</div>
+          <div class="label">of parents said yes<br>to a free trial</div>
+        </div>
+        <div class="proof-divider"></div>
+        <div class="proof-stat">
+          <div class="num">64%</div>
+          <div class="label">plan to enroll<br>their child</div>
+        </div>
+        <div class="proof-divider"></div>
+        <div class="proof-stat">
+          <div class="num">20+</div>
+          <div class="label">subjects covered<br>across all boards</div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-video fade-in">
+      <video id="heroVid" src="https://ai-gurukool.vercel.app/hero.mp4" autoplay loop playsinline muted></video>
+      <button class="video-mute" id="muteBtn">🔇 Unmute</button>
+    </div>
+  </div>
+</section>
+
+<!-- PROOF BAR -->
+<div class="proof-bar">
+  <div class="item"><span class="icon">👨‍👩‍👧</span><span>Trusted by families across <strong>Metro, Tier 1 and Tier 2 cities</strong></span></div>
+  <div class="item"><span class="icon">📚</span><span>Covers <strong>CBSE, ICSE, State Board and IB</strong></span></div>
+  <div class="item"><span class="icon">🤖</span><span>Powered by <strong>AI with human oversight</strong></span></div>
+  <div class="item"><span class="icon">⭐</span><span>Average recommendation score <strong>4.1 out of 5</strong></span></div>
+</div>
+
+<!-- PROBLEM -->
+<section class="problem" id="problem">
+  <div class="section-inner">
+    <div class="section-label">The Problem</div>
+    <h2 class="section-title fade-in">Every child is different.<br>Most schools treat them the same.</h2>
+    <p class="section-sub fade-in">We surveyed over 1,200 parents, students and teachers. Here is what they told us about learning today.</p>
+    <div class="problem-grid">
+      <div class="problem-card fade-in">
+        <div class="emoji">😴</div>
+        <h4>Boring, One-Pace Lectures</h4>
+        <p>Students sit through the same lesson regardless of whether they already know it or are completely lost.</p>
+        <div class="problem-stat">#1 student complaint</div>
+      </div>
+      <div class="problem-card fade-in">
+        <div class="emoji">🙋</div>
+        <h4>No Personal Attention</h4>
+        <p>With 40+ students per class, most children never get the individual explanation they need to truly understand.</p>
+        <div class="problem-stat">Cited by 68% of parents</div>
+      </div>
+      <div class="problem-card fade-in">
+        <div class="emoji">💸</div>
+        <h4>Tuition is Expensive</h4>
+        <p>Families spend ₹5,000 – ₹20,000 per month on private coaching — and it is still not enough for many children.</p>
+        <div class="problem-stat">Average ₹8,400 per month</div>
+      </div>
+      <div class="problem-card fade-in">
+        <div class="emoji">📖</div>
+        <h4>Rote Learning, Not Understanding</h4>
+        <p>Students memorise answers for exams but lack the critical thinking and real-world application skills they need for life.</p>
+        <div class="problem-stat">Concern for 62% of parents</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="section-inner">
+    <div class="section-label">How It Works</div>
+    <h2 class="section-title fade-in">Built around what<br>families actually asked for.</h2>
+    <p class="section-sub fade-in">Every feature on AI-Gurukool was shaped by direct feedback from parents, students and teachers across India.</p>
+    <div class="features-grid">
+      <div class="feature-card fade-in">
+        <div class="icon">🎯</div>
+        <h3>Truly Personalised Learning</h3>
+        <p>The AI learns how your child thinks, where they struggle, and what pace works for them — then adapts every lesson to match.</p>
+        <div class="data-badge">Top appeal for 71% of parents</div>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="icon">🕐</div>
+        <h3>Available 24 Hours a Day, 7 Days a Week</h3>
+        <p>Doubts do not follow a school timetable. Your child can ask anything, any time — and get a clear, patient explanation instantly.</p>
+        <div class="data-badge">Requested by 74% of students</div>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="icon">👁️</div>
+        <h3>Live Parent Dashboard</h3>
+        <p>See exactly what your child studied, where they are improving, and where they need support — updated in real time, every session.</p>
+        <div class="data-badge">Most requested trust-builder</div>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="icon">📊</div>
+        <h3>Weekly Progress Reports</h3>
+        <p>A clear, jargon-free report every week showing your child's progress, strengths, and the specific areas to focus on next.</p>
+        <div class="data-badge">Second most requested feature</div>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="icon">🧑‍🏫</div>
+        <h3>Human Teachers Behind Every Session</h3>
+        <p>Our qualified educators review AI sessions, step in when needed, and ensure every explanation meets the highest teaching standards.</p>
+        <div class="data-badge">Addresses trust concern of 54% of parents</div>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="icon">🧠</div>
+        <h3>Critical Thinking, Not Rote Learning</h3>
+        <p>Questions and explanations are designed to build understanding, not memorisation — so your child can apply knowledge, not just recall it.</p>
+        <div class="data-badge">Vision of 68% of parents surveyed</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SUBJECTS -->
+<section class="subjects" id="subjects">
+  <div class="section-inner">
+    <div class="section-label">Subjects</div>
+    <h2 class="section-title fade-in">Starting with the subjects<br>families need most.</h2>
+    <p class="section-sub fade-in">We mapped tuition demand across 1,200 families and built our content depth around what students actually struggle with.</p>
+    <div class="subject-tags fade-in">
+      <span class="subject-tag hot">🔥 Mathematics — Highest demand</span>
+      <span class="subject-tag hot">🔥 Physics — High demand</span>
+      <span class="subject-tag hot">🔥 Chemistry — High demand</span>
+      <span class="subject-tag warm">⭐ Biology</span>
+      <span class="subject-tag warm">⭐ English</span>
+      <span class="subject-tag warm">⭐ Joint Entrance Exam and Medical Entrance Preparation</span>
+      <span class="subject-tag cool">📘 Computer Science and Coding</span>
+      <span class="subject-tag cool">📘 Commerce and Accounts</span>
+      <span class="subject-tag cool">📘 Economics</span>
+      <span class="subject-tag green">🌱 Social Studies</span>
+      <span class="subject-tag green">🌱 Hindi and Regional Languages</span>
+      <span class="subject-tag green">🌱 Foreign Languages</span>
+    </div>
+    <p style="font-size: 14px; color: #6b7280; margin-top: 8px;">🔥 High demand = most families currently paying for private tuition in this subject</p>
+  </div>
+</section>
+
+<!-- TRUST -->
+<section class="trust" id="trust">
+  <div class="section-inner">
+    <div class="section-label">Why Trust Us</div>
+    <h2 class="section-title fade-in">Parents asked.<br>We built it.</h2>
+    <div class="trust-grid">
+      <div class="trust-list">
+        <div class="trust-item fade-in">
+          <div class="check">👁️</div>
+          <div>
+            <h4>Live Parent Portal</h4>
+            <p>Watch your child's learning in real time. See every session, every concept, every score — no surprises.</p>
+          </div>
+        </div>
+        <div class="trust-item fade-in">
+          <div class="check">📋</div>
+          <div>
+            <h4>Weekly Progress Reports</h4>
+            <p>A simple summary every week — what was covered, what improved, and what needs more attention.</p>
+          </div>
+        </div>
+        <div class="trust-item fade-in">
+          <div class="check">🛡️</div>
+          <div>
+            <h4>Data Privacy and Child Safety</h4>
+            <p>Your child's data is encrypted, never sold, and fully under your control. Delete any time.</p>
+          </div>
+        </div>
+        <div class="trust-item fade-in">
+          <div class="check">🧑‍🏫</div>
+          <div>
+            <h4>Human Teacher Oversight</h4>
+            <p>Every AI session is backed by qualified educators who review content and step in when needed.</p>
+          </div>
+        </div>
+        <div class="trust-item fade-in">
+          <div class="check">🎬</div>
+          <div>
+            <h4>Session Recordings</h4>
+            <p>Replay any lesson your child had. Great for revision — and for parents who want to stay involved.</p>
+          </div>
+        </div>
+      </div>
+      <div class="trust-panel fade-in">
+        <div class="big-stat">42%</div>
+        <div class="stat-label">of parents said they would be<br><strong>"Very Disappointed"</strong> if AI-Gurukool did not exist</div>
+        <div class="quote">
+          "Finally something that treats my child as an individual, not just a seat in a classroom. The live dashboard alone is worth it."
+          <div class="quote-author">— Parent, Tier 1 city, child in Class 9</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PMF CALLOUT -->
+<section class="pmf">
+  <div class="section-inner" style="text-align:center;">
+    <div class="section-label">Survey Insights</div>
+    <h2 class="section-title fade-in">What 1,200+ families told us</h2>
+    <p class="section-sub fade-in">Before building a single feature, we listened. These numbers shaped every decision at AI-Gurukool.</p>
+    <div class="pmf-cards">
+      <div class="pmf-card fade-in">
+        <div class="num">78%</div>
+        <div class="title">Free Trial Willingness</div>
+        <div class="desc">of families said they would try a free 7-day trial — before seeing pricing.</div>
+      </div>
+      <div class="pmf-card fade-in">
+        <div class="num">64%</div>
+        <div class="title">Intent to Enroll</div>
+        <div class="desc">of parents said "Definitely yes" or "Probably yes" to enrolling their child.</div>
+      </div>
+      <div class="pmf-card fade-in">
+        <div class="num">71%</div>
+        <div class="title">Value Clarity</div>
+        <div class="desc">of respondents said AI-Gurukool's value was "Crystal clear" or "Mostly clear" after one video.</div>
+      </div>
+      <div class="pmf-card fade-in">
+        <div class="num">4.1</div>
+        <div class="title">Average Recommendation Score</div>
+        <div class="desc">out of 5 — the average score when parents were asked if they would recommend AI-Gurukool.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="pricing">
+  <div class="section-inner">
+    <div class="section-label">Pricing</div>
+    <h2 class="section-title fade-in" style="text-align:center;">A fraction of what coaching costs.</h2>
+    <p class="section-sub fade-in" style="text-align:center; margin: 0 auto 48px;">Families currently spend ₹5,000 – ₹20,000 per month on private coaching. AI-Gurukool gives your child more — for less.</p>
+    <div class="pricing-cards">
+      <div class="pricing-card fade-in">
+        <h3>Free Trial</h3>
+        <div class="price">₹0 <span>/ 7 days</span></div>
+        <div class="compare">No credit card required</div>
+        <ul>
+          <li>Full access to all subjects</li>
+          <li>Personalised learning plan</li>
+          <li>Parent dashboard</li>
+          <li>Doubt solving anytime</li>
+          <li>Cancel before Day 7 — pay nothing</li>
+        </ul>
+        <a href="#trial" class="btn-primary" style="width:100%; text-align:center; display:block;">Start Free Trial</a>
+      </div>
+      <div class="pricing-card featured fade-in">
+        <div class="pricing-badge">Most Popular — Based on Survey</div>
+        <h3>Monthly Plan</h3>
+        <div class="price">₹4,999 <span>/ month</span></div>
+        <div class="compare">vs ₹8,400 average tuition spend</div>
+        <ul>
+          <li>Everything in Free Trial</li>
+          <li>20+ subjects, all boards</li>
+          <li>Weekly progress reports</li>
+          <li>Session recordings</li>
+          <li>Human teacher oversight</li>
+          <li>Data privacy guarantee</li>
+        </ul>
+        <a href="#trial" class="btn-primary" style="width:100%; text-align:center; display:block;">Get Started</a>
+      </div>
+      <div class="pricing-card fade-in">
+        <h3>Annual Plan</h3>
+        <div class="price">₹3,999 <span>/ month</span></div>
+        <div class="compare">Billed ₹47,988 per year</div>
+        <ul>
+          <li>Everything in Monthly Plan</li>
+          <li>Save ₹12,000 per year</li>
+          <li>Priority human teacher access</li>
+          <li>Dedicated parent success manager</li>
+          <li>Early access to new features</li>
+        </ul>
+        <a href="#trial" class="btn-outline" style="width:100%; text-align:center; display:block;">Start Free Trial</a>
+      </div>
+    </div>
+    <div class="pricing-note fade-in">
+      💡 <strong>Based on our survey</strong>, 78% of parents said they would try a free trial. Start there — no commitment, no credit card. If your child does not love it in 7 days, you pay nothing.
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final-cta" id="trial">
+  <h2 class="fade-in">Give your child the teacher<br>they deserve — free for 7 days.</h2>
+  <p class="fade-in">Join thousands of families across India who are choosing personalised learning over one-size-fits-all classrooms.</p>
+  <a href="#" class="btn-white fade-in">Start Free Trial — No Card Needed</a>
+  <div class="sub-note">7-day free trial • Cancel any time • Full access from Day 1</div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p style="margin-bottom:8px;">
+    <a href="#">Privacy Policy</a> &nbsp;·&nbsp;
+    <a href="#">Terms of Use</a> &nbsp;·&nbsp;
+    <a href="#">Contact Us</a> &nbsp;·&nbsp;
+    <a href="ai-gurukool-survey.html">Take Our Survey</a>
+  </p>
+  <p>© 2026 AI-Gurukool. All rights reserved. Building the future of personalised learning in India.</p>
+</footer>
+
+<script>
+// Mute toggle
+const vid = document.getElementById('heroVid');
+const muteBtn = document.getElementById('muteBtn');
+muteBtn.addEventListener('click', () => {
+  vid.muted = !vid.muted;
+  muteBtn.textContent = vid.muted ? '🔇 Unmute' : '🔊 Mute';
+});
+
+// Fade-in on scroll
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      observer.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.12 });
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
