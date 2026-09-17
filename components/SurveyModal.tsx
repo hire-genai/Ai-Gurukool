@@ -1,297 +1,181 @@
 'use client'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 
 /* ─── Types ─────────────────────────────────────────────────────────────── */
 type Role = 'parent' | 'student' | 'teacher'
-type AnswerValue = string | string[]
-type Answers = Record<string, AnswerValue>
-interface Contact { name: string; email: string; phone: string }
+type QType = 'radio' | 'checkbox' | 'scale'
 
-interface QuestionBase {
-  key: string
+interface Question {
+  cat: string
+  id: string
+  type: QType
   label: string
   required?: boolean
+  options?: string[]
+  max?: number
+  min?: number
+  minLabel?: string
+  maxLabel?: string
 }
-interface SelectQ extends QuestionBase { type: 'select'; options: string[] }
-interface MultiQ  extends QuestionBase { type: 'multi';  options: string[] }
-interface TextQ   extends QuestionBase { type: 'text';   placeholder?: string }
-type Question = SelectQ | MultiQ | TextQ
 
-interface Section { title: string; questions: Question[] }
+interface Category { name: string; questions: Question[] }
 
-/* ─── Question Data ──────────────────────────────────────────────────────── */
-const SCALE_OPTIONS = ['1','2','3','4','5','6','7','8','9','10']
-const PRICE_OPTIONS = ['₹2000–₹4000','₹4000–₹6000','₹6000–₹8000','₹8000–₹10000','₹10000+']
+type AnswerValue = string | string[]
+type Answers = Record<string, AnswerValue>
 
-const parentSections: Section[] = [
-  {
-    title: 'About You',
-    questions: [
-      { key:'p_relation',    type:'select', label:'What is your relationship to the child?', required:true,
-        options:['Mother','Father','Guardian','Other'] },
-      { key:'p_childAge',    type:'select', label:"What is your child's age group?", required:true,
-        options:['5-8','9-12','13-15','16-18','18+'] },
-      { key:'p_location',    type:'text',   label:'Where are you based? (optional)', placeholder:'e.g. Mumbai, India' },
-      { key:'p_eduConcern',  type:'multi',  label:'What are your biggest education concerns? (select all that apply)', required:true,
-        options:['Lack of personal attention','Slow syllabus','Rote learning','No real-time feedback','High costs','Lack of engagement','No career guidance'] },
-    ],
-  },
-  {
-    title: 'Challenges',
-    questions: [
-      { key:'p_satisfaction', type:'select', label:"How satisfied are you with your child's current schooling?", required:true,
-        options: SCALE_OPTIONS },
-      { key:'p_painPoints',   type:'multi',  label:'What are the biggest pain points? (select all that apply)', required:true,
-        options:['No personal attention','Teacher doesn\'t explain well','Too much homework','Child is bored','No progress tracking','Too expensive'] },
-      { key:'p_changeNeeded', type:'text',   label:'What single change would make the biggest difference? (optional)', placeholder:'e.g. More personalised learning...' },
-    ],
-  },
-  {
-    title: 'AI & The Future',
-    questions: [
-      { key:'p_aiFamiliarity', type:'select', label:'How familiar are you with AI in education?', required:true,
-        options:['Very familiar','Somewhat familiar','Not familiar'] },
-      { key:'p_trustAI',       type:'select', label:'Would you trust an AI teacher for your child?', required:true,
-        options:['Yes completely','Yes with human oversight','Maybe or Not sure','No I don\'t trust AI'] },
-      { key:'p_aiComfort',     type:'multi',  label:'What would make you more comfortable with AI teaching? (select all that apply)', required:true,
-        options:['Live parent portal','Weekly progress reports','Human moderator present','Data privacy assurance','Session recordings'] },
-      { key:'p_enroll',        type:'select', label:'Would you enroll your child in AI-Gurukool?', required:true,
-        options:['Definitely yes','Probably yes','Not sure','Probably not'] },
-      { key:'p_reason',        type:'multi',  label:'What appeals most to you? (select all that apply)', required:true,
-        options:['Personalised attention','Critical thinking focus','Faster syllabus','Live parent visibility','Hybrid flexibility','Weekly reports','20+ subjects'] },
-      { key:'p_concerns',      type:'text',   label:'Any concerns about AI-Gurukool? (optional)', placeholder:'e.g. Cost, screen time...' },
-    ],
-  },
-  {
-    title: 'Your Vision',
-    questions: [
-      { key:'p_price',     type:'select', label:'What monthly fee would you consider fair?', required:true,
-        options: PRICE_OPTIONS },
-      { key:'p_value',     type:'select', label:'How does that compare to your current spend?', required:true,
-        options:['Better value','About the same','More expensive'] },
-      { key:'p_vision',    type:'multi',  label:'What is your vision for your child\'s education?', required:true,
-        options:['Build confidence and communication skills','Excel in academics and exams','Develop critical thinking','Prepare for a strong career','Foster creativity and curiosity','Holistic all-round development','Other'] },
-      { key:'p_recommend', type:'select', label:'Would you recommend AI-Gurukool to other parents?', required:true,
-        options:['Definitely','Maybe','Not sure'] },
-      { key:'p_feedback',  type:'text',   label:'Any other thoughts or suggestions? (optional)', placeholder:'We\'re all ears!' },
-    ],
-  },
+/* ─── Question Banks (mirrors ai-gurukool-survey.html) ───────────────────── */
+const PARENT: Question[] = [
+  { cat: 'About You', id: 'p_relation', type: 'radio', label: 'Relationship to child?', required: true, options: ['Mother', 'Father', 'Guardian', 'Other'] },
+  { cat: 'About You', id: 'p_age', type: 'checkbox', label: "Child's age group?", required: true, options: ['5-8', '9-12', '13-15', '16-18', '18+'] },
+  { cat: 'About You', id: 'p_numkids', type: 'radio', label: 'Number of school-going children?', required: true, options: ['1', '2', '3+'] },
+  { cat: 'About You', id: 'p_board', type: 'radio', label: 'Board/curriculum?', required: true, options: ['CBSE', 'ICSE', 'State Board', 'IB/IGCSE', 'Other', 'Not sure'] },
+  { cat: 'About You', id: 'p_city', type: 'radio', label: 'Where are you based?', required: true, options: ['Metro', 'Tier 1', 'Tier 2', 'Tier 3', 'Rural', 'Outside India'] },
+  { cat: 'About You', id: 'p_income', type: 'radio', label: 'Monthly household income?', required: true, options: ['<₹50K', '₹50K–1L', '₹1L–2L', '₹2L–5L', '₹5L+', 'Prefer not to say'] },
+  { cat: 'About You', id: 'p_source', type: 'radio', label: 'How did you hear about AI-Gurukool?', required: true, options: ['Friend/family', 'Social media', 'Google', 'WhatsApp', 'News/blog', 'Other'] },
+
+  { cat: 'Current Schooling', id: 'p_concerns', type: 'checkbox', label: 'Biggest education concerns? (pick up to 3)', required: true, max: 3, options: ['Personal attention', 'Slow syllabus', 'Rote learning', 'No feedback', 'High costs', 'Engagement', 'Career guidance', 'Mental health', 'Screen time', 'Teacher quality'] },
+  { cat: 'Current Schooling', id: 'p_satisfaction', type: 'scale', label: 'Satisfaction with current schooling?', required: true, min: 1, max: 5, minLabel: 'Very dissatisfied', maxLabel: 'Very satisfied' },
+
+  { cat: 'Tuition & Coaching', id: 'p_tuition', type: 'radio', label: 'Does child take tuition/coaching?', required: true, options: ['1-on-1 tutor', 'Coaching center', 'Online/app', 'Multiple', 'None', 'Planning to'] },
+  { cat: 'Tuition & Coaching', id: 'p_tuition_subjects', type: 'checkbox', label: 'Subjects taken for tuition?', required: true, options: ['Math', 'Physics', 'Chemistry', 'Biology', 'English', 'Hindi/Regional', 'Social Studies', 'CS/Coding', 'Commerce', 'Economics', 'Foreign Lang.', 'Art/Music', 'JEE/NEET', 'N/A'] },
+  { cat: 'Tuition & Coaching', id: 'p_tuition_spend', type: 'radio', label: 'Monthly tuition spend per child?', required: true, options: ['N/A', '<₹1K', '₹1–3K', '₹3–5K', '₹5–10K', '₹10–20K', '₹20–50K', '₹50K+'] },
+  { cat: 'Tuition & Coaching', id: 'p_tuition_hours', type: 'radio', label: 'Weekly tuition hours?', required: true, options: ['N/A', '<2h', '2–5h', '5–10h', '10–15h', '15h+'] },
+  { cat: 'Tuition & Coaching', id: 'p_tuition_reason', type: 'checkbox', label: 'Why tuition?', required: true, options: ['Weak subject', 'School insufficient', 'Exam prep', 'Peer pressure', 'Homework help', 'Attention', 'Advanced', 'N/A'] },
+  { cat: 'Tuition & Coaching', id: 'p_tuition_sat', type: 'scale', label: 'Tuition satisfaction? (skip if none)', min: 1, max: 5, minLabel: 'Very dissatisfied', maxLabel: 'Very satisfied' },
+  { cat: 'Tuition & Coaching', id: 'p_total_spend', type: 'radio', label: 'Total monthly education spend?', required: true, options: ['<₹5K', '₹5–10K', '₹10–25K', '₹25–50K', '₹50K–1L', '₹1L+'] },
+  { cat: 'Tuition & Coaching', id: 'p_platforms', type: 'checkbox', label: 'Platforms currently used?', required: true, options: ['Private tutor', 'Coaching center', "BYJU'S", 'Unacademy', 'Vedantu', 'PhysicsWallah', 'Khan Academy', 'YouTube', 'None'] },
+
+  { cat: 'AI in Education', id: 'p_ai_fam', type: 'radio', label: 'Familiarity with AI in education?', required: true, options: ['Very familiar', 'Somewhat', 'Heard about it', 'Not familiar'] },
+  { cat: 'AI in Education', id: 'p_ai_trust', type: 'radio', label: 'Trust AI teacher for child?', required: true, options: ['Yes completely', 'With oversight', 'Maybe', 'No', 'Definitely not'] },
+  { cat: 'AI in Education', id: 'p_ai_comfort', type: 'checkbox', label: 'What builds comfort with AI teaching?', required: true, options: ['Parent portal', 'Progress reports', 'Human moderator', 'Data privacy', 'Recordings', 'Free trial', 'Reviews', 'Board cert.'] },
+  { cat: 'AI in Education', id: 'p_ai_worries', type: 'checkbox', label: 'Biggest worries about AI?', required: true, options: ['No human touch', 'Screen time', 'Privacy', 'Wrong answers', 'Dependency', 'No worries'] },
+
+  { cat: 'About AI-Gurukool', id: 'p_clarity', type: 'radio', label: "How clear is AI-Gurukool's value?", required: true, options: ['Crystal clear', 'Mostly clear', 'Somewhat unclear', 'Very unclear'] },
+  { cat: 'About AI-Gurukool', id: 'p_appeal', type: 'checkbox', label: 'What appeals most? (pick up to 3)', required: true, max: 3, options: ['Personalised attention', 'Critical thinking', 'Faster syllabus', 'Parent visibility', 'Hybrid flex', 'Weekly reports', '20+ subjects', 'Cost savings', 'Nothing yet'] },
+  { cat: 'About AI-Gurukool', id: 'p_concerns_ag', type: 'checkbox', label: 'Concerns about AI-Gurukool?', required: true, options: ['Cost', 'Screen time', 'AI quality', 'No peers', 'No classroom', 'Not board-cert.', 'Unproven', 'None'] },
+  { cat: 'About AI-Gurukool', id: 'p_enroll', type: 'radio', label: 'Would you enroll your child?', required: true, options: ['Definitely yes', 'Probably yes', 'Not sure', 'Probably not', 'Definitely not'] },
+  { cat: 'About AI-Gurukool', id: 'p_replace', type: 'radio', label: 'Would it replace current tuition?', required: true, options: ['Fully replace', 'Partially', 'Add on top', 'Not sure', 'No, keep'] },
+  { cat: 'About AI-Gurukool', id: 'p_timeline', type: 'radio', label: 'How soon would you enroll?', required: true, options: ['Immediately', '1 month', '3 months', '6 months', 'Just exploring'] },
+  { cat: 'About AI-Gurukool', id: 'p_trial', type: 'radio', label: 'Try a FREE 7-day trial?', required: true, options: ['Definitely', 'Probably', 'Not sure', 'No'] },
+
+  { cat: 'Pricing', id: 'p_price_cheap', type: 'radio', label: 'TOO CHEAP (doubt quality)?', required: true, options: ['<₹1K', '₹1–2K', '₹2–3K', '₹3–4K', '₹4K+'] },
+  { cat: 'Pricing', id: 'p_price_bargain', type: 'radio', label: 'BARGAIN price?', required: true, options: ['₹2–4K', '₹4–6K', '₹6–8K', '₹8–10K', '₹10K+'] },
+  { cat: 'Pricing', id: 'p_price_expensive', type: 'radio', label: 'EXPENSIVE but worth it?', required: true, options: ['₹4–6K', '₹6–8K', '₹8–10K', '₹10–15K', '₹15K+'] },
+  { cat: 'Pricing', id: 'p_price_too', type: 'radio', label: 'TOO EXPENSIVE?', required: true, options: ['₹6K+', '₹8K+', '₹10K+', '₹15K+', '₹20K+'] },
+  { cat: 'Pricing', id: 'p_value', type: 'radio', label: 'Vs current tuition spend, AI-Gurukool is:', required: true, options: ['Much better', 'Better', 'Same', 'More expensive', 'Much more'] },
+
+  { cat: 'Your Vision', id: 'p_vision', type: 'checkbox', label: "Vision for child's education? (pick up to 3)", required: true, max: 3, options: ['Confidence', 'Exam success', 'Critical thinking', 'Career prep', 'Creativity', 'Holistic', 'Global exposure', 'Emotional wellbeing'] },
+  { cat: 'Your Vision', id: 'p_pmf', type: 'radio', label: "If AI-Gurukool didn't exist for your child?", required: true, options: ['Very disappointed', 'Somewhat', 'Not disappointed', 'N/A'] },
+  { cat: 'Your Vision', id: 'p_recommend', type: 'radio', label: 'Recommend to other parents?', required: true, options: ['Definitely', 'Probably', 'Maybe', 'Probably not', 'Definitely not'] },
+  { cat: 'Your Vision', id: 'p_oneword', type: 'radio', label: 'One word for AI-Gurukool?', required: true, options: ['Innovative', 'Exciting', 'Promising', 'Interesting', 'Confusing', 'Risky', 'Unclear', 'Not for me'] },
 ]
 
-const studentSections: Section[] = [
-  {
-    title: 'About You',
-    questions: [
-      { key:'s_age',      type:'select', label:'What is your age group?', required:true,
-        options:['5-8','9-12','13-15','16-18','19-22','23-25','25+'] },
-      { key:'s_grade',    type:'select', label:'What grade or year are you in?', required:true,
-        options:['Kindergarten','1st-2nd','3rd-5th','6th-8th','9th-10th','11th-12th','College Year 1','College Year 2','College Year 3+','Other'] },
-      { key:'s_location', type:'text',   label:'Where are you based? (optional)' },
-      { key:'s_subjects', type:'multi',  label:'Which subjects do you study? (select all that apply)', required:true,
-        options:['Mathematics','Science','History','Languages','Computer Science','Commerce','Art','Music','Physical Education','Other'] },
-    ],
-  },
-  {
-    title: 'Challenges',
-    questions: [
-      { key:'s_satisfaction', type:'select', label:'How satisfied are you with your current schooling?', required:true,
-        options: SCALE_OPTIONS },
-      { key:'s_painPoints',   type:'multi',  label:'What are the biggest problems with how you learn now? (select all that apply)', required:true,
-        options:['Boring lectures','Too much memorisation','No personal attention','Can\'t ask questions freely','Slow syllabus','Too much pressure','Lack of real-world application','Not enough practical learning'] },
-      { key:'s_idealClass',   type:'text',   label:'Describe your ideal class in one sentence. (optional)', placeholder:'e.g. Interactive, personalised, engaging' },
-    ],
-  },
-  {
-    title: 'AI & The Future',
-    questions: [
-      { key:'s_aiFamiliarity', type:'select', label:'Have you used AI tools for learning?', required:true,
-        options:['Yes regularly','Yes a few times','No but I want to','No not interested'] },
-      { key:'s_trustAI',       type:'select', label:'Would you be comfortable with an AI teacher?', required:true,
-        options:['Yes I\'d love that','Yes with human support','Maybe','No I prefer human teachers'] },
-      { key:'s_aiBenefits',    type:'multi',  label:'What would you most want AI to help with? (select all that apply)', required:true,
-        options:['Explaining difficult concepts','Practice questions','Personalised study plans','Instant feedback','Career guidance','Making learning fun'] },
-      { key:'s_enroll',        type:'select', label:'Would you want to learn at AI-Gurukool?', required:true,
-        options:['Definitely yes','Probably yes','Not sure','Probably not'] },
-      { key:'s_concerns',      type:'text',   label:'Any concerns or questions? (optional)', placeholder:'e.g. I might miss human interaction...' },
-    ],
-  },
-  {
-    title: 'Your Vision',
-    questions: [
-      { key:'s_price',     type:'select', label:'What monthly fee seems fair to you?', required:true,
-        options: PRICE_OPTIONS },
-      { key:'s_vision',    type:'text',   label:'What would your ideal learning experience look like? (optional)', placeholder:'e.g. More interactive learning...' },
-      { key:'s_recommend', type:'select', label:'Would you recommend AI-Gurukool to friends?', required:true,
-        options:['Definitely','Maybe','Not sure'] },
-      { key:'s_feedback',  type:'text',   label:'Any other thoughts? (optional)' },
-    ],
-  },
+const STUDENT: Question[] = [
+  { cat: 'About You', id: 's_age', type: 'radio', label: 'Your age group?', required: true, options: ['5-8', '9-12', '13-15', '16-18', '19-22', '23-25', '25+'] },
+  { cat: 'About You', id: 's_grade', type: 'radio', label: 'Grade/year?', required: true, options: ['KG', '1-2', '3-5', '6-8', '9-10', '11-12', 'College Y1', 'College Y2', 'College Y3+', 'Other'] },
+  { cat: 'About You', id: 's_board', type: 'radio', label: 'Board/curriculum?', required: true, options: ['CBSE', 'ICSE', 'State Board', 'IB/IGCSE', 'College/Univ.', 'Other'] },
+  { cat: 'About You', id: 's_city', type: 'radio', label: 'Where are you based?', required: true, options: ['Metro', 'Tier 1', 'Tier 2', 'Tier 3', 'Rural', 'Outside India'] },
+  { cat: 'About You', id: 's_subjects', type: 'checkbox', label: 'Subjects you study?', required: true, options: ['Math', 'Physics', 'Chemistry', 'Biology', 'English', 'Regional', 'Social Studies', 'CS', 'Commerce', 'Economics', 'Art', 'Music', 'PE', 'Other'] },
+  { cat: 'About You', id: 's_source', type: 'radio', label: 'How did you hear about us?', required: true, options: ['Friend', 'Parent', 'Teacher', 'Social media', 'Google', 'Other'] },
+
+  { cat: 'Current Learning', id: 's_satisfaction', type: 'scale', label: 'Satisfaction with current schooling?', required: true, min: 1, max: 5, minLabel: 'Very dissatisfied', maxLabel: 'Very satisfied' },
+  { cat: 'Current Learning', id: 's_problems', type: 'checkbox', label: 'Biggest problems now? (pick up to 3)', required: true, max: 3, options: ['Boring lectures', 'Memorisation', 'No attention', "Can't ask", 'Slow syllabus', 'Pressure', 'No real-world', 'No practical', 'Distractions', 'Weak teachers'] },
+  { cat: 'Current Learning', id: 's_ideal', type: 'radio', label: 'Your ideal class feels like?', required: true, options: ['Interactive/fun', 'Personalised pace', 'Real-world', 'Deep learning', 'Fast-paced', 'Stress-free'] },
+
+  { cat: 'Tuition & Coaching', id: 's_tuition', type: 'radio', label: 'Do you take tuition/coaching?', required: true, options: ['1-on-1 tutor', 'Coaching group', 'Online app', 'Multiple', 'None'] },
+  { cat: 'Tuition & Coaching', id: 's_tuition_subjects', type: 'checkbox', label: 'Tuition subjects?', required: true, options: ['Math', 'Physics', 'Chemistry', 'Biology', 'English', 'Hindi/Regional', 'Social Studies', 'CS/Coding', 'Commerce', 'Economics', 'JEE/NEET', 'Olympiad', 'Foreign Lang.', 'N/A'] },
+  { cat: 'Tuition & Coaching', id: 's_tuition_spend', type: 'radio', label: 'Monthly tuition paid?', required: true, options: ["Don't know", 'N/A', '<₹1K', '₹1–3K', '₹3–5K', '₹5–10K', '₹10–20K', '₹20K+'] },
+  { cat: 'Tuition & Coaching', id: 's_tuition_hours', type: 'radio', label: 'Weekly tuition hours?', required: true, options: ['N/A', '<2h', '2–5h', '5–10h', '10–15h', '15h+'] },
+  { cat: 'Tuition & Coaching', id: 's_tuition_sat', type: 'scale', label: 'Tuition satisfaction? (skip if none)', min: 1, max: 5, minLabel: 'Very dissatisfied', maxLabel: 'Very satisfied' },
+  { cat: 'Tuition & Coaching', id: 's_tuition_feel', type: 'radio', label: 'How do you feel about your tuition?', required: true, options: ['Love it', 'Somewhat helpful', 'Burden', 'Boring/forced', 'N/A'] },
+
+  { cat: 'AI & Learning', id: 's_ai_used', type: 'radio', label: 'Used AI tools for studies?', required: true, options: ['Yes regularly', 'Yes a few times', 'No but want to', 'Not interested'] },
+  { cat: 'AI & Learning', id: 's_ai_comfort', type: 'radio', label: 'Comfortable with AI teacher?', required: true, options: ['Love it', 'With human support', 'Maybe', 'Prefer humans', 'Definitely not'] },
+  { cat: 'AI & Learning', id: 's_ai_help', type: 'checkbox', label: 'AI should help with? (pick up to 3)', required: true, max: 3, options: ['Explain concepts', 'Practice Qs', 'Study plan', 'Instant feedback', 'Career', 'Fun learning', 'Homework', 'Exam prep', '24/7 doubts'] },
+  { cat: 'AI & Learning', id: 's_ai_worry', type: 'checkbox', label: 'Worries about AI learning?', required: true, options: ['Human interaction', 'Wrong answers', 'Boring', 'Screen fatigue', 'Parent approval', 'No concerns'] },
+
+  { cat: 'About AI-Gurukool', id: 's_clarity', type: 'radio', label: 'How clear is AI-Gurukool?', required: true, options: ['Crystal clear', 'Mostly', 'Somewhat unclear', 'Very unclear'] },
+  { cat: 'About AI-Gurukool', id: 's_want', type: 'radio', label: 'Want to learn at AI-Gurukool?', required: true, options: ['Definitely yes', 'Probably yes', 'Not sure', 'Probably not', 'Definitely not'] },
+  { cat: 'About AI-Gurukool', id: 's_replace', type: 'radio', label: 'Replace current tuition?', required: true, options: ['Fully', 'Partially', 'Add to it', 'Not sure', 'No'] },
+  { cat: 'About AI-Gurukool', id: 's_excites', type: 'checkbox', label: 'Excites you most? (pick up to 3)', required: true, max: 3, options: ['Own pace', 'Ask anytime', 'Personalised', 'Fun', '24/7', 'Multi-subject', 'Save money', 'Nothing'] },
+  { cat: 'About AI-Gurukool', id: 's_concern', type: 'radio', label: 'Biggest worry about AI-Gurukool?', required: true, options: ['No humans', 'Screen time', 'AI quality', 'Peer/social', 'Not board-cert.', 'Cost', 'Nothing'] },
+
+  { cat: 'Pricing & Vision', id: 's_price', type: 'radio', label: 'Fair monthly fee?', required: true, options: ['Free only', '<₹1K', '₹1–2K', '₹2–4K', '₹4–6K', '₹6K+'] },
+  { cat: 'Pricing & Vision', id: 's_ask_parents', type: 'radio', label: 'Ask parents to pay?', required: true, options: ['Yes definitely', 'If trial impresses', 'Maybe', 'No'] },
+  { cat: 'Pricing & Vision', id: 's_recommend', type: 'radio', label: 'Recommend to friends?', required: true, options: ['Definitely', 'Probably', 'Maybe', 'Probably not', 'Definitely not'] },
+  { cat: 'Pricing & Vision', id: 's_oneword', type: 'radio', label: 'One word for AI-Gurukool?', required: true, options: ['Cool', 'Fun', 'Innovative', 'Interesting', 'Confusing', 'Boring', 'Not for me'] },
 ]
 
-const teacherSections: Section[] = [
-  {
-    title: 'About You',
-    questions: [
-      { key:'t_experience', type:'select', label:'How many years have you been teaching?', required:true,
-        options:['0-2','3-5','6-10','10-15','15+'] },
-      { key:'t_level',      type:'select', label:'What level do you teach?', required:true,
-        options:['Primary K-5','Middle 6-8','High School 9-12','College or University','Coaching or Tutoring','Special Education'] },
-      { key:'t_location',   type:'text',   label:'Where are you based? (optional)' },
-      { key:'t_subjects',   type:'multi',  label:'Which subjects do you teach? (select all that apply)', required:true,
-        options:['Mathematics','Science','English','History','Computer Science','Languages','Commerce','Art','Music','Physical Education','Other'] },
-    ],
-  },
-  {
-    title: 'Challenges',
-    questions: [
-      { key:'t_satisfaction', type:'select', label:'How satisfied are you with your current teaching environment?', required:true,
-        options: SCALE_OPTIONS },
-      { key:'t_painPoints',   type:'multi',  label:'What are the biggest challenges you face? (select all that apply)', required:true,
-        options:['Large class sizes','Lack of resources','Student disengagement','Administrative burden','Slow curriculum','Parent expectations','Assessment pressure','Lack of professional development'] },
-      { key:'t_changeNeeded', type:'text',   label:'What single change would most improve teaching outcomes? (optional)', placeholder:'e.g. Smaller class sizes...' },
-    ],
-  },
-  {
-    title: 'AI & The Future',
-    questions: [
-      { key:'t_aiFamiliarity', type:'select', label:'How familiar are you with AI tools in education?', required:true,
-        options:['Very familiar','Somewhat familiar','Not familiar'] },
-      { key:'t_trustAI',       type:'select', label:'Would you trust AI as a co-teacher?', required:true,
-        options:['Yes as co-teacher','Yes for admin tasks','Maybe','No I don\'t trust AI'] },
-      { key:'t_aiUse',         type:'multi',  label:'What would you most want AI to help with in teaching? (select all that apply)', required:true,
-        options:['Personalised lesson plans','Auto-grading','Student progress tracking','Generating practice questions','Explaining concepts','Classroom management'] },
-      { key:'t_enroll',        type:'select', label:'Would you consider teaching at AI-Gurukool?', required:true,
-        options:['Definitely yes','Probably yes','Not sure','Probably not'] },
-      { key:'t_concerns',      type:'text',   label:'Any concerns? (optional)', placeholder:'e.g. Job displacement, loss of human touch...' },
-    ],
-  },
-  {
-    title: 'Your Vision',
-    questions: [
-      { key:'t_price',     type:'select', label:'What monthly student fee seems reasonable?', required:true,
-        options: PRICE_OPTIONS },
-      { key:'t_vision',    type:'text',   label:'What is your vision for the future of education? (optional)', placeholder:'e.g. Personalised learning at scale...' },
-      { key:'t_recommend', type:'select', label:'Would you recommend AI-Gurukool to other educators?', required:true,
-        options:['Definitely','Maybe','Not sure'] },
-      { key:'t_feedback',  type:'text',   label:'Any other thoughts or suggestions? (optional)' },
-    ],
-  },
+const TEACHER: Question[] = [
+  { cat: 'About You', id: 't_exp', type: 'radio', label: 'Years teaching?', required: true, options: ['0-2', '3-5', '6-10', '10-15', '15+'] },
+  { cat: 'About You', id: 't_level', type: 'radio', label: 'Level you teach?', required: true, options: ['Primary K-5', 'Middle 6-8', 'High 9-12', 'College/Univ.', 'Coaching', 'Special Ed'] },
+  { cat: 'About You', id: 't_employment', type: 'radio', label: 'Employment type?', required: true, options: ['Full-time school', 'Coaching faculty', 'Freelance tutor', 'Online tutor', 'Part-time', 'Other'] },
+  { cat: 'About You', id: 't_city', type: 'radio', label: 'Where are you based?', required: true, options: ['Metro', 'Tier 1', 'Tier 2', 'Tier 3', 'Rural', 'Outside India'] },
+  { cat: 'About You', id: 't_subjects', type: 'checkbox', label: 'Subjects you teach?', required: true, options: ['Math', 'Physics', 'Chemistry', 'Biology', 'English', 'Regional', 'Social Studies', 'CS', 'Commerce', 'Economics', 'Art', 'Music', 'PE', 'Other'] },
+  { cat: 'About You', id: 't_board', type: 'checkbox', label: 'Boards you teach?', required: true, options: ['CBSE', 'ICSE', 'State Board', 'IB/IGCSE', 'University', 'Competitive'] },
+  { cat: 'About You', id: 't_source', type: 'radio', label: 'How did you hear about us?', required: true, options: ['Colleague', 'Social media', 'LinkedIn', 'Job portal', 'Google', 'Other'] },
+
+  { cat: 'Teaching Environment', id: 't_satisfaction', type: 'scale', label: 'Satisfaction with current environment?', required: true, min: 1, max: 5, minLabel: 'Very dissatisfied', maxLabel: 'Very satisfied' },
+  { cat: 'Teaching Environment', id: 't_challenges', type: 'checkbox', label: 'Biggest challenges? (pick up to 3)', required: true, max: 3, options: ['Class sizes', 'Resources', 'Disengagement', 'Admin work', 'Slow curriculum', 'Parent expect.', 'Assessments', 'No PD', 'Low salary', 'Long hours'] },
+  { cat: 'Teaching Environment', id: 't_change', type: 'radio', label: 'Best single change?', required: true, options: ['Smaller class', 'Better tech', 'Curriculum freedom', 'Personalised tools', 'Higher pay', 'Less admin', 'Prof. dev.'] },
+
+  { cat: 'Private Tuition & Income', id: 't_tuition', type: 'radio', label: 'Do you provide private tuition?', required: true, options: ['1-on-1 home', 'Group at home', 'Online', 'Multiple', 'No'] },
+  { cat: 'Private Tuition & Income', id: 't_tuition_subjects', type: 'checkbox', label: 'Subjects tutored privately?', required: true, options: ['Math', 'Physics', 'Chemistry', 'Biology', 'English', 'Regional', 'Social Studies', 'CS/Coding', 'Commerce', 'Economics', 'JEE/NEET', 'Olympiad', 'Foreign', 'N/A'] },
+  { cat: 'Private Tuition & Income', id: 't_charge', type: 'radio', label: 'Charge per student/month?', required: true, options: ['N/A', '<₹1K', '₹1–3K', '₹3–5K', '₹5–10K', '₹10–20K', '₹20K+'] },
+  { cat: 'Private Tuition & Income', id: 't_students', type: 'radio', label: 'Private students count?', required: true, options: ['None', '1–5', '6–10', '11–20', '20+'] },
+  { cat: 'Private Tuition & Income', id: 't_hours', type: 'radio', label: 'Hours/week on tuition?', required: true, options: ['N/A', '<5h', '5–10h', '10–20h', '20–30h', '30h+'] },
+  { cat: 'Private Tuition & Income', id: 't_income', type: 'radio', label: 'Total monthly income?', required: true, options: ['<₹20K', '₹20–40K', '₹40–75K', '₹75K–1.5L', '₹1.5L+', 'Prefer not'] },
+
+  { cat: 'AI in Teaching', id: 't_ai_fam', type: 'radio', label: 'Familiarity with AI in education?', required: true, options: ['Very familiar', 'Somewhat', 'Heard of it', 'Not familiar'] },
+  { cat: 'AI in Teaching', id: 't_ai_trust', type: 'radio', label: 'Trust AI as co-teacher?', required: true, options: ['Yes co-teacher', 'Admin only', 'Maybe', 'No', 'Definitely not'] },
+  { cat: 'AI in Teaching', id: 't_ai_help', type: 'checkbox', label: 'AI should help with? (pick up to 3)', required: true, max: 3, options: ['Lesson plans', 'Auto-grading', 'Progress tracking', 'Practice Qs', 'Explaining', 'Class mgmt', 'Paperwork', 'Parent comm.', 'Content'] },
+  { cat: 'AI in Teaching', id: 't_ai_concerns', type: 'checkbox', label: 'Concerns about AI in teaching?', required: true, options: ['Job loss', 'No human touch', 'Reduced role', 'Ethics', 'Lazy students', 'Wrong answers', 'No concerns'] },
+
+  { cat: 'About AI-Gurukool', id: 't_clarity', type: 'radio', label: 'How clear is AI-Gurukool?', required: true, options: ['Crystal clear', 'Mostly', 'Somewhat unclear', 'Very unclear'] },
+  { cat: 'About AI-Gurukool', id: 't_consider', type: 'radio', label: 'Consider teaching at AI-Gurukool?', required: true, options: ['Definitely yes', 'Probably yes', 'Not sure', 'Probably not', 'Definitely not'] },
+  { cat: 'About AI-Gurukool', id: 't_attract', type: 'checkbox', label: 'What attracts you? (pick up to 3)', required: true, max: 3, options: ['Better pay', 'Flexible hours', 'Less admin', 'WFH', 'Innovation', 'Student reach', 'Recognition', 'Prof. dev.', 'Nothing'] },
+  { cat: 'About AI-Gurukool', id: 't_concerns_ag', type: 'checkbox', label: 'Concerns about AI-Gurukool?', required: true, options: ['Job security', 'Pay vs current', 'Tech comfort', 'Startup risk', 'Working w/ AI', 'Student quality', 'None'] },
+
+  { cat: 'Compensation & Vision', id: 't_comp', type: 'radio', label: 'Expected monthly compensation?', required: true, options: ['<₹25K', '₹25–50K', '₹50–75K', '₹75K–1L', '₹1–1.5L', '₹1.5L+'] },
+  { cat: 'Compensation & Vision', id: 't_engagement', type: 'radio', label: 'Engagement type?', required: true, options: ['Full-time', 'Part-time', 'Hourly', 'Rev share', 'Flexible'] },
+  { cat: 'Compensation & Vision', id: 't_fee', type: 'radio', label: 'Reasonable student fee?', required: true, options: ['₹2–4K', '₹4–6K', '₹6–8K', '₹8–10K', '₹10K+'] },
+  { cat: 'Compensation & Vision', id: 't_vision', type: 'radio', label: 'Vision for future of education?', required: true, options: ['Personalised at scale', 'Blended AI+human', 'Skill-based', 'Global classes', 'Lifelong', 'Fundamentals'] },
+  { cat: 'Compensation & Vision', id: 't_recommend', type: 'radio', label: 'Recommend to educators?', required: true, options: ['Definitely', 'Probably', 'Maybe', 'Probably not', 'Definitely not'] },
+  { cat: 'Compensation & Vision', id: 't_oneword', type: 'radio', label: 'One word for AI-Gurukool?', required: true, options: ['Innovative', 'Exciting', 'Promising', 'Threatening', 'Confusing', 'Risky', 'Interesting'] },
 ]
 
-const SECTIONS: Record<Role, Section[]> = {
-  parent:  parentSections,
-  student: studentSections,
-  teacher: teacherSections,
-}
+const BANKS: Record<Role, Question[]> = { parent: PARENT, student: STUDENT, teacher: TEACHER }
+
+const COMPREHENSION_OPTIONS = [
+  'AI-powered personalised learning platform',
+  'Online school with AI teachers + human oversight',
+  'A tuition/coaching alternative using AI',
+  'A parent dashboard for tracking learning',
+  'Not sure yet',
+]
 
 /* ─── Helpers ────────────────────────────────────────────────────────────── */
-function isScale(q: SelectQ) {
-  return q.options.length === 10 && q.options[0] === '1' && q.options[9] === '10'
-}
-
-function progressPct(step: number): number {
-  if (step === 0) return 0
-  if (step === 6) return 100
-  return Math.round((step / 6) * 100)
+function groupByCategory(questions: Question[]): Category[] {
+  const map: Record<string, Question[]> = {}
+  const order: string[] = []
+  questions.forEach(q => {
+    if (!map[q.cat]) { map[q.cat] = []; order.push(q.cat) }
+    map[q.cat].push(q)
+  })
+  return order.map(name => ({ name, questions: map[name] }))
 }
 
 function isValidEmail(val: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)
 }
 
-/* ─── Sub-components ─────────────────────────────────────────────────────── */
-function ChipSelect({ q, value, onChange, otherValue, onOtherChange, otherError }: {
-  q: SelectQ
-  value: string
-  onChange: (v: string) => void
-  otherValue?: string
-  onOtherChange?: (v: string) => void
-  otherError?: string
-}) {
-  if (isScale(q)) {
-    return (
-      <div>
-        <div className="svy-scale">
-          {q.options.map(o => (
-            <button key={o} type="button"
-              className={`svy-scale-chip${value === o ? ' active' : ''}`}
-              onClick={() => onChange(o)}
-            >{o}</button>
-          ))}
-        </div>
-        <div className="svy-scale-labels">
-          <span className="svy-scale-lbl">Very dissatisfied</span>
-          <span className="svy-scale-lbl">Very satisfied</span>
-        </div>
-      </div>
-    )
-  }
-
-  const hasOther = q.options.includes('Other')
-  return (
-    <div>
-      <div className="svy-chips">
-        {q.options.map(o => (
-          <button key={o} type="button"
-            className={`svy-chip${value === o ? ' active' : ''}`}
-            onClick={() => onChange(o)}
-          >{o}</button>
-        ))}
-      </div>
-      {hasOther && value === 'Other' && (
-        <div style={{ marginTop: 8 }}>
-          <input
-            className="svy-input"
-            type="text"
-            placeholder="Please specify... *"
-            value={otherValue || ''}
-            onChange={e => onOtherChange?.(e.target.value)}
-          />
-          {otherError && <div className="svy-error">{otherError}</div>}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function ChipMulti({ q, value, onChange, otherValue, onOtherChange, otherError }: {
-  q: MultiQ
-  value: string[]
-  onChange: (v: string[]) => void
-  otherValue?: string
-  onOtherChange?: (v: string) => void
-  otherError?: string
-}) {
-  const toggle = (opt: string) => {
-    if (value.includes(opt)) onChange(value.filter(x => x !== opt))
-    else onChange([...value, opt])
-  }
-
-  const hasOther = q.options.includes('Other')
-  return (
-    <div>
-      <div className="svy-chips">
-        {q.options.map(o => (
-          <button key={o} type="button"
-            className={`svy-chip${value.includes(o) ? ' active' : ''}`}
-            onClick={() => toggle(o)}
-          >{o}</button>
-        ))}
-      </div>
-      {hasOther && value.includes('Other') && (
-        <div style={{ marginTop: 8 }}>
-          <input
-            className="svy-input"
-            type="text"
-            placeholder="Please specify... *"
-            value={otherValue || ''}
-            onChange={e => onOtherChange?.(e.target.value)}
-          />
-          {otherError && <div className="svy-error">{otherError}</div>}
-        </div>
-      )}
-    </div>
-  )
+function categoryReady(cat: Category, answers: Answers) {
+  return cat.questions.every(q => {
+    if (!q.required) return true
+    const a = answers[q.id]
+    if (q.type === 'checkbox') return Array.isArray(a) && a.length > 0
+    return a !== undefined && a !== '' && a !== null
+  })
 }
 
 /* ─── Main Component ─────────────────────────────────────────────────────── */
@@ -300,23 +184,33 @@ interface SurveyModalProps {
   onClose: () => void
 }
 
-const EMPTY_CONTACT: Contact = { name: '', email: '', phone: '' }
-
 export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
-  const [step, setStep]             = useState(0)
-  const [role, setRole]             = useState<Role | null>(null)
-  const [answers, setAnswers]       = useState<Answers>({})
-  const [errors, setErrors]         = useState<Record<string, string>>({})
-  const [contact, setContact]       = useState<Contact>(EMPTY_CONTACT)
-  const [contactErrors, setContactErrors] = useState<Partial<Contact>>({})
+  // step 0 = welcome, 1 = comprehension, 2 = role, 3..3+N-1 = categories, 3+N = contact, 3+N+1 = success
+  const [step, setStep] = useState(0)
+  const [role, setRole] = useState<Role | null>(null)
+  const [comprehension, setComprehension] = useState<string>('')
+  const [answers, setAnswers] = useState<Answers>({})
+  const [contact, setContact] = useState({ name: '', email: '', phone: '', interview: '' })
+  const [contactErrors, setContactErrors] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
+  const [muted, setMuted] = useState(false)
+  const [autoAdvance, setAutoAdvance] = useState(true)
+  const [copied, setCopied] = useState(false)
+  const videoRef = useRef<HTMLVideoElement | null>(null)
+
+  const categories: Category[] = useMemo(
+    () => (role ? groupByCategory(BANKS[role]) : []),
+    [role]
+  )
+  const totalSteps = 3 + categories.length + 2 // welcome, comp, role, cats, contact, success
 
   useEffect(() => {
     if (isOpen) {
-      setStep(0); setRole(null); setAnswers({}); setErrors({})
-      setContact(EMPTY_CONTACT); setContactErrors({})
-      setSubmitting(false); setSubmitError('')
+      setStep(0); setRole(null); setComprehension(''); setAnswers({})
+      setContact({ name: '', email: '', phone: '', interview: '' })
+      setContactErrors({}); setSubmitting(false); setSubmitError(''); setMuted(false)
+      setAutoAdvance(true); setCopied(false)
     }
   }, [isOpen])
 
@@ -336,90 +230,116 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
     }
   }, [isOpen, handleKeyDown])
 
-  if (!isOpen) return null
+  // Attempt to play with sound on welcome step; fall back to muted if blocked
+  useEffect(() => {
+    if (step === 0 && videoRef.current) {
+      const v = videoRef.current
+      v.muted = false; v.volume = 1
+      v.play().catch(() => { v.muted = true; setMuted(true) })
+    }
+  }, [step])
 
-  const sections = role ? SECTIONS[role] : []
-  const currentSection: Section | null = step >= 1 && step <= 4 ? sections[step - 1] : null
-
-  function setAnswer(key: string, val: AnswerValue) {
-    setAnswers(prev => ({ ...prev, [key]: val }))
-    setErrors(prev => { const e = { ...prev }; delete e[key]; delete e[key + '_other']; return e })
-  }
-
-  function setOtherAnswer(key: string, val: string) {
-    setAnswers(prev => ({ ...prev, [key + '_other']: val }))
-    setErrors(prev => { const e = { ...prev }; delete e[key + '_other']; return e })
-  }
-
-  function setContactField(field: keyof Contact, val: string) {
-    setContact(prev => ({ ...prev, [field]: val }))
-    setContactErrors(prev => { const e = { ...prev }; delete e[field]; return e })
-  }
-
-  function validate(): boolean {
-    if (!currentSection) return true
-    const errs: Record<string, string> = {}
-    for (const q of currentSection.questions) {
-      if (!q.required) continue
-      const val = answers[q.key]
-      if (q.type === 'multi') {
-        if (!val || (val as string[]).length === 0) {
-          errs[q.key] = 'Please select at least one option.'
-        } else if ((val as string[]).includes('Other')) {
-          const otherText = (answers[q.key + '_other'] as string || '').trim()
-          if (!otherText) errs[q.key + '_other'] = 'Please specify your other option.'
-        }
-      } else if (q.type === 'select') {
-        if (!val) {
-          errs[q.key] = 'Please select an option.'
-        } else if (val === 'Other') {
-          const otherText = (answers[q.key + '_other'] as string || '').trim()
-          if (!otherText) errs[q.key + '_other'] = 'Please specify your other option.'
+  // Auto-advance: when current category / step is complete, move forward automatically
+  useEffect(() => {
+    if (!isOpen || !autoAdvance) return
+    // Comprehension step
+    if (step === 1 && comprehension) {
+      const t = setTimeout(() => setStep(s => (s === 1 ? 2 : s)), 320)
+      return () => clearTimeout(t)
+    }
+    // Category steps
+    if (step >= 3 && role) {
+      const idx = step - 3
+      if (idx >= 0 && idx < categories.length) {
+        const cat = categories[idx]
+        if (categoryReady(cat, answers)) {
+          const t = setTimeout(() => setStep(s => (s === 3 + idx ? s + 1 : s)), 380)
+          return () => clearTimeout(t)
         }
       }
     }
-    setErrors(errs)
-    return Object.keys(errs).length === 0
+  }, [answers, comprehension, step, autoAdvance, isOpen, role, categories])
+
+  if (!isOpen) return null
+
+  const catIdx = step - 3
+  const currentCategory: Category | null =
+    catIdx >= 0 && catIdx < categories.length ? categories[catIdx] : null
+  const isContactStep = role !== null && step === 3 + categories.length
+  const isSuccessStep = role !== null && step === 3 + categories.length + 1
+
+  const progressPct = Math.min(100, Math.round((step / Math.max(1, totalSteps - 1)) * 100))
+
+  function setAnswer(id: string, val: AnswerValue) {
+    setAnswers(prev => ({ ...prev, [id]: val }))
+    setAutoAdvance(true)
   }
 
-  function validateContact(): boolean {
-    const errs: Partial<Contact> = {}
-    if (!contact.name.trim()) errs.name = 'Name is required.'
-    if (!contact.email.trim()) {
-      errs.email = 'Email is required.'
-    } else if (!isValidEmail(contact.email.trim())) {
-      errs.email = 'Please enter a valid email address.'
+  function toggleCheckbox(q: Question, opt: string) {
+    const cur = Array.isArray(answers[q.id]) ? (answers[q.id] as string[]).slice() : []
+    const idx = cur.indexOf(opt)
+    if (idx >= 0) cur.splice(idx, 1)
+    else {
+      if (q.max && cur.length >= q.max) return
+      cur.push(opt)
     }
-    setContactErrors(errs)
-    return Object.keys(errs).length === 0
+    setAnswer(q.id, cur)
   }
 
-  function handleNext() {
-    if (!validate()) return
+  function goNext() {
+    if (step === 1 && !comprehension) return
+    if (step === 2 && !role) return
+    if (currentCategory && !categoryReady(currentCategory, answers)) return
+    setAutoAdvance(false)
     setStep(s => s + 1)
   }
 
-  function handleBack() {
-    if (step === 1) { setRole(null); setStep(0) }
-    else setStep(s => s - 1)
+  function goPrev() {
+    if (step === 0) return
+    setAutoAdvance(false)
+    setStep(s => s - 1)
   }
 
-  async function handleSubmit() {
-    if (!validateContact()) return
-    setSubmitting(true)
-    setSubmitError('')
+  function selectRole(r: Role) {
+    setRole(r)
+    setAutoAdvance(true)
+    setStep(3)
+  }
+
+  function pickComprehension(v: string) {
+    setComprehension(v)
+    setAutoAdvance(true)
+  }
+
+  async function submitSurvey() {
+    const errs: Record<string, string> = {}
+    if (!contact.email.trim()) errs.email = 'Email is required.'
+    else if (!isValidEmail(contact.email.trim())) errs.email = 'Please enter a valid email.'
+    if (!contact.interview) errs.interview = 'Please answer this question.'
+    setContactErrors(errs)
+    if (Object.keys(errs).length > 0) return
+
+    setSubmitting(true); setSubmitError('')
     try {
+      const payload = {
+        role,
+        comprehension,
+        answers,
+        contact: {
+          name: contact.name.trim(),
+          email: contact.email.trim(),
+          phone: contact.phone.trim(),
+          interview: contact.interview,
+        },
+      }
       const res = await fetch('/api/survey', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role, answers, contact }),
+        body: JSON.stringify(payload),
       })
       const data = await res.json()
-      if (data.ok) {
-        setStep(6)
-      } else {
-        setSubmitError(data.error || 'Something went wrong. Please try again.')
-      }
+      if (data.ok) setStep(3 + categories.length + 1)
+      else setSubmitError(data.error || 'Something went wrong. Please try again.')
     } catch {
       setSubmitError('Network error. Please check your connection and try again.')
     } finally {
@@ -427,30 +347,25 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
     }
   }
 
-  const sectionTitles: Record<Role, string[]> = {
-    parent:  ['About You','Challenges','AI & The Future','Your Vision'],
-    student: ['About You','Challenges','AI & The Future','Your Vision'],
-    teacher: ['About You','Challenges','AI & The Future','Your Vision'],
-  }
-
+  /* ─── Renderers ──────────────────────────────────────────────────────── */
   let eyebrow = ''
-  let title   = ''
-  if (step === 0) { eyebrow = 'Step 1 of 6'; title = 'Who are you?' }
-  else if (step >= 1 && step <= 4 && role) { eyebrow = `Step ${step + 1} of 6 — ${sectionTitles[role][step - 1]}`; title = currentSection?.title ?? '' }
-  else if (step === 5) { eyebrow = 'Step 6 of 6 — Almost Done!'; title = 'Your Details' }
-  else if (step === 6) { eyebrow = 'Complete!'; title = 'Thank You!' }
+  let title = ''
+  if (step === 0) { eyebrow = 'Step 1'; title = 'Watch the intro' }
+  else if (step === 1) { eyebrow = 'Quick check'; title = 'What is AI-Gurukool?' }
+  else if (step === 2) { eyebrow = 'Choose your role'; title = 'I am a…' }
+  else if (currentCategory) { eyebrow = `Section ${catIdx + 1} of ${categories.length}`; title = currentCategory.name }
+  else if (isContactStep) { eyebrow = 'Almost done 🎉'; title = 'Your contact details' }
+  else if (isSuccessStep) { eyebrow = 'Complete'; title = 'Thank you!' }
 
   return (
     <div className="svy-overlay" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div className={`svy-card${step >= 1 ? ' svy-card-full' : ''}`} onClick={e => e.stopPropagation()}>
+      <div className={`svy-card${step >= 1 && !isSuccessStep ? ' svy-card-full' : ''}`} onClick={e => e.stopPropagation()}>
 
-        {/* Progress bar */}
         <div className="svy-progress">
-          <div className="svy-progress-fill" style={{ width: `${progressPct(step)}%` }} />
+          <div className="svy-progress-fill" style={{ width: `${progressPct}%` }} />
         </div>
 
-        {/* Header */}
-        {step !== 6 && (
+        {!isSuccessStep && (
           <div className="svy-header">
             <div className="svy-header-text">
               <div className="svy-eyebrow">{eyebrow}</div>
@@ -460,150 +375,275 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
           </div>
         )}
 
-        {/* Body */}
         <div className="svy-body">
-
-          {/* Step 0 — Role selection */}
+          {/* Welcome + video */}
           {step === 0 && (
+            <div>
+              <div className="svy-q-label" style={{ textAlign: 'center', marginBottom: 10 }}>
+                Please watch this short video about AI-Gurukool 🙏
+              </div>
+              <div className="svy-video-wrap">
+                <video
+                  ref={videoRef}
+                  src="/hero.mp4"
+                  autoPlay
+                  playsInline
+                  controls
+                />
+                <button
+                  className="svy-mute-btn"
+                  type="button"
+                  onClick={() => {
+                    const v = videoRef.current; if (!v) return
+                    v.muted = !v.muted; setMuted(v.muted)
+                  }}
+                >{muted ? '🔇 Unmute' : '🔊 Mute'}</button>
+              </div>
+              <div className="svy-info-box">⏱️ Takes ~5 minutes • Your feedback shapes the future of learning</div>
+            </div>
+          )}
+
+          {/* Comprehension */}
+          {step === 1 && (
+            <div className="svy-q">
+              <div className="svy-q-label">
+                Which best describes AI-Gurukool from the video? <span className="svy-required">*</span>
+              </div>
+              <div className="svy-chips">
+                {COMPREHENSION_OPTIONS.map(o => (
+                  <button
+                    key={o}
+                    type="button"
+                    className={`svy-chip${comprehension === o ? ' active' : ''}`}
+                    onClick={() => pickComprehension(o)}
+                  >{o}</button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Role */}
+          {step === 2 && (
             <div className="svy-role-grid">
               {([
-                { r: 'parent'  as Role, icon: '👨‍👩‍👧', label: 'Parent / Guardian', sub: 'I have a child in school' },
-                { r: 'student' as Role, icon: '🎒',      label: 'Student',            sub: 'I am currently studying' },
-                { r: 'teacher' as Role, icon: '📚',      label: 'Educator',           sub: 'I teach or tutor students' },
+                { r: 'parent'  as Role, icon: '👨‍👩‍👧', label: 'Parent',  sub: 'I have a child in school' },
+                { r: 'student' as Role, icon: '🎓',      label: 'Student', sub: 'I am currently studying' },
+                { r: 'teacher' as Role, icon: '👩‍🏫',    label: 'Teacher', sub: 'I teach or tutor students' },
               ]).map(({ r, icon, label, sub }) => (
-                <button key={r} className="svy-role-btn" onClick={() => { setRole(r); setStep(1) }}>
+                <button
+                  key={r}
+                  className={`svy-role-btn${role === r ? ' active' : ''}`}
+                  onClick={() => selectRole(r)}
+                >
                   <span className="svy-role-icon">{icon}</span>
-                  <span className="svy-role-label">{label}</span>
-                  <span className="svy-role-sub">{sub}</span>
+                  <span>
+                    <span className="svy-role-label">{label}</span>
+                    <span className="svy-role-sub" style={{ display: 'block' }}>{sub}</span>
+                  </span>
                 </button>
               ))}
             </div>
           )}
 
-          {/* Steps 1–4 — Section questions */}
-          {step >= 1 && step <= 4 && currentSection && (
+          {/* Category questions */}
+          {currentCategory && (
             <div>
-              {currentSection.questions.map(q => (
-                <div key={q.key} className="svy-q">
-                  <div className="svy-q-label">
-                    {q.label}
-                    {q.required ? <span className="svy-required">*</span> : <span className="svy-optional">optional</span>}
+              {currentCategory.questions.map(q => {
+                const val = answers[q.id]
+                return (
+                  <div key={q.id} className="svy-q">
+                    <div className="svy-q-label">
+                      {q.label}
+                      {q.required
+                        ? <span className="svy-required">*</span>
+                        : <span className="svy-optional">optional</span>}
+                      {q.type === 'checkbox' && (
+                        <span className="svy-optional" style={{ marginLeft: 8 }}>
+                          {q.max ? `Pick up to ${q.max}` : 'Select all that apply'}
+                        </span>
+                      )}
+                    </div>
+
+                    {q.type === 'radio' && (
+                      <div className="svy-chips">
+                        {q.options!.map(o => (
+                          <button
+                            key={o}
+                            type="button"
+                            className={`svy-chip${val === o ? ' active' : ''}`}
+                            onClick={() => setAnswer(q.id, o)}
+                          >{o}</button>
+                        ))}
+                      </div>
+                    )}
+
+                    {q.type === 'checkbox' && (
+                      <div className="svy-chips">
+                        {q.options!.map(o => {
+                          const arr = Array.isArray(val) ? val : []
+                          return (
+                            <button
+                              key={o}
+                              type="button"
+                              className={`svy-chip${arr.includes(o) ? ' active' : ''}`}
+                              onClick={() => toggleCheckbox(q, o)}
+                            >{o}</button>
+                          )
+                        })}
+                      </div>
+                    )}
+
+                    {q.type === 'scale' && (
+                      <div>
+                        <div className="svy-scale">
+                          {Array.from({ length: (q.max! - q.min! + 1) }, (_, i) => {
+                            const v = String(q.min! + i)
+                            return (
+                              <button
+                                key={v}
+                                type="button"
+                                className={`svy-scale-chip${String(val) === v ? ' active' : ''}`}
+                                onClick={() => setAnswer(q.id, v)}
+                              >{v}</button>
+                            )
+                          })}
+                        </div>
+                        <div className="svy-scale-labels">
+                          <span className="svy-scale-lbl">{q.minLabel}</span>
+                          <span className="svy-scale-lbl">{q.maxLabel}</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
-
-                  {q.type === 'select' && (
-                    <ChipSelect
-                      q={q}
-                      value={(answers[q.key] as string) || ''}
-                      onChange={v => setAnswer(q.key, v)}
-                      otherValue={(answers[q.key + '_other'] as string) || ''}
-                      onOtherChange={v => setOtherAnswer(q.key, v)}
-                      otherError={errors[q.key + '_other']}
-                    />
-                  )}
-
-                  {q.type === 'multi' && (
-                    <ChipMulti
-                      q={q}
-                      value={(answers[q.key] as string[]) || []}
-                      onChange={v => setAnswer(q.key, v)}
-                      otherValue={(answers[q.key + '_other'] as string) || ''}
-                      onOtherChange={v => setOtherAnswer(q.key, v)}
-                      otherError={errors[q.key + '_other']}
-                    />
-                  )}
-
-                  {q.type === 'text' && (
-                    <textarea
-                      className="svy-textarea"
-                      rows={3}
-                      placeholder={q.placeholder || ''}
-                      value={(answers[q.key] as string) || ''}
-                      onChange={e => setAnswer(q.key, e.target.value)}
-                    />
-                  )}
-
-                  {errors[q.key] && <div className="svy-error">{errors[q.key]}</div>}
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
 
-          {/* Step 5 — Contact details */}
-          {step === 5 && (
+          {/* Contact */}
+          {isContactStep && (
             <div className="svy-contact">
-              <p className="svy-contact-intro">Almost done! Share your details so we can keep you updated on AI-Gurukool&apos;s launch.</p>
-
+              <p className="svy-contact-intro">Share your details so we can keep you posted and follow up if needed.</p>
               <div className="svy-q">
-                <div className="svy-q-label">Full Name <span className="svy-required">*</span></div>
+                <div className="svy-q-label">Email <span className="svy-required">*</span></div>
+                <input
+                  className="svy-input"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={contact.email}
+                  onChange={e => setContact(c => ({ ...c, email: e.target.value }))}
+                />
+                {contactErrors.email && <div className="svy-error">{contactErrors.email}</div>}
+              </div>
+              <div className="svy-q">
+                <div className="svy-q-label">Full Name <span className="svy-optional">optional</span></div>
                 <input
                   className="svy-input"
                   type="text"
                   placeholder="e.g. Priya Sharma"
                   value={contact.name}
-                  onChange={e => setContactField('name', e.target.value)}
+                  onChange={e => setContact(c => ({ ...c, name: e.target.value }))}
                 />
-                {contactErrors.name && <div className="svy-error">{contactErrors.name}</div>}
               </div>
-
               <div className="svy-q">
-                <div className="svy-q-label">Email Address <span className="svy-required">*</span></div>
-                <input
-                  className="svy-input"
-                  type="email"
-                  placeholder="e.g. priya@gmail.com"
-                  value={contact.email}
-                  onChange={e => setContactField('email', e.target.value)}
-                />
-                {contactErrors.email && <div className="svy-error">{contactErrors.email}</div>}
-              </div>
-
-              <div className="svy-q">
-                <div className="svy-q-label">Phone Number <span className="svy-optional">optional</span></div>
+                <div className="svy-q-label">Phone / WhatsApp <span className="svy-optional">optional</span></div>
                 <input
                   className="svy-input"
                   type="tel"
-                  placeholder="e.g. +91 98765 43210"
+                  placeholder="+91 98765 43210"
                   value={contact.phone}
-                  onChange={e => setContactField('phone', e.target.value)}
+                  onChange={e => setContact(c => ({ ...c, phone: e.target.value }))}
                 />
               </div>
-
+              <div className="svy-q">
+                <div className="svy-q-label">
+                  Available for a 15-min follow-up interview? <span className="svy-required">*</span>
+                </div>
+                <div className="svy-chips">
+                  {['Yes', 'No'].map(o => (
+                    <button
+                      key={o}
+                      type="button"
+                      className={`svy-chip${contact.interview === o ? ' active' : ''}`}
+                      onClick={() => setContact(c => ({ ...c, interview: o }))}
+                    >{o}</button>
+                  ))}
+                </div>
+                {contactErrors.interview && <div className="svy-error">{contactErrors.interview}</div>}
+              </div>
               <p className="svy-privacy-note">🔒 Your details are kept private and never shared with third parties.</p>
             </div>
           )}
 
-          {/* Step 6 — Success */}
-          {step === 6 && (
-            <div className="svy-success">
-              <div className="svy-success-icon">✅</div>
-              <h3>Responses Submitted!</h3>
-              <p>Thank you for helping shape AI-Gurukool. Your answers directly influence what we build for thousands of students.</p>
-              <button className="svy-btn-next" style={{ marginTop: 12 }} onClick={onClose}>Close</button>
-            </div>
-          )}
+          {/* Success */}
+          {isSuccessStep && (() => {
+            const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://ai-gurukool.vercel.app'
+            const shareText = 'Check out AI-Gurukool — personalised AI learning for every child.'
+            const enc = (s: string) => encodeURIComponent(s)
+            const shares = [
+              { label: 'WhatsApp',  icon: '📱', href: `https://wa.me/?text=${enc(shareText + ' ' + siteUrl)}` },
+              { label: 'Telegram',  icon: '✈️', href: `https://t.me/share/url?url=${enc(siteUrl)}&text=${enc(shareText)}` },
+              { label: 'Twitter',   icon: '🐦', href: `https://twitter.com/intent/tweet?text=${enc(shareText)}&url=${enc(siteUrl)}` },
+              { label: 'LinkedIn',  icon: '💼', href: `https://www.linkedin.com/sharing/share-offsite/?url=${enc(siteUrl)}` },
+              { label: 'Facebook',  icon: '📘', href: `https://www.facebook.com/sharer/sharer.php?u=${enc(siteUrl)}` },
+            ]
+            const copyLink = async () => {
+              try { await navigator.clipboard.writeText(siteUrl); setCopied(true); setTimeout(() => setCopied(false), 2000) } catch {}
+            }
+            return (
+              <div className="svy-success">
+                <div className="svy-success-icon">🎉</div>
+                <h3>Thank you! Your voice matters.</h3>
+                <p>Your responses go directly into shaping AI-Gurukool. Help us reach more people 🚀</p>
 
+                <div className="svy-share-title">Share AI-Gurukool</div>
+                <div className="svy-share-grid">
+                  {shares.map(s => (
+                    <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" className={`svy-share-btn svy-share-${s.label.toLowerCase()}`}>
+                      <span className="svy-share-icon">{s.icon}</span>
+                      <span>{s.label}</span>
+                    </a>
+                  ))}
+                  <button type="button" className="svy-share-btn svy-share-instagram" onClick={copyLink}>
+                    <span className="svy-share-icon">📸</span>
+                    <span>Instagram</span>
+                  </button>
+                  <button type="button" className="svy-share-btn svy-share-copy" onClick={copyLink}>
+                    <span className="svy-share-icon">{copied ? '✅' : '🔗'}</span>
+                    <span>{copied ? 'Copied!' : 'Copy Link'}</span>
+                  </button>
+                </div>
+
+                <button className="svy-btn-next" style={{ marginTop: 16 }} onClick={onClose}>Close</button>
+              </div>
+            )
+          })()}
         </div>
 
-        {/* Submit error */}
         {submitError && <div className="svy-submit-err">{submitError}</div>}
 
-        {/* Footer — steps 1–5 */}
-        {step > 0 && step < 6 && (
+        {!isSuccessStep && (
           <div className="svy-footer">
             <div className="svy-step-info">
-              {role && step <= 4 && `${role.charAt(0).toUpperCase() + role.slice(1)} · Section ${step} of 4`}
-              {step === 5 && 'Final step'}
+              {role && currentCategory && `${role.charAt(0).toUpperCase() + role.slice(1)} · ${currentCategory.name}`}
+              {isContactStep && 'Final step'}
             </div>
             <div className="svy-footer-btns">
-              <button className="svy-btn-back" onClick={handleBack}>← Back</button>
-              {step < 4
-                ? <button className="svy-btn-next" onClick={handleNext}>Next →</button>
-                : step === 4
-                ? <button className="svy-btn-next" onClick={handleNext}>Next →</button>
-                : <button className="svy-btn-next" onClick={handleSubmit} disabled={submitting}>
-                    {submitting ? 'Submitting…' : 'Submit →'}
-                  </button>
-              }
+              {step > 0 && <button className="svy-btn-back" onClick={goPrev}>← Back</button>}
+              {isContactStep ? (
+                <button className="svy-btn-next" onClick={submitSurvey} disabled={submitting}>
+                  {submitting ? 'Submitting…' : 'Submit ✓'}
+                </button>
+              ) : step !== 2 ? (
+                <button
+                  className="svy-btn-next"
+                  onClick={goNext}
+                  disabled={
+                    (step === 1 && !comprehension) ||
+                    (!!currentCategory && !categoryReady(currentCategory, answers))
+                  }
+                >Next →</button>
+              ) : null}
             </div>
           </div>
         )}
