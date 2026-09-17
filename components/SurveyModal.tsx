@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
+import { useCurrency, convertLabel } from '@/lib/currency'
 
 /* ─── Types ─────────────────────────────────────────────────────────────── */
 type Role = 'parent' | 'student' | 'teacher'
@@ -198,6 +199,7 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
   const [autoAdvance, setAutoAdvance] = useState(true)
   const [copied, setCopied] = useState(false)
   const videoRef = useRef<HTMLVideoElement | null>(null)
+  const currency = useCurrency()
 
   const categories: Category[] = useMemo(
     () => (role ? groupByCategory(BANKS[role]) : []),
@@ -472,7 +474,7 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
                             type="button"
                             className={`svy-chip${val === o ? ' active' : ''}`}
                             onClick={() => setAnswer(q.id, o)}
-                          >{o}</button>
+                          >{convertLabel(o, currency)}</button>
                         ))}
                       </div>
                     )}
@@ -487,7 +489,7 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
                               type="button"
                               className={`svy-chip${arr.includes(o) ? ' active' : ''}`}
                               onClick={() => toggleCheckbox(q, o)}
-                            >{o}</button>
+                            >{convertLabel(o, currency)}</button>
                           )
                         })}
                       </div>

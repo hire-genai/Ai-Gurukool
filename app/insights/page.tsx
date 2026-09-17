@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { useCurrency, convertLabel } from '@/lib/currency'
 
 /* ─── Types ─────────────────────────────────────────────────────────────── */
 type Bucket = { label: string; count: number }
@@ -192,7 +193,9 @@ export default function InsightsPage() {
   const [usingSample, setUsingSample] = useState(false)
   const [loading, setLoading]   = useState(true)
   const [error, setError]       = useState('')
+  const [formattedDate, setFormattedDate] = useState('')
   const chartsRef = useRef<Array<{ destroy(): void }>>([])
+  const currency = useCurrency()
 
   useEffect(() => {
     let alive = true
@@ -255,7 +258,7 @@ export default function InsightsPage() {
       }
       const bar = (id: string, rows: Bucket[], color: string | string[] = GOLD, horizontal = false) => mk(id, {
         type: 'bar',
-        data: { labels: rows.map(r => r.label), datasets: [{ data: rows.map(r => r.count), backgroundColor: color, borderRadius: 6, maxBarThickness: 34 }] },
+        data: { labels: rows.map(r => convertLabel(r.label, currency)), datasets: [{ data: rows.map(r => r.count), backgroundColor: color, borderRadius: 6, maxBarThickness: 34 }] },
         options: {
           maintainAspectRatio: false, indexAxis: horizontal ? 'y' : 'x',
           plugins: { legend: { display: false }, tooltip: { backgroundColor: '#0a1526', borderColor: 'rgba(255,255,255,.1)', borderWidth: 1 } },
@@ -264,7 +267,7 @@ export default function InsightsPage() {
       })
       const doughnut = (id: string, rows: Bucket[], colors = PALETTE) => mk(id, {
         type: 'doughnut',
-        data: { labels: rows.map(r => r.label), datasets: [{ data: rows.map(r => r.count), backgroundColor: colors, borderColor: '#07111f', borderWidth: 2 }] },
+        data: { labels: rows.map(r => convertLabel(r.label, currency)), datasets: [{ data: rows.map(r => r.count), backgroundColor: colors, borderColor: '#07111f', borderWidth: 2 }] },
         options: { maintainAspectRatio: false, cutout: '62%', plugins: { legend: { position: 'bottom', labels: { color: AXIS, boxWidth: 10, padding: 10, font: { size: 11 } } } } },
       })
 
@@ -291,7 +294,7 @@ export default function InsightsPage() {
       mk('c-vw', {
         type: 'line',
         data: {
-          labels: priceLabels,
+          labels: priceLabels.map(l => convertLabel(l, currency)),
           datasets: [
             { label: 'Too cheap (%)',      data: cumFromLeft(D_.pC),  borderColor: RED,    backgroundColor: 'transparent', tension: .4 },
             { label: 'Bargain (%)',        data: cumFromRight(D_.pB), borderColor: ORANGE, backgroundColor: 'transparent', tension: .4 },
@@ -343,6 +346,11 @@ export default function InsightsPage() {
     })
 
     return () => { cancelled = true; chartsRef.current.forEach(c => c.destroy()); chartsRef.current = [] }
+  }, [data, currency])
+
+  useEffect(() => {
+    if (data?.updatedAt) setFormattedDate(new Date(data.updatedAt).toLocaleString())
+    else setFormattedDate(new Date(SAMPLE.updatedAt).toLocaleString())
   }, [data])
 
   const kpi = data ?? SAMPLE
@@ -392,6 +400,16 @@ export default function InsightsPage() {
             Aggregated from every survey response. Filter by section below. Charts refresh whenever
             new responses land. {usingSample && <span className="ins-tag">Sample data (waiting for real responses)</span>}
             {error && <span className="ins-tag ins-tag-warn">{error}</span>}
+            <button
+              style={{ marginLeft: 12, padding: '2px 10px', borderRadius: 6, border: '1px solid #fbbf24', background: 'transparent', color: '#fbbf24', cursor: 'pointer', fontSize: 12 }}
+              onClick={() => {
+                const next = currency === 'INR' ? 'USD' : 'INR'
+                localStorage.setItem('aig_currency_override', next)
+                window.location.reload()
+              }}
+            >
+              {currency === 'INR' ? '🇮🇳 ₹ INR → Switch to $ USD' : '🇺🇸 $ USD → Switch to ₹ INR'}
+            </button>
           </p>
         </div>
       </section>
@@ -487,7 +505,7 @@ export default function InsightsPage() {
       <div className="container ins-grid">
         <Card col={6} tall title="Student learning problems" sub="Top pain points reported by students"><canvas id="c-sproblems" /></Card>
         <Card col={6} tall title="What would attract teachers" sub="Top levers for teacher acquisition"><canvas id="c-tattract" /></Card>
-        <Card col={6} title="Teacher expected compensation" sub="Pay expectations (₹ / month)"><canvas id="c-tcomp" /></Card>
+        <Card col={6} title="Teacher expected compensation" sub={`Pay expectations (${currency === 'INR' ? '₹' : '$'} / month)`}><canvas id="c-tcomp" /></Card>
         <Card col={6} title="Teacher engagement preference" sub="Full-time · part-time · flexible · rev-share"><canvas id="c-tengage" /></Card>
       </div>
 
@@ -505,11 +523,11 @@ export default function InsightsPage() {
       <div className="container ins-recs">
         {[
           { p: 0, label: 'P0', tag: 'ins-p0', action: 'Address screen-time worry — publish research, add usage caps', signal: `${kpi.worries.find(w => /screen/i.test(w.label))?.count || '—'} respondents flagged it`, impact: 'Removes #1 objection' },
-          { p: 0, label: 'P0', tag: 'ins-p0', action: 'Anchor pricing at ₹4,999/mo · early-bird ₹3,999', signal: `Van Westendorp sweet-spot: ${kpi.fairPrice[Math.floor(kpi.fairPrice.length / 2)]?.label || '—'}`, impact: 'Maximises acceptance vs revenue' },
+          { p: 0, label: 'P0', tag: 'ins-p0', action: convertLabel('Anchor pricing at ₹4,999/mo · early-bird ₹3,999', currency), signal: `Van Westendorp sweet-spot: ${convertLabel(kpi.fairPrice[Math.floor(kpi.fairPrice.length / 2)]?.label || '—', currency)}`, impact: 'Maximises acceptance vs revenue' },
           { p: 1, label: 'P1', tag: 'ins-p1', action: 'Free 7-day trial as primary CTA', signal: `${trialPct}% willing to try trial`, impact: '~3× expected conversion' },
           { p: 1, label: 'P1', tag: 'ins-p1', action: 'Build parent dashboard (live + weekly reports)', signal: `${kpi.comfort[0]?.label} · ${kpi.comfort[1]?.label} are top trust-builders`, impact: 'Converts fence-sitters' },
           { p: 1, label: 'P1', tag: 'ins-p1', action: 'Prioritise Math / Physics / Chemistry depth', signal: `Top 3 tuition subjects: ${kpi.subjects.slice(0, 3).map(s => s.label).join(', ')}`, impact: 'Replaces existing spend' },
-          { p: 2, label: 'P2', tag: 'ins-p2', action: 'Target Tier-1/2 cities · ₹1L–₹5L household income', signal: 'Highest enrollment-intent segment', impact: 'Best CAC efficiency' },
+          { p: 2, label: 'P2', tag: 'ins-p2', action: convertLabel('Target Tier-1/2 cities · ₹1L–₹5L household income', currency), signal: 'Highest enrollment-intent segment', impact: 'Best CAC efficiency' },
           { p: 2, label: 'P2', tag: 'ins-p2', action: 'Teacher recruiting: flexible hours + WFH messaging', signal: `Top 2 attract factors: ${kpi.teacherAttract.slice(0, 2).map(t => t.label).join(', ')}`, impact: 'Faster teacher acquisition' },
           { p: 3, label: 'P3', tag: 'ins-p3', action: 'Refine intro video — still unclear for many', signal: `${100 - clarityPct}% found value unclear or somewhat unclear`, impact: 'Higher top-of-funnel conversion' },
         ].map(r => (
@@ -524,7 +542,7 @@ export default function InsightsPage() {
       </div>
 
       <footer className="ins-foot">
-        Updated {new Date(kpi.updatedAt).toLocaleString()} · Powered by <code>/api/insights</code> · Charts by Chart.js
+        {formattedDate && <>Updated {formattedDate} · </>}Powered by <code>/api/insights</code> · Charts by Chart.js
       </footer>
     </>
   )

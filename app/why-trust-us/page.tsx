@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import SurveyModal from '@/components/SurveyModal'
+import { useCurrency, convertLabel } from '@/lib/currency'
 
 /* ─── Content (mirrors useful text from ai-gurukool-landing.html) ────── */
 
@@ -60,6 +61,7 @@ const SUBJECTS = [
 export default function WhyTrustUsPage() {
   const [mobileNav, setMobileNav] = useState(false)
   const [showSurvey, setShowSurvey] = useState(false)
+  const currency = useCurrency()
 
   useEffect(() => {
     const io = new IntersectionObserver(entries => {
@@ -87,7 +89,7 @@ export default function WhyTrustUsPage() {
           <li><a href="/insights"    onClick={() => setMobileNav(false)}>Insights</a></li>
         </ul>
         <div className="nav-right">
-          <button className="nav-cta" onClick={() => setShowSurvey(true)}>Book a Class</button>
+          <button className="nav-cta" onClick={() => setShowSurvey(true)}>Survey</button>
           <button className="nav-toggle" onClick={() => setMobileNav(v => !v)} aria-label="menu">
             <span /><span /><span />
           </button>
@@ -152,8 +154,8 @@ export default function WhyTrustUsPage() {
                 <div className="wtu2-problem-emoji">{p.emoji}</div>
                 <div className="wtu2-problem-body">
                   <h3>{p.h}</h3>
-                  <p>{p.p}</p>
-                  <span className="wtu2-problem-stat">{p.stat}</span>
+                  <p>{convertLabel(p.p, currency)}</p>
+                  <span className="wtu2-problem-stat">{convertLabel(p.stat, currency)}</span>
                 </div>
               </div>
             ))}

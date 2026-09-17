@@ -304,7 +304,7 @@ export default function HomePage() {
           <li><a href="/insights"    onClick={() => setMobileNav(false)}>Insights</a></li>
         </ul>
         <div className="nav-right">
-          <button className="nav-cta" onClick={() => setShowSurvey(true)}>Book a Class</button>
+          <button className="nav-cta" onClick={() => setShowSurvey(true)}>Survey</button>
           <button className="nav-toggle" onClick={() => setMobileNav(v => !v)} aria-label="menu">
             <span /><span /><span />
           </button>
