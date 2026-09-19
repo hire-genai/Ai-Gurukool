@@ -34,6 +34,8 @@ const PARENT: Question[] = [
   { cat: 'About You', id: 'p_income', type: 'radio', label: 'Monthly household income?', required: true, options: ['<₹50K', '₹50K–1L', '₹1L–2L', '₹2L–5L', '₹5L+', 'Prefer not to say'] },
   { cat: 'About You', id: 'p_source', type: 'radio', label: 'How did you hear about AI-Gurukool?', required: true, options: ['Friend/family', 'Social media', 'Google', 'WhatsApp', 'News/blog', 'Other'] },
 
+  { cat: 'Current Schooling', id: 'p_school_type', type: 'radio', label: 'Which type of school does your child attend?', required: true, options: ['Private', 'Public', 'Homeschooling', 'International', 'Other'] },
+  { cat: 'Current Schooling', id: 'p_total_spend', type: 'radio', label: 'Total monthly education spend?', required: true, options: ['<₹10K', '₹10–25K', '₹25–50K', '₹50K–1L', '₹1L+'] },
   { cat: 'Current Schooling', id: 'p_concerns', type: 'checkbox', label: 'Biggest education concerns? (pick up to 3)', required: true, max: 3, options: ['Personal attention', 'Slow syllabus', 'Rote learning', 'No feedback', 'High costs', 'Engagement', 'Career guidance', 'Mental health', 'Screen time', 'Teacher quality'] },
   { cat: 'Current Schooling', id: 'p_satisfaction', type: 'scale', label: 'Satisfaction with current schooling?', required: true, min: 1, max: 5, minLabel: 'Very dissatisfied', maxLabel: 'Very satisfied' },
 
@@ -43,8 +45,6 @@ const PARENT: Question[] = [
   { cat: 'Tuition & Coaching', id: 'p_tuition_hours', type: 'radio', label: 'Weekly tuition hours?', required: true, options: ['N/A', '<2h', '2–5h', '5–10h', '10–15h', '15h+'] },
   { cat: 'Tuition & Coaching', id: 'p_tuition_reason', type: 'checkbox', label: 'Why tuition?', required: true, options: ['Weak subject', 'School insufficient', 'Exam prep', 'Peer pressure', 'Homework help', 'Attention', 'Advanced', 'N/A'] },
   { cat: 'Tuition & Coaching', id: 'p_tuition_sat', type: 'scale', label: 'Tuition satisfaction? (skip if none)', min: 1, max: 5, minLabel: 'Very dissatisfied', maxLabel: 'Very satisfied' },
-  { cat: 'Tuition & Coaching', id: 'p_total_spend', type: 'radio', label: 'Total monthly education spend?', required: true, options: ['<₹5K', '₹5–10K', '₹10–25K', '₹25–50K', '₹50K–1L', '₹1L+'] },
-  { cat: 'Tuition & Coaching', id: 'p_platforms', type: 'checkbox', label: 'Platforms currently used?', required: true, options: ['Private tutor', 'Coaching center', "BYJU'S", 'Unacademy', 'Vedantu', 'PhysicsWallah', 'Khan Academy', 'YouTube', 'None'] },
 
   { cat: 'AI in Education', id: 'p_ai_fam', type: 'radio', label: 'Familiarity with AI in education?', required: true, options: ['Very familiar', 'Somewhat', 'Heard about it', 'Not familiar'] },
   { cat: 'AI in Education', id: 'p_ai_trust', type: 'radio', label: 'Trust AI teacher for child?', required: true, options: ['Yes completely', 'With oversight', 'Maybe', 'No', 'Definitely not'] },
@@ -59,11 +59,11 @@ const PARENT: Question[] = [
   { cat: 'About AI-Gurukool', id: 'p_timeline', type: 'radio', label: 'How soon would you enroll?', required: true, options: ['Immediately', '1 month', '3 months', '6 months', 'Just exploring'] },
   { cat: 'About AI-Gurukool', id: 'p_trial', type: 'radio', label: 'Try a FREE 7-day trial?', required: true, options: ['Definitely', 'Probably', 'Not sure', 'No'] },
 
-  { cat: 'Pricing', id: 'p_price_cheap', type: 'radio', label: 'TOO CHEAP (doubt quality)?', required: true, options: ['<₹1K', '₹1–2K', '₹2–3K', '₹3–4K', '₹4K+'] },
-  { cat: 'Pricing', id: 'p_price_bargain', type: 'radio', label: 'BARGAIN price?', required: true, options: ['₹2–4K', '₹4–6K', '₹6–8K', '₹8–10K', '₹10K+'] },
-  { cat: 'Pricing', id: 'p_price_expensive', type: 'radio', label: 'EXPENSIVE but worth it?', required: true, options: ['₹4–6K', '₹6–8K', '₹8–10K', '₹10–15K', '₹15K+'] },
-  { cat: 'Pricing', id: 'p_price_too', type: 'radio', label: 'TOO EXPENSIVE?', required: true, options: ['₹6K+', '₹8K+', '₹10K+', '₹15K+', '₹20K+'] },
-  { cat: 'Pricing', id: 'p_value', type: 'radio', label: 'Vs current tuition spend, AI-Gurukool is:', required: true, options: ['Much better', 'Better', 'Same', 'More expensive', 'Much more'] },
+  { cat: 'Pricing Perception', id: 'p_price_cheap', type: 'radio', label: 'At what monthly price would AI-Gurukool be SO CHEAP that you\'d doubt its quality?', required: true, options: ['₹10K', '₹15K', '₹20K', '₹30K', '₹40K', '₹50K', '₹75K'] },
+  { cat: 'Pricing Perception', id: 'p_price_bargain', type: 'radio', label: 'At what monthly price would AI-Gurukool be a BARGAIN — great value for money?', required: true, options: ['₹10K', '₹15K', '₹20K', '₹30K', '₹40K', '₹50K', '₹75K'] },
+  { cat: 'Pricing Perception', id: 'p_price_expensive', type: 'radio', label: 'At what monthly price would it feel EXPENSIVE, but still worth considering?', required: true, options: ['₹15K', '₹20K', '₹30K', '₹40K', '₹50K', '₹75K', '₹1L'] },
+  { cat: 'Pricing Perception', id: 'p_price_too', type: 'radio', label: 'At what monthly price would it be TOO EXPENSIVE to consider?', required: true, options: ['₹20K', '₹30K', '₹40K', '₹50K', '₹75K', '₹1L', '₹1.5L+'] },
+  { cat: 'Pricing Perception', id: 'p_value', type: 'radio', label: 'Vs current tuition spend, AI-Gurukool is:', required: true, options: ['Much better', 'Better', 'Same', 'More expensive', 'Much more'] },
 
   { cat: 'Your Vision', id: 'p_vision', type: 'checkbox', label: "Vision for child's education? (pick up to 3)", required: true, max: 3, options: ['Confidence', 'Exam success', 'Critical thinking', 'Career prep', 'Creativity', 'Holistic', 'Global exposure', 'Emotional wellbeing'] },
   { cat: 'Your Vision', id: 'p_pmf', type: 'radio', label: "If AI-Gurukool didn't exist for your child?", required: true, options: ['Very disappointed', 'Somewhat', 'Not disappointed', 'N/A'] },
