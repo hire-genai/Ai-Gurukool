@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
-import { useCurrency, convertLabel, isOutsideIndia } from '@/lib/currency'
+import { useCurrency, convertLabel } from '@/lib/currency'
 
 /* ─── Types ─────────────────────────────────────────────────────────────── */
 type Role = 'parent' | 'student' | 'teacher'
@@ -199,8 +199,11 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
   const [autoAdvance, setAutoAdvance] = useState(true)
   const [copied, setCopied] = useState(false)
   const videoRef = useRef<HTMLVideoElement | null>(null)
-  const currency = useCurrency()
-  const outsideIndia = typeof window !== 'undefined' ? isOutsideIndia() : false
+  const detectedCurrency = useCurrency()
+
+  // If user selects "Outside India" in city question → switch to USD live
+  const cityAnswer = answers['p_city'] || answers['s_city'] || answers['t_city']
+  const currency = cityAnswer === 'Outside India' ? 'USD' : detectedCurrency
 
   const categories: Category[] = useMemo(
     () => (role ? groupByCategory(BANKS[role]) : []),
@@ -210,15 +213,12 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
 
   useEffect(() => {
     if (isOpen) {
-      setStep(0); setRole(null); setComprehension('')
-      // Auto-detect location → pre-fill city questions
-      const cityPrefill = outsideIndia ? 'Outside India' : ''
-      setAnswers(cityPrefill ? { p_city: cityPrefill, s_city: cityPrefill, t_city: cityPrefill } : {})
+      setStep(0); setRole(null); setComprehension(''); setAnswers({})
       setContact({ name: '', email: '', phone: '', interview: '' })
       setContactErrors({}); setSubmitting(false); setSubmitError(''); setMuted(false)
       setAutoAdvance(true); setCopied(false)
     }
-  }, [isOpen, outsideIndia])
+  }, [isOpen])
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : ''
@@ -463,9 +463,6 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
                       {q.required
                         ? <span className="svy-required">*</span>
                         : <span className="svy-optional">optional</span>}
-                      {outsideIndia && (q.id === 'p_city' || q.id === 's_city' || q.id === 't_city') && (
-                        <span className="svy-optional" style={{ marginLeft: 8, color: '#10b981' }}>📍 Auto-detected</span>
-                      )}
                       {q.type === 'checkbox' && (
                         <span className="svy-optional" style={{ marginLeft: 8 }}>
                           {q.max ? `Pick up to ${q.max}` : 'Select all that apply'}
