@@ -199,7 +199,10 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
   const [muted, setMuted] = useState(false)
   const [autoAdvance, setAutoAdvance] = useState(true)
   const [copied, setCopied] = useState(false)
+  const [showShareRow, setShowShareRow] = useState(false)
+  const [successMuted, setSuccessMuted] = useState(true)
   const videoRef = useRef<HTMLVideoElement | null>(null)
+  const successVideoRef = useRef<HTMLVideoElement | null>(null)
   const [locationLoading, setLocationLoading] = useState(false)
   const detectedCurrency = useCurrency()
 
@@ -221,10 +224,10 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
       setAutoAdvance(true); setCopied(false)
       // Auto-detect country + city via IP geolocation
       setLocationLoading(true)
-      fetch('https://ipapi.co/json/')
+      fetch('https://ipwho.is/')
         .then(r => r.json())
-        .then((d: { country_name?: string; city?: string }) => {
-          const country = d.country_name || ''
+        .then((d: { country?: string; city?: string }) => {
+          const country = d.country || ''
           const city = d.city || ''
           if (country) setAnswers(prev => ({
             ...prev,
@@ -635,50 +638,76 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
             const shareText = 'Check out AI-Gurukool — personalised AI learning for every child.'
             const enc = (s: string) => encodeURIComponent(s)
             const shares = [
-              { label: 'WhatsApp',  icon: '📱', href: `https://wa.me/?text=${enc(shareText + ' ' + siteUrl)}` },
-              { label: 'Telegram',  icon: '✈️', href: `https://t.me/share/url?url=${enc(siteUrl)}&text=${enc(shareText)}` },
-              { label: 'Twitter',   icon: '🐦', href: `https://twitter.com/intent/tweet?text=${enc(shareText)}&url=${enc(siteUrl)}` },
-              { label: 'LinkedIn',  icon: '💼', href: `https://www.linkedin.com/sharing/share-offsite/?url=${enc(siteUrl)}` },
-              { label: 'Facebook',  icon: '📘', href: `https://www.facebook.com/sharer/sharer.php?u=${enc(siteUrl)}` },
+              { label: 'WhatsApp', icon: '📱', href: `https://wa.me/?text=${enc(shareText + ' ' + siteUrl)}` },
+              { label: 'Telegram', icon: '✈️', href: `https://t.me/share/url?url=${enc(siteUrl)}&text=${enc(shareText)}` },
+              { label: 'Twitter',  icon: '🐦', href: `https://twitter.com/intent/tweet?text=${enc(shareText)}&url=${enc(siteUrl)}` },
+              { label: 'LinkedIn', icon: '💼', href: `https://www.linkedin.com/sharing/share-offsite/?url=${enc(siteUrl)}` },
+              { label: 'Facebook', icon: '📘', href: `https://www.facebook.com/sharer/sharer.php?u=${enc(siteUrl)}` },
             ]
             const copyLink = async () => {
               try { await navigator.clipboard.writeText(siteUrl); setCopied(true); setTimeout(() => setCopied(false), 2000) } catch {}
             }
+            const handleShare = async () => {
+              if (typeof navigator !== 'undefined' && navigator.share) {
+                try { await navigator.share({ title: 'AI-Gurukool', text: shareText, url: siteUrl }) } catch {}
+              } else {
+                setShowShareRow(v => !v)
+              }
+            }
+            const iconBtn: React.CSSProperties = { width: 48, height: 48, borderRadius: '50%', background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, textDecoration: 'none', cursor: 'pointer', flexShrink: 0 }
             return (
-              <div className="svy-success">
-                <div className="svy-success-icon">🎉</div>
-                <h3>Thank you! Your voice matters.</h3>
-                <p>Your responses go directly into shaping AI-Gurukool. Help us reach more people 🚀</p>
-
-                <video
-                  src="/survey.mp4"
-                  autoPlay
-                  playsInline
-                  controls
-                  style={{ width: '100%', borderRadius: 16, marginBottom: 24, maxHeight: 420, objectFit: 'cover', display: 'block' }}
-                />
-
-                <div className="svy-share-title">Share AI-Gurukool</div>
-                <div style={{ display: 'flex', justifyContent: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 8 }}>
-                  {shares.map(s => (
-                    <a
-                      key={s.label}
-                      href={s.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title={s.label}
-                      style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, textDecoration: 'none', transition: 'background .2s' }}
-                    >{s.icon}</a>
-                  ))}
-                  <button
-                    type="button"
-                    title="Copy link"
-                    onClick={copyLink}
-                    style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, cursor: 'pointer', transition: 'background .2s' }}
-                  >{copied ? '✅' : '🔗'}</button>
+              <div className="svy-success" style={{ padding: 0 }}>
+                {/* Header — above video */}
+                <div style={{ padding: '20px 20px 14px', textAlign: 'center' }}>
+                  <div className="svy-success-icon">🎉</div>
+                  <h3 style={{ margin: '6px 0 4px' }}>Thank you! Your voice matters.</h3>
+                  <p style={{ margin: 0, fontSize: 13, opacity: .75 }}>Your responses directly shape AI-Gurukool. Help us reach more families 🚀</p>
                 </div>
 
-                <button className="svy-btn-next" style={{ marginTop: 16 }} onClick={onClose}>Close</button>
+                {/* Video — full card width */}
+                <div style={{ position: 'relative', width: '100%' }}>
+                  <video
+                    ref={successVideoRef}
+                    src="/survey.mp4"
+                    autoPlay
+                    playsInline
+                    muted={successMuted}
+                    loop
+                    style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', display: 'block' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSuccessMuted(m => {
+                        const next = !m
+                        if (successVideoRef.current) successVideoRef.current.muted = next
+                        return next
+                      })
+                    }}
+                    style={{ position: 'absolute', bottom: 10, right: 10, background: 'rgba(0,0,0,.6)', border: 'none', borderRadius: 20, color: '#fff', fontSize: 12, padding: '4px 10px', cursor: 'pointer' }}
+                  >{successMuted ? '🔇 Unmute' : '🔊 Mute'}</button>
+                </div>
+
+                {/* Actions — below video */}
+                <div style={{ padding: '16px 20px 24px' }}>
+                  <button
+                    type="button"
+                    className="svy-btn-next"
+                    style={{ width: '100%', marginBottom: showShareRow ? 14 : 0 }}
+                    onClick={handleShare}
+                  >🔗 Share AI-Gurukool</button>
+
+                  {showShareRow && (
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
+                      {shares.map(s => (
+                        <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" title={s.label} style={iconBtn as React.CSSProperties}>{s.icon}</a>
+                      ))}
+                      <button type="button" title="Copy link" onClick={copyLink} style={iconBtn as React.CSSProperties}>{copied ? '✅' : '🔗'}</button>
+                    </div>
+                  )}
+
+                  <button className="svy-btn-back" style={{ width: '100%', marginTop: 8 }} onClick={onClose}>Close</button>
+                </div>
               </div>
             )
           })()}
