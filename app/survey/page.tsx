@@ -16,12 +16,7 @@ export default function SurveyPage() {
 
   const handleClose = () => {
     setOpen(false)
-    // Go back if there's history, else go home
-    if (window.history.length > 1) {
-      router.back()
-    } else {
-      router.push('/')
-    }
+    router.push('/')
   }
 
   return (
