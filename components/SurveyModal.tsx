@@ -648,6 +648,14 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
                 <h3>Thank you! Your voice matters.</h3>
                 <p>Your responses go directly into shaping AI-Gurukool. Help us reach more people 🚀</p>
 
+                <video
+                  src="/survey.mp4"
+                  autoPlay
+                  playsInline
+                  controls
+                  style={{ width: '100%', borderRadius: 12, marginBottom: 20, maxHeight: 280, objectFit: 'cover' }}
+                />
+
                 <div className="svy-share-title">Share AI-Gurukool</div>
                 <div className="svy-share-grid">
                   {shares.map(s => (
