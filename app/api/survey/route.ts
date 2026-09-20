@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
     const enriched = {
       __comprehension: comprehension || '',
       __interview: contact?.interview || '',
+      __message: contact?.message || '',
       ...answers,
     }
     const record = await prisma.surveyResponse.create({

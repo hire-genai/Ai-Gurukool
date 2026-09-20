@@ -192,7 +192,7 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
   const [role, setRole] = useState<Role | null>(null)
   const [comprehension, setComprehension] = useState<string>('')
   const [answers, setAnswers] = useState<Answers>({})
-  const [contact, setContact] = useState({ name: '', email: '', phone: '', interview: '' })
+  const [contact, setContact] = useState({ name: '', email: '', phone: '', interview: '', message: '' })
   const [contactErrors, setContactErrors] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
@@ -216,7 +216,7 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
   useEffect(() => {
     if (isOpen) {
       setStep(0); setRole(null); setComprehension(''); setAnswers({})
-      setContact({ name: '', email: '', phone: '', interview: '' })
+      setContact({ name: '', email: '', phone: '', interview: '', message: '' })
       setContactErrors({}); setSubmitting(false); setSubmitError(''); setMuted(false)
       setAutoAdvance(true); setCopied(false)
       // Auto-detect country + city via IP geolocation
@@ -343,6 +343,7 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
           email: contact.email.trim(),
           phone: contact.phone.trim(),
           interview: contact.interview,
+          message: contact.message.trim(),
         },
       }
       const res = await fetch('/api/survey', {
@@ -613,17 +614,18 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
                 </div>
                 {contactErrors.interview && <div className="svy-error">{contactErrors.interview}</div>}
               </div>
-              <p className="svy-privacy-note">🔒 Your details are kept private and never shared with third parties.</p>
-              <div style={{ marginTop: 16, padding: '10px 14px', background: 'rgba(251,191,36,.08)', border: '1px solid rgba(251,191,36,.25)', borderRadius: 8 }}>
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,.5)', marginBottom: 4 }}>Share this survey with others</div>
-                <a
-                  href="/survey"
-                  onClick={e => { e.preventDefault(); window.history.pushState({ survey: true }, '', '/survey') }}
-                  style={{ color: '#fbbf24', fontSize: 13, fontFamily: 'monospace' }}
-                >
-                  {typeof window !== 'undefined' ? window.location.origin : ''}/survey
-                </a>
+              <div className="svy-q">
+                <div className="svy-q-label">Any message for us? <span className="svy-optional">optional</span></div>
+                <textarea
+                  className="svy-input"
+                  rows={3}
+                  placeholder="Your thoughts, suggestions, or questions…"
+                  value={contact.message}
+                  onChange={e => setContact(c => ({ ...c, message: e.target.value }))}
+                  style={{ resize: 'none' }}
+                />
               </div>
+              <p className="svy-privacy-note">🔒 Your details are kept private and never shared with third parties.</p>
             </div>
           )}
 
@@ -653,25 +655,27 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
                   autoPlay
                   playsInline
                   controls
-                  style={{ width: '100%', borderRadius: 12, marginBottom: 20, maxHeight: 280, objectFit: 'cover' }}
+                  style={{ width: '100%', borderRadius: 16, marginBottom: 24, maxHeight: 420, objectFit: 'cover', display: 'block' }}
                 />
 
                 <div className="svy-share-title">Share AI-Gurukool</div>
-                <div className="svy-share-grid">
+                <div style={{ display: 'flex', justifyContent: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 8 }}>
                   {shares.map(s => (
-                    <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" className={`svy-share-btn svy-share-${s.label.toLowerCase()}`}>
-                      <span className="svy-share-icon">{s.icon}</span>
-                      <span>{s.label}</span>
-                    </a>
+                    <a
+                      key={s.label}
+                      href={s.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={s.label}
+                      style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, textDecoration: 'none', transition: 'background .2s' }}
+                    >{s.icon}</a>
                   ))}
-                  <button type="button" className="svy-share-btn svy-share-instagram" onClick={copyLink}>
-                    <span className="svy-share-icon">📸</span>
-                    <span>Instagram</span>
-                  </button>
-                  <button type="button" className="svy-share-btn svy-share-copy" onClick={copyLink}>
-                    <span className="svy-share-icon">{copied ? '✅' : '🔗'}</span>
-                    <span>{copied ? 'Copied!' : 'Copy Link'}</span>
-                  </button>
+                  <button
+                    type="button"
+                    title="Copy link"
+                    onClick={copyLink}
+                    style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, cursor: 'pointer', transition: 'background .2s' }}
+                  >{copied ? '✅' : '🔗'}</button>
                 </div>
 
                 <button className="svy-btn-next" style={{ marginTop: 16 }} onClick={onClose}>Close</button>
