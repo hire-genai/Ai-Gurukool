@@ -459,89 +459,108 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
           )}
 
           {/* Category questions */}
-          {currentCategory && (
-            <div>
-              {currentCategory.questions.map(q => {
-                const val = answers[q.id]
-                return (
-                  <div key={q.id} className="svy-q">
-                    <div className="svy-q-label">
-                      {q.label}
-                      {q.required
-                        ? <span className="svy-required">*</span>
-                        : <span className="svy-optional">optional</span>}
-                      {q.type === 'checkbox' && (
-                        <span className="svy-optional" style={{ marginLeft: 8 }}>
-                          {q.max ? `Pick up to ${q.max}` : 'Select all that apply'}
-                        </span>
-                      )}
-                    </div>
+          {currentCategory && (() => {
+            const qs = currentCategory.questions
+            const items: Array<Question | [Question, Question]> = []
+            let qi = 0
+            while (qi < qs.length) {
+              if (qs[qi].type === 'text' && qi + 1 < qs.length && qs[qi + 1].type === 'text') {
+                items.push([qs[qi], qs[qi + 1]]); qi += 2
+              } else {
+                items.push(qs[qi]); qi++
+              }
+            }
 
-                    {q.type === 'radio' && (
-                      <div className="svy-chips">
-                        {q.options!.map(o => (
+            const renderQ = (q: Question) => {
+              const val = answers[q.id]
+              return (
+                <div key={q.id} className="svy-q" style={q.type === 'text' ? { flex: 1, minWidth: 0 } : {}}>
+                  <div className="svy-q-label">
+                    {q.label}
+                    {q.required
+                      ? <span className="svy-required">*</span>
+                      : <span className="svy-optional">optional</span>}
+                    {q.type === 'checkbox' && (
+                      <span className="svy-optional" style={{ marginLeft: 8 }}>
+                        {q.max ? `Pick up to ${q.max}` : 'Select all that apply'}
+                      </span>
+                    )}
+                  </div>
+
+                  {q.type === 'radio' && (
+                    <div className="svy-chips">
+                      {q.options!.map(o => (
+                        <button
+                          key={o}
+                          type="button"
+                          className={`svy-chip${val === o ? ' active' : ''}`}
+                          onClick={() => setAnswer(q.id, o)}
+                        >{convertLabel(o, currency)}</button>
+                      ))}
+                    </div>
+                  )}
+
+                  {q.type === 'checkbox' && (
+                    <div className="svy-chips">
+                      {q.options!.map(o => {
+                        const arr = Array.isArray(val) ? val : []
+                        return (
                           <button
                             key={o}
                             type="button"
-                            className={`svy-chip${val === o ? ' active' : ''}`}
-                            onClick={() => setAnswer(q.id, o)}
+                            className={`svy-chip${arr.includes(o) ? ' active' : ''}`}
+                            onClick={() => toggleCheckbox(q, o)}
                           >{convertLabel(o, currency)}</button>
-                        ))}
-                      </div>
-                    )}
+                        )
+                      })}
+                    </div>
+                  )}
 
-                    {q.type === 'checkbox' && (
-                      <div className="svy-chips">
-                        {q.options!.map(o => {
-                          const arr = Array.isArray(val) ? val : []
+                  {q.type === 'text' && (
+                    <input
+                      className="svy-input"
+                      type="text"
+                      placeholder={q.id.includes('country') ? 'e.g. India' : 'e.g. Mumbai'}
+                      value={String(val || '')}
+                      onChange={e => setAnswer(q.id, e.target.value)}
+                    />
+                  )}
+
+                  {q.type === 'scale' && (
+                    <div>
+                      <div className="svy-scale">
+                        {Array.from({ length: (q.max! - q.min! + 1) }, (_, i) => {
+                          const v = String(q.min! + i)
                           return (
                             <button
-                              key={o}
+                              key={v}
                               type="button"
-                              className={`svy-chip${arr.includes(o) ? ' active' : ''}`}
-                              onClick={() => toggleCheckbox(q, o)}
-                            >{convertLabel(o, currency)}</button>
+                              className={`svy-scale-chip${String(val) === v ? ' active' : ''}`}
+                              onClick={() => setAnswer(q.id, v)}
+                            >{v}</button>
                           )
                         })}
                       </div>
-                    )}
-
-                    {q.type === 'text' && (
-                      <input
-                        className="svy-input"
-                        type="text"
-                        placeholder={q.id.includes('country') ? 'e.g. India' : 'e.g. Mumbai'}
-                        value={String(val || '')}
-                        onChange={e => setAnswer(q.id, e.target.value)}
-                      />
-                    )}
-
-                    {q.type === 'scale' && (
-                      <div>
-                        <div className="svy-scale">
-                          {Array.from({ length: (q.max! - q.min! + 1) }, (_, i) => {
-                            const v = String(q.min! + i)
-                            return (
-                              <button
-                                key={v}
-                                type="button"
-                                className={`svy-scale-chip${String(val) === v ? ' active' : ''}`}
-                                onClick={() => setAnswer(q.id, v)}
-                              >{v}</button>
-                            )
-                          })}
-                        </div>
-                        <div className="svy-scale-labels">
-                          <span className="svy-scale-lbl">{q.minLabel}</span>
-                          <span className="svy-scale-lbl">{q.maxLabel}</span>
-                        </div>
+                      <div className="svy-scale-labels">
+                        <span className="svy-scale-lbl">{q.minLabel}</span>
+                        <span className="svy-scale-lbl">{q.maxLabel}</span>
                       </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
+                    </div>
+                  )}
+                </div>
+              )
+            }
+
+            return (
+              <div>
+                {items.map((item, idx) =>
+                  Array.isArray(item)
+                    ? <div key={idx} style={{ display: 'flex', gap: 12 }}>{item.map(renderQ)}</div>
+                    : renderQ(item)
+                )}
+              </div>
+            )
+          })()}
 
           {/* Contact */}
           {isContactStep && (
