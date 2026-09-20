@@ -279,6 +279,17 @@ export default function HomePage() {
   const [mobileNav, setMobileNav] = useState(false)
   const [showSurvey, setShowSurvey] = useState(false)
 
+  const openSurvey = () => {
+    setShowSurvey(true)
+    window.history.pushState({ survey: true }, '', '/survey')
+  }
+  const closeSurvey = () => {
+    setShowSurvey(false)
+    if (typeof window !== 'undefined' && window.history.state?.survey) {
+      window.history.back()
+    }
+  }
+
   useEffect(() => {
     const els = document.querySelectorAll('.reveal, .reveal-l, .reveal-r')
     const io = new IntersectionObserver(es => {
@@ -304,7 +315,7 @@ export default function HomePage() {
           <li><a href="/insights"    onClick={() => setMobileNav(false)}>Insights</a></li>
         </ul>
         <div className="nav-right">
-          <button className="nav-cta" onClick={() => setShowSurvey(true)}>Survey</button>
+          <button className="nav-cta" onClick={openSurvey}>Survey</button>
           <button className="nav-toggle" onClick={() => setMobileNav(v => !v)} aria-label="menu">
             <span /><span /><span />
           </button>
@@ -481,7 +492,7 @@ export default function HomePage() {
           <div className="lp-badge lp-badge-gold">📋 2-minute Parent Survey — Open Now</div>
           <h2 className="lp-h2 lp-h2-white">Help us build the school<br /><span className="lp-accent">your child actually deserves.</span></h2>
           <p className="lp-cta-p">We&apos;re speaking to parents, students and teachers before building anything. Your answers shape what gets built. Under 2 minutes, no sign-up needed.</p>
-          <button className="lp-btn-gold lp-btn-lg" onClick={() => setShowSurvey(true)}>Register for Class →</button>
+          <button className="lp-btn-gold lp-btn-lg" onClick={openSurvey}>Register for Class →</button>
         </div>
       </section>
 
@@ -533,7 +544,7 @@ export default function HomePage() {
         </div>
       </footer>
 
-      <SurveyModal isOpen={showSurvey} onClose={() => setShowSurvey(false)} />
+      <SurveyModal isOpen={showSurvey} onClose={closeSurvey} />
     </>
   )
 }
