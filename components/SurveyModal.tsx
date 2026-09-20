@@ -1,10 +1,10 @@
 'use client'
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useCurrency, convertLabel } from '@/lib/currency'
 
 /* ─── Types ─────────────────────────────────────────────────────────────── */
 type Role = 'parent' | 'student' | 'teacher'
-type QType = 'radio' | 'checkbox' | 'scale'
+type QType = 'radio' | 'checkbox' | 'scale' | 'text'
 
 interface Question {
   cat: string
@@ -30,7 +30,8 @@ const PARENT: Question[] = [
   { cat: 'About You', id: 'p_age', type: 'checkbox', label: "Child's age group?", required: true, options: ['5-8', '9-12', '13-15', '16-18', '18+'] },
   { cat: 'About You', id: 'p_numkids', type: 'radio', label: 'Number of school-going children?', required: true, options: ['1', '2', '3+'] },
   { cat: 'About You', id: 'p_board', type: 'radio', label: 'Board/curriculum?', required: true, options: ['CBSE', 'ICSE', 'State Board', 'IB/IGCSE', 'Other', 'Not sure'] },
-  { cat: 'About You', id: 'p_city', type: 'radio', label: 'Where are you based?', required: true, options: ['Metro', 'Tier 1', 'Tier 2', 'Tier 3', 'Rural', 'Outside India'] },
+  { cat: 'About You', id: 'p_country', type: 'text', label: 'Country?', required: true },
+  { cat: 'About You', id: 'p_city_name', type: 'text', label: 'City?', required: true },
   { cat: 'About You', id: 'p_income', type: 'radio', label: 'Monthly household income?', required: true, options: ['<₹50K', '₹50K–1L', '₹1L–2L', '₹2L–5L', '₹5L+', 'Prefer not to say'] },
   { cat: 'About You', id: 'p_source', type: 'radio', label: 'How did you hear about AI-Gurukool?', required: true, options: ['Friend/family', 'Social media', 'Google', 'WhatsApp', 'News/blog', 'Other'] },
 
@@ -44,8 +45,6 @@ const PARENT: Question[] = [
   { cat: 'Tuition & Coaching', id: 'p_tuition_spend', type: 'radio', label: 'Monthly tuition spend per child?', required: true, options: ['N/A', '<₹1K', '₹1–3K', '₹3–5K', '₹5–10K', '₹10–20K', '₹20–50K', '₹50K+'] },
   { cat: 'Tuition & Coaching', id: 'p_tuition_hours', type: 'radio', label: 'Weekly tuition hours?', required: true, options: ['N/A', '<2h', '2–5h', '5–10h', '10–15h', '15h+'] },
   { cat: 'Tuition & Coaching', id: 'p_tuition_reason', type: 'checkbox', label: 'Why tuition?', required: true, options: ['Weak subject', 'School insufficient', 'Exam prep', 'Peer pressure', 'Homework help', 'Attention', 'Advanced', 'N/A'] },
-  { cat: 'Tuition & Coaching', id: 'p_tuition_sat', type: 'scale', label: 'Tuition satisfaction? (skip if none)', min: 1, max: 5, minLabel: 'Very dissatisfied', maxLabel: 'Very satisfied' },
-
   { cat: 'AI in Education', id: 'p_ai_fam', type: 'radio', label: 'Familiarity with AI in education?', required: true, options: ['Very familiar', 'Somewhat', 'Heard about it', 'Not familiar'] },
   { cat: 'AI in Education', id: 'p_ai_trust', type: 'radio', label: 'Trust AI teacher for child?', required: true, options: ['Yes completely', 'With oversight', 'Maybe', 'No', 'Definitely not'] },
   { cat: 'AI in Education', id: 'p_ai_comfort', type: 'checkbox', label: 'What builds comfort with AI teaching?', required: true, options: ['Parent portal', 'Progress reports', 'Human moderator', 'Data privacy', 'Recordings', 'Free trial', 'Reviews', 'Board cert.'] },
@@ -75,7 +74,8 @@ const STUDENT: Question[] = [
   { cat: 'About You', id: 's_age', type: 'radio', label: 'Your age group?', required: true, options: ['5-8', '9-12', '13-15', '16-18', '19-22', '23-25', '25+'] },
   { cat: 'About You', id: 's_grade', type: 'radio', label: 'Grade/year?', required: true, options: ['KG', '1-2', '3-5', '6-8', '9-10', '11-12', 'College Y1', 'College Y2', 'College Y3+', 'Other'] },
   { cat: 'About You', id: 's_board', type: 'radio', label: 'Board/curriculum?', required: true, options: ['CBSE', 'ICSE', 'State Board', 'IB/IGCSE', 'College/Univ.', 'Other'] },
-  { cat: 'About You', id: 's_city', type: 'radio', label: 'Where are you based?', required: true, options: ['Metro', 'Tier 1', 'Tier 2', 'Tier 3', 'Rural', 'Outside India'] },
+  { cat: 'About You', id: 's_country', type: 'text', label: 'Country?', required: true },
+  { cat: 'About You', id: 's_city_name', type: 'text', label: 'City?', required: true },
   { cat: 'About You', id: 's_subjects', type: 'checkbox', label: 'Subjects you study?', required: true, options: ['Math', 'Physics', 'Chemistry', 'Biology', 'English', 'Regional', 'Social Studies', 'CS', 'Commerce', 'Economics', 'Art', 'Music', 'PE', 'Other'] },
   { cat: 'About You', id: 's_source', type: 'radio', label: 'How did you hear about us?', required: true, options: ['Friend', 'Parent', 'Teacher', 'Social media', 'Google', 'Other'] },
 
@@ -111,7 +111,8 @@ const TEACHER: Question[] = [
   { cat: 'About You', id: 't_exp', type: 'radio', label: 'Years teaching?', required: true, options: ['0-2', '3-5', '6-10', '10-15', '15+'] },
   { cat: 'About You', id: 't_level', type: 'radio', label: 'Level you teach?', required: true, options: ['Primary K-5', 'Middle 6-8', 'High 9-12', 'College/Univ.', 'Coaching', 'Special Ed'] },
   { cat: 'About You', id: 't_employment', type: 'radio', label: 'Employment type?', required: true, options: ['Full-time school', 'Coaching faculty', 'Freelance tutor', 'Online tutor', 'Part-time', 'Other'] },
-  { cat: 'About You', id: 't_city', type: 'radio', label: 'Where are you based?', required: true, options: ['Metro', 'Tier 1', 'Tier 2', 'Tier 3', 'Rural', 'Outside India'] },
+  { cat: 'About You', id: 't_country', type: 'text', label: 'Country?', required: true },
+  { cat: 'About You', id: 't_city_name', type: 'text', label: 'City?', required: true },
   { cat: 'About You', id: 't_subjects', type: 'checkbox', label: 'Subjects you teach?', required: true, options: ['Math', 'Physics', 'Chemistry', 'Biology', 'English', 'Regional', 'Social Studies', 'CS', 'Commerce', 'Economics', 'Art', 'Music', 'PE', 'Other'] },
   { cat: 'About You', id: 't_board', type: 'checkbox', label: 'Boards you teach?', required: true, options: ['CBSE', 'ICSE', 'State Board', 'IB/IGCSE', 'University', 'Competitive'] },
   { cat: 'About You', id: 't_source', type: 'radio', label: 'How did you hear about us?', required: true, options: ['Colleague', 'Social media', 'LinkedIn', 'Job portal', 'Google', 'Other'] },
@@ -199,11 +200,12 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
   const [autoAdvance, setAutoAdvance] = useState(true)
   const [copied, setCopied] = useState(false)
   const videoRef = useRef<HTMLVideoElement | null>(null)
+  const [locationLoading, setLocationLoading] = useState(false)
   const detectedCurrency = useCurrency()
 
-  // If user selects "Outside India" in city question → switch to USD live
-  const cityAnswer = answers['p_city'] || answers['s_city'] || answers['t_city']
-  const currency = cityAnswer === 'Outside India' ? 'USD' : detectedCurrency
+  // Currency: if detected country is not India → USD
+  const countryAnswer = String(answers['p_country'] || answers['s_country'] || answers['t_country'] || '')
+  const currency = (countryAnswer && countryAnswer.toLowerCase() !== 'india') ? 'USD' : detectedCurrency
 
   const categories: Category[] = useMemo(
     () => (role ? groupByCategory(BANKS[role]) : []),
@@ -217,6 +219,21 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
       setContact({ name: '', email: '', phone: '', interview: '' })
       setContactErrors({}); setSubmitting(false); setSubmitError(''); setMuted(false)
       setAutoAdvance(true); setCopied(false)
+      // Auto-detect country + city via IP geolocation
+      setLocationLoading(true)
+      fetch('https://ipapi.co/json/')
+        .then(r => r.json())
+        .then((d: { country_name?: string; city?: string }) => {
+          const country = d.country_name || ''
+          const city = d.city || ''
+          if (country) setAnswers(prev => ({
+            ...prev,
+            p_country: country, s_country: country, t_country: country,
+            p_city_name: city, s_city_name: city, t_city_name: city,
+          }))
+        })
+        .catch(() => {})
+        .finally(() => setLocationLoading(false))
     }
   }, [isOpen])
 
@@ -225,16 +242,6 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
     return () => { document.body.style.overflow = '' }
   }, [isOpen])
 
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') onClose()
-  }, [onClose])
-
-  useEffect(() => {
-    if (isOpen) {
-      window.addEventListener('keydown', handleKeyDown)
-      return () => window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [isOpen, handleKeyDown])
 
   // Attempt to play with sound on welcome step; fall back to muted if blocked
   useEffect(() => {
@@ -364,7 +371,7 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
   else if (isSuccessStep) { eyebrow = 'Complete'; title = 'Thank you!' }
 
   return (
-    <div className="svy-overlay" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+    <div className="svy-overlay">
       <div className={`svy-card${step >= 1 && !isSuccessStep ? ' svy-card-full' : ''}`} onClick={e => e.stopPropagation()}>
 
         <div className="svy-progress">
@@ -499,6 +506,16 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
                       </div>
                     )}
 
+                    {q.type === 'text' && (
+                      <input
+                        className="svy-input"
+                        type="text"
+                        placeholder={q.id.includes('country') ? 'e.g. India' : 'e.g. Mumbai'}
+                        value={String(val || '')}
+                        onChange={e => setAnswer(q.id, e.target.value)}
+                      />
+                    )}
+
                     {q.type === 'scale' && (
                       <div>
                         <div className="svy-scale">
@@ -578,6 +595,16 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
                 {contactErrors.interview && <div className="svy-error">{contactErrors.interview}</div>}
               </div>
               <p className="svy-privacy-note">🔒 Your details are kept private and never shared with third parties.</p>
+              <div style={{ marginTop: 16, padding: '10px 14px', background: 'rgba(251,191,36,.08)', border: '1px solid rgba(251,191,36,.25)', borderRadius: 8 }}>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,.5)', marginBottom: 4 }}>Share this survey with others</div>
+                <a
+                  href="/survey"
+                  onClick={e => { e.preventDefault(); window.history.pushState({ survey: true }, '', '/survey') }}
+                  style={{ color: '#fbbf24', fontSize: 13, fontFamily: 'monospace' }}
+                >
+                  {typeof window !== 'undefined' ? window.location.origin : ''}/survey
+                </a>
+              </div>
             </div>
           )}
 

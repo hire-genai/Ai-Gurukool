@@ -63,6 +63,17 @@ export default function WhyTrustUsPage() {
   const [showSurvey, setShowSurvey] = useState(false)
   const currency = useCurrency()
 
+  const openSurvey = () => {
+    setShowSurvey(true)
+    window.history.pushState({ survey: true }, '', '/survey')
+  }
+  const closeSurvey = () => {
+    setShowSurvey(false)
+    if (typeof window !== 'undefined' && window.history.state?.survey) {
+      window.history.back()
+    }
+  }
+
   useEffect(() => {
     const io = new IntersectionObserver(entries => {
       entries.forEach(e => {
@@ -89,7 +100,7 @@ export default function WhyTrustUsPage() {
           <li><a href="/insights"    onClick={() => setMobileNav(false)}>Insights</a></li>
         </ul>
         <div className="nav-right">
-          <button className="nav-cta" onClick={() => setShowSurvey(true)}>Survey</button>
+          <button className="nav-cta" onClick={openSurvey}>Survey</button>
           <button className="nav-toggle" onClick={() => setMobileNav(v => !v)} aria-label="menu">
             <span /><span /><span />
           </button>
@@ -110,7 +121,7 @@ export default function WhyTrustUsPage() {
             specific worry they raised.
           </p>
           <div className="wtu2-hero-cta reveal">
-            <button className="lp-btn-gold lp-btn-lg" onClick={() => setShowSurvey(true)}>Take the Survey</button>
+            <button className="lp-btn-gold lp-btn-lg" onClick={openSurvey}>Take the Survey</button>
             <a href="#pillars" className="lp-btn-ghost">See what we built ↓</a>
           </div>
 
@@ -270,14 +281,14 @@ export default function WhyTrustUsPage() {
             teachers we invest in for the next 1,000 families.
           </p>
           <div className="wtu2-cta-actions reveal">
-            <button className="lp-btn-gold lp-btn-lg" onClick={() => setShowSurvey(true)}>Take the Survey</button>
+            <button className="lp-btn-gold lp-btn-lg" onClick={openSurvey}>Take the Survey</button>
             <a href="/" className="lp-btn-ghost">← Back to Home</a>
           </div>
           <div className="wtu2-cta-note">🔒 5 minutes · Anonymous · No card or sign-up required</div>
         </div>
       </section>
 
-      <SurveyModal isOpen={showSurvey} onClose={() => setShowSurvey(false)} />
+      <SurveyModal isOpen={showSurvey} onClose={closeSurvey} />
     </>
   )
 }
