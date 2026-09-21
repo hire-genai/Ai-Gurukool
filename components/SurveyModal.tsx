@@ -200,7 +200,7 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
   const [autoAdvance, setAutoAdvance] = useState(true)
   const [copied, setCopied] = useState(false)
   const [showShareRow, setShowShareRow] = useState(false)
-  const [successMuted, setSuccessMuted] = useState(true)
+  const [successMuted, setSuccessMuted] = useState(false)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const successVideoRef = useRef<HTMLVideoElement | null>(null)
   const [locationLoading, setLocationLoading] = useState(false)
@@ -376,7 +376,7 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
 
   return (
     <div className="svy-overlay">
-      <div className={`svy-card${step >= 1 && !isSuccessStep ? ' svy-card-full' : ''}`} onClick={e => e.stopPropagation()}>
+      <div className={`svy-card${(step >= 3 || isContactStep) && !isSuccessStep ? ' svy-card-full' : ''}`} onClick={e => e.stopPropagation()}>
 
         <div className="svy-progress">
           <div className="svy-progress-fill" style={{ width: `${progressPct}%` }} />
@@ -405,6 +405,7 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
                   src="/hero.mp4"
                   autoPlay
                   playsInline
+                  loop
                   controls
                 />
                 <button
@@ -657,11 +658,13 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
             const iconBtn: React.CSSProperties = { width: 48, height: 48, borderRadius: '50%', background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, textDecoration: 'none', cursor: 'pointer', flexShrink: 0 }
             return (
               <div className="svy-success" style={{ padding: 0 }}>
-                {/* Header — above video */}
-                <div style={{ padding: '20px 20px 14px', textAlign: 'center' }}>
-                  <div className="svy-success-icon">🎉</div>
-                  <h3 style={{ margin: '6px 0 4px' }}>Thank you! Your voice matters.</h3>
-                  <p style={{ margin: 0, fontSize: 13, opacity: .75 }}>Your responses directly shape AI-Gurukool. Help us reach more families 🚀</p>
+                {/* Header */}
+                <div style={{ padding: '18px 20px 14px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                    <span style={{ fontSize: 26, lineHeight: 1, flexShrink: 0 }}>🎉</span>
+                    <h3 style={{ margin: 0, fontSize: 17, lineHeight: 1.25 }}>Thank you! Your voice matters.</h3>
+                  </div>
+                  <p style={{ margin: 0, fontSize: 13, opacity: .72 }}>Your responses directly shape AI-Gurukool. Help us reach more families 🚀</p>
                 </div>
 
                 {/* Video — full card width */}
@@ -673,7 +676,7 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
                     playsInline
                     muted={successMuted}
                     loop
-                    style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', display: 'block' }}
+                    style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', display: 'block', minHeight: 220 }}
                   />
                   <button
                     type="button"
@@ -690,15 +693,9 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
 
                 {/* Actions — below video */}
                 <div style={{ padding: '16px 20px 24px' }}>
-                  <button
-                    type="button"
-                    className="svy-btn-next"
-                    style={{ width: '100%', marginBottom: showShareRow ? 14 : 0 }}
-                    onClick={handleShare}
-                  >🔗 Share AI-Gurukool</button>
-
+                  {/* Share icon row (fallback for desktop / no Web Share API) */}
                   {showShareRow && (
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
                       {shares.map(s => (
                         <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" title={s.label} style={iconBtn as React.CSSProperties}>{s.icon}</a>
                       ))}
@@ -706,7 +703,24 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
                     </div>
                   )}
 
-                  <button className="svy-btn-back" style={{ width: '100%', marginTop: 8 }} onClick={onClose}>Close</button>
+                  {/* Share + Close — side by side, equal width */}
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <button
+                      type="button"
+                      className="svy-btn-next"
+                      style={{ flex: 1, margin: 0, minHeight: 48, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', lineHeight: 1.3 }}
+                      onClick={handleShare}
+                    >
+                      <span>🔗 Share</span>
+                      <span style={{ whiteSpace: 'nowrap', fontSize: '0.85em' }}>AI-Gurukool</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="svy-btn-back"
+                      style={{ flex: 1, margin: 0, minHeight: 48 }}
+                      onClick={onClose}
+                    >Close</button>
+                  </div>
                 </div>
               </div>
             )
