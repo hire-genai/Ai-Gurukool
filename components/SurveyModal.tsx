@@ -218,6 +218,7 @@ export default function SurveyModal({ isOpen, onClose }: SurveyModalProps) {
 
   useEffect(() => {
     if (isOpen) {
+      fetch('/api/track-visit', { method: 'POST' }).catch(() => {})
       setStep(0); setRole(null); setComprehension(''); setAnswers({})
       setContact({ name: '', email: '', phone: '', interview: '', message: '' })
       setContactErrors({}); setSubmitting(false); setSubmitError(''); setMuted(false)
