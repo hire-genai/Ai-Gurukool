@@ -292,7 +292,9 @@ export default function HomePage() {
   }
 
   useEffect(() => {
+    // GET on load for accurate initial count
     fetch('/api/track-visit').then(r => r.json()).then(d => { if (typeof d.count === 'number') setVisitors(d.count) }).catch(() => {})
+    // POST response (from VisitorTracker) updates to latest after unique-check
     const onCount = (e: Event) => {
       const n = (e as CustomEvent<number>).detail
       if (typeof n === 'number') setVisitors(n)
