@@ -1,23 +1,27 @@
 'use client'
 import { useEffect } from 'react'
 
-export default function VisitorTracker() {
+export default function VisitorTracker({ onCount }: { onCount?: (n: number) => void } = {}) {
   useEffect(() => {
     const KEY = 'aig_vid'
     let vid = localStorage.getItem(KEY)
     if (!vid) {
-      vid = crypto.randomUUID()
+      vid = (crypto.randomUUID?.() ?? String(Date.now()) + Math.random().toString(36).slice(2))
       localStorage.setItem(KEY, vid)
     }
-    // only POST on first-ever visit (no second key means already posted before)
-    const posted = sessionStorage.getItem('aig_tracked')
-    if (posted) return
-    sessionStorage.setItem('aig_tracked', '1')
     fetch('/api/track-visit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ vid }),
-    }).catch(() => {})
-  }, [])
+    })
+      .then(r => r.json())
+      .then(d => {
+        if (typeof d?.count === 'number') {
+          window.dispatchEvent(new CustomEvent('aig-visitor-count', { detail: d.count }))
+          onCount?.(d.count)
+        }
+      })
+      .catch(() => {})
+  }, [onCount])
   return null
 }
