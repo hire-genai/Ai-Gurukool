@@ -278,6 +278,7 @@ function ReportCard() {
 export default function HomePage() {
   const [mobileNav, setMobileNav] = useState(false)
   const [showSurvey, setShowSurvey] = useState(false)
+  const [visitors, setVisitors] = useState(200)
 
   const openSurvey = () => {
     setShowSurvey(true)
@@ -289,6 +290,10 @@ export default function HomePage() {
       window.history.back()
     }
   }
+
+  useEffect(() => {
+    fetch('/api/track-visit').then(r => r.json()).then(d => { if (d.count) setVisitors(d.count) }).catch(() => {})
+  }, [])
 
   useEffect(() => {
     const els = document.querySelectorAll('.reveal, .reveal-l, .reveal-r')
@@ -327,7 +332,13 @@ export default function HomePage() {
         <div className="lp-hero-fullimg">
           {/* lp-hero-over is first in DOM → flows above image on mobile */}
           <div className="lp-hero-over container">
-            <div className="lp-badge">🏛 Ancient Gurukul · Reimagined with AI</div>
+            <div className="lp-hero-badge-row">
+              <div className="lp-badge">🏛 Ancient Gurukul · Reimagined with AI</div>
+              <div className="lp-visitor-pill">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                {visitors.toLocaleString()}
+              </div>
+            </div>
             <h1 className="lp-h1">One AI Teacher.<br />Ten Curious Minds.<br /><span className="lp-accent">The Gurukul, Reimagined.</span></h1>
             <p className="lp-hero-sub lp-hero-sub-desktop">10 students. 1 AI teacher. A round table. Every child speaks, debates, and builds real understanding — no rote learning, ever.</p>
           </div>

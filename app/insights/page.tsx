@@ -194,13 +194,8 @@ export default function InsightsPage() {
   const [loading, setLoading]   = useState(true)
   const [error, setError]       = useState('')
   const [formattedDate, setFormattedDate] = useState('')
-  const [surveyVisits, setSurveyVisits] = useState<number | null>(null)
   const chartsRef = useRef<Array<{ destroy(): void }>>([])
   const currency = useCurrency()
-
-  useEffect(() => {
-    fetch('/api/track-visit').then(r => r.json()).then(d => setSurveyVisits(d.surveyVisits ?? 0)).catch(() => {})
-  }, [])
 
   useEffect(() => {
     let alive = true
@@ -398,8 +393,8 @@ export default function InsightsPage() {
 
       {/* HEADER */}
       <section className="ins-hero">
-        <div className="container" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 32, flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: 260 }}>
+        <div className="container">
+          <div>
             <div className="lp-badge lp-badge-gold">📊 Live Survey Insights</div>
             <h1 className="ins-h1">Everything <span className="lp-accent">1,200+ voices</span> told us.</h1>
             <p className="ins-sub">
@@ -418,16 +413,6 @@ export default function InsightsPage() {
               </button>
             </p>
           </div>
-          {surveyVisits !== null && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, background: 'rgba(251,191,36,.08)', border: '1px solid rgba(251,191,36,.3)', borderRadius: 14, padding: '18px 26px', flexShrink: 0, alignSelf: 'center' }}>
-              <span style={{ fontSize: 32 }}>👀</span>
-              <div>
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,.55)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '.06em' }}>Survey page visitors</div>
-                <div style={{ fontSize: 36, fontWeight: 800, color: '#fbbf24', lineHeight: 1 }}>{surveyVisits.toLocaleString()}</div>
-                <div style={{ fontSize: 11, color: 'rgba(255,255,255,.4)', marginTop: 4 }}>Unique opens tracked since launch</div>
-              </div>
-            </div>
-          )}
         </div>
       </section>
 
