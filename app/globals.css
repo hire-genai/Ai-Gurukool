@@ -1499,7 +1499,7 @@ body { background:#07111f; color:#e8edf5; }
 .lp-gold   { background:linear-gradient(90deg,#4f7df3,#6c5ce7); -webkit-background-clip:text; background-clip:text; color:transparent; }
 .lp-accent { background:linear-gradient(90deg,#ffd76a,#fbbf24,#f59e0b); -webkit-background-clip:text; background-clip:text; color:transparent; }
 .lp-badge  { display:inline-block; width:fit-content; padding:7px 18px; border-radius:40px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.13); font-size:.77rem; font-weight:600; color:rgba(255,255,255,.75); white-space:nowrap; }
-.lp-hero-badge-row { display:flex; align-items:center; gap:10px; margin-bottom:22px; flex-wrap:wrap; }
+.lp-hero-badge-row { display:inline-flex; align-items:center; gap:8px; margin-bottom:22px; flex-wrap:nowrap; width:fit-content; }
 .lp-visitor-pill { display:inline-flex; align-items:center; gap:5px; padding:7px 14px; border-radius:40px; background:rgba(251,191,36,.08); border:1px solid rgba(251,191,36,.25); font-size:.77rem; font-weight:700; color:#fbbf24; white-space:nowrap; }
 .lp-badge-gold { background:rgba(251,191,36,.1); border-color:rgba(251,191,36,.3); color:#fbbf24; }
 .lp-btn-gold  { background:linear-gradient(135deg,#fbbf24,#f59e0b); color:#07111f; border:none; cursor:pointer; padding:14px 32px; border-radius:60px; font-size:.95rem; font-weight:700; box-shadow:0 10px 28px -8px rgba(245,158,11,.55); transition:transform .2s,box-shadow .2s; }
@@ -1607,16 +1607,18 @@ body { background:#07111f; color:#e8edf5; }
 
   .lp-hero-over .lp-badge,
   .lp-badge {
-    display: inline-block !important;
+    display: inline-flex !important;
+    align-items: center !important;
     width: fit-content !important;
-    max-width: 100% !important;
-    padding: 10px 18px !important;
-    margin-bottom: 24px !important;
-    white-space: normal !important;
-    font-size: .7rem !important;
+    max-width: none !important;
+    padding: 7px 14px !important;
+    margin-bottom: 0 !important;
+    white-space: nowrap !important;
+    font-size: .68rem !important;
     background: rgba(245,166,35,.15) !important;
     border: 1px solid rgba(245,166,35,.35) !important;
   }
+  .lp-hero-badge-row { margin-bottom: 20px !important; }
 
   .lp-h1 {
     font-size: 1.85rem !important;
@@ -2067,6 +2069,7 @@ body { background:#07111f; color:#e8edf5; }
   .lp-stat-n { font-size: 1rem !important; }
   .lp-stat-l { font-size: .55rem !important; }
   .lp-badge { font-size: .68rem !important; padding: 6px 14px !important; }
+  .lp-visitor-pill { font-size: .68rem !important; padding: 6px 11px !important; }
   .lp-h1 { font-size: 1.55rem !important; }
 }
 
