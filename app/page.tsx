@@ -292,7 +292,13 @@ export default function HomePage() {
   }
 
   useEffect(() => {
-    fetch('/api/track-visit').then(r => r.json()).then(d => { if (d.count) setVisitors(d.count) }).catch(() => {})
+    fetch('/api/track-visit').then(r => r.json()).then(d => { if (typeof d.count === 'number') setVisitors(d.count) }).catch(() => {})
+    const onCount = (e: Event) => {
+      const n = (e as CustomEvent<number>).detail
+      if (typeof n === 'number') setVisitors(n)
+    }
+    window.addEventListener('aig-visitor-count', onCount)
+    return () => window.removeEventListener('aig-visitor-count', onCount)
   }, [])
 
   useEffect(() => {
