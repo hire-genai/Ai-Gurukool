@@ -1,6 +1,10 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  GeminiClassroomSession,
+  type GeminiClassroomEvent,
+} from '@/lib/gemini/session'
 
 type Speaker = 'teacher' | 'student'
 type TranscriptItem = {
@@ -20,11 +24,6 @@ type Status =
   | 'ended'
   | 'error'
 
-const INITIAL_KICKOFF =
-  "Begin the class now. Follow STEP 1 from your instructions exactly: " +
-  "say 'Hi there! This is your AI-Gurukool teacher — what subject would you like to study today?' " +
-  "Say nothing else after that. Go completely silent and wait for the student to answer."
-
 export default function ClassRoomPage() {
   const [status, setStatus] = useState<Status>('idle')
   const [errorMsg, setErrorMsg] = useState<string>('')
@@ -41,74 +40,26 @@ export default function ClassRoomPage() {
   const [sessionExpiresAt, setSessionExpiresAt] = useState<number | null>(null)
   const [expiryWarning, setExpiryWarning] = useState(false)
 
-  const pcRef = useRef<RTCPeerConnection | null>(null)
-  const dcRef = useRef<RTCDataChannel | null>(null)
+  const sessionRef = useRef<GeminiClassroomSession | null>(null)
   const micStreamRef = useRef<MediaStream | null>(null)
-  const audioElRef = useRef<HTMLAudioElement | null>(null)
   const videoElRef = useRef<HTMLVideoElement | null>(null)   // AI video (ai_video.mp4)
   const studentVideoRef = useRef<HTMLVideoElement | null>(null) // Student video (ai_video2.mp4)
   const currentAvatarModeRef = useRef<'idle' | 'ai' | 'student'>('idle')
   const transcriptEndRef = useRef<HTMLDivElement | null>(null)
-  const aiSpeakingRef = useRef(false)
   const statusRef = useRef<Status>('idle')
   const [nowTick, setNowTick] = useState(0)
 
-  const aiSpeakStartRef = useRef<number>(0)
-  const kickoffSentRef = useRef<boolean>(false)
   const reconnectAttemptsRef = useRef<number>(0)
   const skipTranscriptResetRef = useRef<boolean>(false)
   const startClassRef = useRef<() => void>(() => {})
 
-  // Buffered teacher transcript text — only revealed when audio is actually playing,
-  // so what the student SEES matches what they HEAR (no more transcript-ahead-of-voice).
+  // ─── Teacher transcript reveal buffer (mirrors OpenAI implementation) ─────
+  // Gemini's outputTranscription arrives before the corresponding audio plays.
+  // We buffer it here and reveal it char-by-char only while audio is active,
+  // so what the student SEES in captions matches what they HEAR.
   const teacherBufferRef = useRef<Map<string, string>>(new Map())
   const audioPlayingRef = useRef<boolean>(false)
-  const revealTimerRef = useRef<any>(null)
-
-  // ─── AVATAR SYNC (Web Audio analyser) ─────────────────────
-  // WebRTC MediaStreams never fire onpause/onended between AI turns — they play silence.
-  // So we analyse the actual waveform via AnalyserNode. This IS the AI audio playback.
-  const audioCtxRef = useRef<AudioContext | null>(null)
-  const analyserRef = useRef<AnalyserNode | null>(null)
-  const analyserSrcRef = useRef<MediaStreamAudioSourceNode | null>(null)
-  const rafRef = useRef<number | null>(null)
-  const audioActiveRef = useRef<boolean>(false)          // TRUE when waveform > threshold
-  const silenceSinceRef = useRef<number>(0)              // ts (ms) since we first saw silence
-  // Turn generation: incremented on every response.created. The video only resets to 0
-  // when it hasn't yet started for the CURRENT turn — so stale audio-start signals from
-  // an old turn can't reset a video that's already playing for the new turn.
-  const currentTurnIdRef = useRef<number>(0)
-  const videoStartedForTurnRef = useRef<number>(-1)
-  // True between response.created and response.done/completed/cancelled. THIS defines
-  // "the AI is currently in a speaking turn." Micro-silences within a turn (breaths,
-  // sentence boundaries) do NOT pause the video — only turn end does.
-  const turnActiveRef = useRef<boolean>(false)
-
-  const SILENCE_THRESHOLD = 0.008   // RMS below this = silent
-  // Sustained silence needed to declare "AI truly finished." Kept LONG so that
-  // any natural inter-sentence pause (200–500ms) cannot trigger a switch back
-  // to the student video while the AI response is still in progress.
-  const SILENCE_HOLD_MS   = 900
-
-  // Central tracer — every video state transition should go through this so you
-  // can see in the browser console EXACTLY what triggered each switch.
-  const traceVideo = (trigger: string, extra?: Record<string, any>) => {
-    const av = videoElRef.current
-    const sv = studentVideoRef.current
-    console.log(
-      `[VIDEO] ${trigger}`,
-      {
-        mode: currentAvatarModeRef.current,
-        turnActive: turnActiveRef.current,
-        aiSpeaking: aiSpeakingRef.current,
-        audioActive: audioActiveRef.current,
-        turnId: currentTurnIdRef.current,
-        ai: av ? { display: av.style.display, paused: av.paused, t: +av.currentTime.toFixed(2) } : null,
-        student: sv ? { display: sv.style.display, paused: sv.paused, t: +sv.currentTime.toFixed(2) } : null,
-        ...(extra || {}),
-      }
-    )
-  }
+  const revealTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     statusRef.current = status
@@ -145,14 +96,8 @@ export default function ClassRoomPage() {
     []
   )
 
-  const sendEvent = useCallback((event: Record<string, any>) => {
-    const dc = dcRef.current
-    if (!dc || dc.readyState !== 'open') return
-    dc.send(JSON.stringify(event))
-  }, [])
-
-  // Reveal buffered teacher text into the visible transcript, char-by-char,
-  // paced only while audio is actively playing. Keeps subtitles in sync with voice.
+  // Reveals buffered teacher text char-by-char while audio is active.
+  // Same mechanism the OpenAI path used (teacherBufferRef + startTeacherReveal).
   const startTeacherReveal = useCallback(() => {
     if (revealTimerRef.current) return
     const tick = () => {
@@ -183,450 +128,212 @@ export default function ClassRoomPage() {
     revealTimerRef.current = setTimeout(tick, 0)
   }, [upsertItem])
 
-  const handleRealtimeEvent = useCallback(
-    (evt: any) => {
+  // Flush all remaining buffered teacher text immediately (used on turn end/interrupt).
+  const flushTeacherBuffer = useCallback((id: string) => {
+    const remaining = teacherBufferRef.current.get(id) ?? ''
+    if (!remaining) return
+    teacherBufferRef.current.set(id, '')
+    upsertItem(id, 'teacher', (prev) => ({
+      ...prev,
+      text: (prev.text || '') + remaining,
+    }))
+  }, [upsertItem])
+
+  // ─── Avatar switching helpers ─────────────────────────────
+  // Gemini gives us discrete audio chunks, so unlike the OpenAI WebRTC path
+  // we don't need a waveform analyser — teacher-started / teacher-stopped
+  // from the playback queue are precise signals.
+  const showAiVideo = useCallback(() => {
+    currentAvatarModeRef.current = 'ai'
+    const sv = studentVideoRef.current
+    if (sv) { sv.style.display = 'none'; try { sv.pause() } catch {} }
+    const v = videoElRef.current
+    if (!v) return
+    v.style.display = 'block'
+    try { v.currentTime = 0 } catch {}
+    v.play().catch(() => {})
+  }, [])
+
+  const showStudentVideo = useCallback(() => {
+    currentAvatarModeRef.current = 'student'
+    const v = videoElRef.current
+    if (v) { try { v.pause() } catch {}; v.style.display = 'none' }
+    const sv = studentVideoRef.current
+    if (!sv) return
+    sv.style.display = 'block'
+    try { sv.currentTime = 0 } catch {}
+    sv.play().catch(() => {
+      const onReady = () => {
+        sv.removeEventListener('canplay', onReady)
+        if (currentAvatarModeRef.current !== 'student') return
+        sv.play().catch(() => {})
+      }
+      sv.addEventListener('canplay', onReady)
+      try { sv.load() } catch {}
+    })
+  }, [])
+
+  const detectSubject = useCallback((cleaned: string) => {
+    setCurrentSubject((prev) => {
+      if (prev) return prev
+      const SUBJECTS_MAP: Record<string, string> = {
+        math: 'Math', maths: 'Math', mathematics: 'Math',
+        science: 'Science', physics: 'Physics', chemistry: 'Chemistry',
+        biology: 'Biology', english: 'English', grammar: 'English Grammar',
+        history: 'History', geography: 'Geography',
+        computer: 'Computer Science', coding: 'Computer Science',
+        jee: 'JEE Prep', neet: 'NEET Prep', clat: 'CLAT Prep',
+      }
+      const words = cleaned.toLowerCase().split(/\W+/)
+      for (const w of words) {
+        if (SUBJECTS_MAP[w]) return SUBJECTS_MAP[w]
+      }
+      return prev
+    })
+  }, [])
+
+  // ─── Fan-out from Gemini session events into UI state ─────
+  const handleSessionEvent = useCallback(
+    (evt: GeminiClassroomEvent) => {
       switch (evt.type) {
-        case 'session.created':
-        case 'session.updated':
+        case 'connected':
+          setStatus('active')
+          setStartedAt((v) => v ?? Date.now())
           break
 
-        case 'input_audio_buffer.speech_started':
-          traceVideo('EVENT: speech_started (student began)')
+        case 'student-started':
           setStudentSpeaking(true)
-          // Interrupt the AI IMMEDIATELY whenever the student starts speaking,
-          // even mid-sentence. No 800ms grace — the video and the audio must
-          // both switch to the student the moment they begin talking.
-          if (turnActiveRef.current || aiSpeakingRef.current) {
-            sendEvent({ type: 'response.cancel' })
-            // Mark the AI turn as ended locally so response.cancelled arriving
-            // later is a no-op for the avatar (student mode is already active).
-            turnActiveRef.current = false
-            aiSpeakingRef.current = false
-            audioPlayingRef.current = false
-            setAiSpeaking(false)
-          }
-          // Switch avatar to student video — only on first start of a student turn
+          setProcessingResponse(false)
+          // Barge-in: if AI video is showing, immediately switch to student.
           if (currentAvatarModeRef.current !== 'student') {
-            currentAvatarModeRef.current = 'student'
-            const av = videoElRef.current
-            if (av) { av.style.display = 'none'; try { av.pause() } catch {} }
-            const sv = studentVideoRef.current
-            console.log('[AVATAR] student speech detected', {
-              exists: !!sv,
-              readyState: sv?.readyState,
-              currentTime: sv?.currentTime,
-              paused: sv?.paused,
-              src: sv?.currentSrc,
-            })
-            if (sv) {
-              sv.style.display = 'block'
-              sv.muted = true
-              // playsInline attribute is on the element; ensure the property is on too
-              ;(sv as any).playsInline = true
-              const tryPlay = () => {
-                try { sv.currentTime = 0 } catch {}
-                const p = sv.play()
-                if (p && typeof p.then === 'function') {
-                  p.then(() => {
-                    console.log('[AVATAR] student video play OK', {
-                      readyState: sv.readyState, currentTime: sv.currentTime, paused: sv.paused,
-                    })
-                  }).catch((err) => {
-                    console.warn('[AVATAR] student video play FAILED', err?.message || err, {
-                      readyState: sv.readyState,
-                    })
-                    // Retry when the video is actually ready
-                    const onReady = () => {
-                      sv.removeEventListener('canplay', onReady)
-                      sv.removeEventListener('loadeddata', onReady)
-                      if (currentAvatarModeRef.current !== 'student') return
-                      try { sv.currentTime = 0 } catch {}
-                      sv.play().then(() => {
-                        console.log('[AVATAR] student video play OK (retry)')
-                      }).catch((e2) => {
-                        console.warn('[AVATAR] student video retry FAILED', e2?.message || e2)
-                      })
-                    }
-                    sv.addEventListener('canplay', onReady)
-                    sv.addEventListener('loadeddata', onReady)
-                    try { sv.load() } catch {}
-                  })
-                }
-              }
-              if (sv.readyState >= 2) {
-                tryPlay()
-              } else {
-                console.log('[AVATAR] student video not ready — waiting for loadeddata')
-                const onReady = () => {
-                  sv.removeEventListener('canplay', onReady)
-                  sv.removeEventListener('loadeddata', onReady)
-                  if (currentAvatarModeRef.current !== 'student') return
-                  tryPlay()
-                }
-                sv.addEventListener('canplay', onReady)
-                sv.addEventListener('loadeddata', onReady)
-                try { sv.load() } catch {}
-                // Also attempt immediate play — some browsers succeed even at readyState 0
-                tryPlay()
-              }
-            }
-          }
-          break
-        case 'input_audio_buffer.speech_stopped':
-          traceVideo('EVENT: speech_stopped (student ended)')
-          setStudentSpeaking(false)
-          setProcessingResponse(true)
-          // Pause student video; wait for AI to start before showing AI video
-          if (currentAvatarModeRef.current === 'student') {
-            currentAvatarModeRef.current = 'idle'
-            const sv = studentVideoRef.current
-            if (sv) { try { sv.pause() } catch {} }
+            showStudentVideo()
           }
           break
 
-        case 'conversation.item.input_audio_transcription.delta': {
-          const id = evt.item_id || evt.id
-          const delta: string = evt.delta ?? ''
-          if (!id || !delta) break
-          if (/[^\x00-\x7F]/.test(delta)) break
-          upsertItem(id, 'student', (prev) => ({
+        case 'student-stopped':
+          setStudentSpeaking(false)
+          // Show "Thinking…" between student stop and teacher start.
+          // Mirrors OpenAI's speech_stopped → processingResponse = true.
+          setProcessingResponse(true)
+          break
+
+        case 'teacher-started':
+          setAiSpeaking(true)
+          setProcessingResponse(false)
+          audioPlayingRef.current = true
+          if (currentAvatarModeRef.current !== 'ai') showAiVideo()
+          // Start revealing any buffered teacher transcript text.
+          startTeacherReveal()
+          break
+
+        case 'teacher-stopped':
+          setAiSpeaking(false)
+          audioPlayingRef.current = false
+          // Flush any remaining buffer (audio is done, reveal whatever is left).
+          teacherBufferRef.current.forEach((_, id) => flushTeacherBuffer(id))
+          if (currentAvatarModeRef.current === 'ai') showStudentVideo()
+          break
+
+        case 'teacher-interrupted':
+          setAiSpeaking(false)
+          audioPlayingRef.current = false
+          // Flush remaining buffer on interruption too.
+          teacherBufferRef.current.forEach((_, id) => flushTeacherBuffer(id))
+          // Student is presumably speaking; student-started handles avatar.
+          break
+
+        case 'student-transcript-delta': {
+          // IMPORTANT: Gemini's interimInputTranscription.text is the FULL current
+          // STT hypothesis, not a char-delta. We SET (replace) the text, not APPEND.
+          // OpenAI sent true deltas (APPEND). This is the key difference.
+          const currentText = evt.text
+          if (!currentText) break
+          upsertItem(evt.id, 'student', (prev) => ({
             ...prev,
             speaker: 'student',
-            text: (prev.text || '') + delta,
+            text: currentText,   // SET — not (prev.text || '') + currentText
             final: false,
           }))
           break
         }
-        case 'conversation.item.input_audio_transcription.completed': {
-          const id = evt.item_id || evt.id
-          const finalText: string = evt.transcript ?? ''
-          if (!id) break
-          const cleaned = finalText.trim()
-          const hasNonLatin = /[^\x00-\x7F]/.test(cleaned)
-          const hasAsciiLetter = /[a-zA-Z]/.test(cleaned)
+
+        case 'student-transcript-final': {
+          const cleaned = (evt.text || '').trim()
+          if (!cleaned) {
+            itemsRef.current.delete(evt.id)
+            setTranscript((prev) => prev.filter((p) => p.id !== evt.id))
+            break
+          }
           const NOISE_PHRASES = [
             'thank you', 'thank you for watching', 'thanks for watching',
             'please subscribe', 'subscribe', 'music playing', 'applause',
             'background music', 'inaudible', 'laughter',
           ]
-          const isKnownHallucination = NOISE_PHRASES.some(p => cleaned.toLowerCase() === p)
+          const lower = cleaned.toLowerCase()
           const looksLikeNoise =
-            cleaned.length < 4 ||
-            (!/\s/.test(cleaned) && cleaned.length < 8) ||
-            hasNonLatin ||
-            !hasAsciiLetter ||
-            isKnownHallucination
+            cleaned.length < 3 ||
+            NOISE_PHRASES.some((p) => lower === p)
           if (looksLikeNoise) {
-            itemsRef.current.delete(id)
-            setTranscript((prev) => prev.filter((p) => p.id !== id))
+            itemsRef.current.delete(evt.id)
+            setTranscript((prev) => prev.filter((p) => p.id !== evt.id))
             break
           }
-          upsertItem(id, 'student', (prev) => ({
+          upsertItem(evt.id, 'student', (prev) => ({
             ...prev,
             speaker: 'student',
-            text: cleaned || prev.text,
+            text: cleaned,
             final: true,
           }))
-          // Detect subject from early student messages (first 3 exchanges only)
-          setCurrentSubject(prev => {
-            if (prev) return prev
-            const SUBJECTS_MAP: Record<string, string> = {
-              math: 'Math', maths: 'Math', mathematics: 'Math',
-              science: 'Science', physics: 'Physics', chemistry: 'Chemistry',
-              biology: 'Biology', english: 'English', grammar: 'English Grammar',
-              history: 'History', geography: 'Geography',
-              computer: 'Computer Science', coding: 'Computer Science',
-              jee: 'JEE Prep', neet: 'NEET Prep', clat: 'CLAT Prep',
-            }
-            const words = cleaned.toLowerCase().split(/\W+/)
-            for (const w of words) {
-              if (SUBJECTS_MAP[w]) return SUBJECTS_MAP[w]
-            }
-            return prev
-          })
-          break
-        }
-        case 'conversation.item.input_audio_transcription.failed': {
-          const id = evt.item_id
-          if (id) {
-            itemsRef.current.delete(id)
-            setTranscript((prev) => prev.filter((p) => p.id !== id))
-          }
+          detectSubject(cleaned)
           break
         }
 
-        case 'response.audio_transcript.delta':
-        case 'response.output_audio_transcript.delta': {
-          const id = evt.item_id || evt.response_id
-          if (!id) break
-          const delta: string = evt.delta ?? ''
-          if (!delta) break
-          // Transcript is captions ONLY. It never controls the avatar video.
-          const prev = teacherBufferRef.current.get(id) || ''
-          teacherBufferRef.current.set(id, prev + delta)
+        case 'teacher-transcript-delta': {
+          // Buffer the new delta; the reveal timer drips it out while audio plays.
+          // This keeps captions in sync with the voice — same as OpenAI's teacherBufferRef.
+          const id = evt.id
+          const prev = teacherBufferRef.current.get(id) ?? ''
+          teacherBufferRef.current.set(id, prev + evt.text)
+          // Ensure the row exists in the transcript so its position is stable.
           upsertItem(id, 'teacher', (p) => ({ ...p, speaker: 'teacher' }))
           if (audioPlayingRef.current) startTeacherReveal()
           break
         }
-        case 'response.audio_transcript.done':
-        case 'response.output_audio_transcript.done': {
-          const id = evt.item_id || evt.response_id
-          const finalText: string = evt.transcript ?? ''
-          if (!id) break
-          // Flush any remaining buffered text into the visible row, then mark final
-          const remaining = teacherBufferRef.current.get(id) || ''
-          teacherBufferRef.current.set(id, '')
+
+        case 'teacher-transcript-final': {
+          const id = evt.id
+          // Flush any remaining buffer, then mark final.
+          flushTeacherBuffer(id)
+          teacherBufferRef.current.delete(id)
           upsertItem(id, 'teacher', (prev) => ({
             ...prev,
             speaker: 'teacher',
-            text: finalText || (prev.text || '') + remaining,
+            text: evt.text.trim() || prev.text || '',
             final: true,
           }))
           break
         }
 
-        case 'response.created': {
-          // NEW logical turn — start AI video immediately so it's never delayed by
-          // AudioContext state or RTP/SCTP ordering. The analyser still handles hiding.
-          currentTurnIdRef.current += 1
-          const newTurn = currentTurnIdRef.current
-          turnActiveRef.current = true
-          aiSpeakStartRef.current = Date.now()
-          aiSpeakingRef.current = true
-          setAiSpeaking(true)
-          setProcessingResponse(false)
-          traceVideo('EVENT: response.created → trigger AI video', { newTurn })
-          if (currentAvatarModeRef.current !== 'student') {
-            const v = videoElRef.current
-            if (v) {
-              videoStartedForTurnRef.current = newTurn
-              currentAvatarModeRef.current = 'ai'
-              const sv = studentVideoRef.current
-              if (sv) { sv.style.display = 'none'; try { sv.pause() } catch {} }
-              v.style.display = 'block'
-              v.currentTime = 0
-              v.play().catch(() => {})
-              console.log('[AVATAR] VIDEO START on response.created turn=' + newTurn)
-            }
-          }
-          break
-        }
-        case 'response.done':
-        case 'response.completed':
-        case 'response.cancelled':
-          // Turn ended on SCTP data channel — but audio (RTP) may still be draining
-          // from the WebRTC jitter buffer. DO NOT hide the video here; let onAudioActiveStop
-          // do it once the analyser confirms sustained true silence.
-          traceVideo('EVENT: ' + evt.type + ' (AI turn ended)', { evtType: evt.type })
-          turnActiveRef.current = false
-          aiSpeakingRef.current = false
-          // Don't set audioPlayingRef=false here — audio may still be draining.
-          // onAudioActiveStop will do it when waveform goes silent.
-          setAiSpeaking(false)
-          // If student interrupted, leave student mode alone.
-          // If we're in AI mode, leave the video PLAYING until analyser calls onAudioActiveStop.
-          if (currentAvatarModeRef.current === 'ai') {
-            if (!audioActiveRef.current) {
-              // Analyser already declared silence before response.done arrived — hide now.
-              currentAvatarModeRef.current = 'student'
-              const v = videoElRef.current
-              if (v) { try { v.pause() } catch {}; v.style.display = 'none' }
-              console.log('[AVATAR] VIDEO HIDDEN immediately (audio already silent)')
-              // AI finished — automatically show student video (no speech_started needed)
-              const sv = studentVideoRef.current
-              if (sv) {
-                sv.style.display = 'block'
-                try { sv.currentTime = 0 } catch {}
-                sv.play().catch(() => {
-                  const onReady = () => {
-                    sv.removeEventListener('canplay', onReady)
-                    if (currentAvatarModeRef.current !== 'student') return
-                    try { sv.currentTime = 0 } catch {}
-                    sv.play().catch(() => {})
-                  }
-                  sv.addEventListener('canplay', onReady)
-                })
-                console.log('[AVATAR] student video AUTO-START (AI complete, immediate)')
-              }
-            } else {
-              // Audio still flowing — defer hide to onAudioActiveStop.
-              console.log('[AVATAR] deferring video hide to analyser (audio still active)')
-            }
-          }
+        case 'error':
+          setErrorMsg(evt.message || 'Live session error')
           break
 
-        case 'error': {
-          const msg: string = evt?.error?.message || 'Realtime session error'
-          if (/no active response/i.test(msg) || /Cancellation failed/i.test(msg)) {
-            console.warn('[rt] benign cancel race:', msg)
-            break
+        case 'closed':
+          if (statusRef.current === 'active' &&
+              reconnectAttemptsRef.current < 2) {
+            reconnectAttemptsRef.current += 1
+            setStatus('reconnecting')
+            skipTranscriptResetRef.current = true
+            setTimeout(() => {
+              if (statusRef.current !== 'ended') startClassRef.current()
+            }, 2000)
           }
-          setErrorMsg(msg)
-          break
-        }
-
-        default:
           break
       }
     },
-    [upsertItem, sendEvent, startTeacherReveal]
+    [showAiVideo, showStudentVideo, upsertItem, detectSubject,
+     startTeacherReveal, flushTeacherBuffer]
   )
-
-  // ─── Audio-waveform analyser: SOLE source of truth for AI-speaking ───
-  const stopAudioAnalyser = useCallback(() => {
-    if (rafRef.current !== null) {
-      cancelAnimationFrame(rafRef.current)
-      rafRef.current = null
-    }
-    try { analyserSrcRef.current?.disconnect() } catch {}
-    try { analyserRef.current?.disconnect() } catch {}
-    analyserSrcRef.current = null
-    analyserRef.current = null
-    try { audioCtxRef.current?.close() } catch {}
-    audioCtxRef.current = null
-    audioActiveRef.current = false
-    silenceSinceRef.current = 0
-  }, [])
-
-  const onAudioActiveStart = useCallback(() => {
-    const turn = currentTurnIdRef.current
-    const now = Date.now()
-    traceVideo('ANALYSER: audio active (rising edge) → AI video', { turn })
-    aiSpeakingRef.current = true
-    aiSpeakStartRef.current = now
-    audioPlayingRef.current = true
-    setAiSpeaking(true)
-    startTeacherReveal()
-
-    // If student is actively speaking, do not override their video with AI video.
-    if (currentAvatarModeRef.current === 'student') return
-    // NOTE: do NOT gate on turnActiveRef here. Audio arrives on the WebRTC RTP path
-    // and response.created arrives on the SCTP data channel — they aren't ordered.
-    // If we required response.created first, audio could start before we allow the
-    // video, causing "AI is talking but video is frozen." Micro-pauses are already
-    // handled by the STOP path (see onAudioActiveStop's turnActiveRef guard).
-
-    const v = videoElRef.current
-    if (!v) return
-
-    const isNewTurn = videoStartedForTurnRef.current !== turn
-    const needsSwitch = currentAvatarModeRef.current !== 'ai'
-
-    if (isNewTurn || needsSwitch) {
-      videoStartedForTurnRef.current = turn
-      currentAvatarModeRef.current = 'ai'
-      // Hide student video, show AI video
-      const sv = studentVideoRef.current
-      if (sv) { sv.style.display = 'none'; try { sv.pause() } catch {} }
-      v.style.display = 'block'
-      v.currentTime = 0
-      console.log('[AVATAR] VIDEO START currentTime=0 turn=' + turn)
-    } else {
-      console.log('[AVATAR] VIDEO RESUME currentTime=' + v.currentTime.toFixed(2) + ' turn=' + turn)
-    }
-    v.play().catch(() => {})
-  }, [startTeacherReveal])
-
-  const onAudioActiveStop = useCallback(() => {
-    // Waveform dipped silent. If the AI turn is still active (no response.done yet),
-    // this is a natural gap between words/sentences — DO NOT hide the video.
-    if (turnActiveRef.current) {
-      traceVideo('ANALYSER: silence IGNORED — turn still active')
-      return
-    }
-    // Extra defense: if we're in AI mode AND the AI is still marked as speaking
-    // (aiSpeakingRef), refuse to switch. Some events can flip turnActiveRef before
-    // aiSpeakingRef, and we never want a fluctuation to bounce us to the student.
-    if (currentAvatarModeRef.current === 'ai' && aiSpeakingRef.current) {
-      traceVideo('ANALYSER: silence IGNORED — mode=ai + aiSpeaking=true')
-      return
-    }
-    // Turn has ended AND audio has truly gone silent — now safe to hide AI video.
-    traceVideo('ANALYSER: silence CONFIRMED → switch AI → student')
-    aiSpeakingRef.current = false
-    audioPlayingRef.current = false
-    setAiSpeaking(false)
-    if (currentAvatarModeRef.current === 'ai') {
-      currentAvatarModeRef.current = 'student'
-      const v = videoElRef.current
-      if (v) {
-        try { v.pause() } catch {}
-        v.style.display = 'none'
-        console.log('[AVATAR] VIDEO HIDDEN at currentTime=' + v.currentTime.toFixed(2))
-      }
-      // AI finished and audio truly silent — automatically show student video
-      const sv = studentVideoRef.current
-      if (sv) {
-        sv.style.display = 'block'
-        try { sv.currentTime = 0 } catch {}
-        sv.play().catch(() => {
-          const onReady = () => {
-            sv.removeEventListener('canplay', onReady)
-            if (currentAvatarModeRef.current !== 'student') return
-            try { sv.currentTime = 0 } catch {}
-            sv.play().catch(() => {})
-          }
-          sv.addEventListener('canplay', onReady)
-        })
-        console.log('[AVATAR] student video AUTO-START (AI complete, analyser confirmed)')
-      }
-    }
-  }, [])
-
-  const startAudioAnalyser = useCallback((stream: MediaStream) => {
-    stopAudioAnalyser()
-    try {
-      const AC = (window.AudioContext || (window as any).webkitAudioContext)
-      const ctx: AudioContext = new AC()
-      // AudioContext created in an async callback has no user-gesture context,
-      // so Chrome starts it suspended. Resume it immediately so the analyser
-      // can actually read audio data.
-      ctx.resume().catch(() => {})
-      audioCtxRef.current = ctx
-      const src = ctx.createMediaStreamSource(stream)
-      analyserSrcRef.current = src
-      const analyser = ctx.createAnalyser()
-      analyser.fftSize = 512
-      analyser.smoothingTimeConstant = 0
-      src.connect(analyser)
-      analyserRef.current = analyser
-      const buf = new Uint8Array(analyser.fftSize)
-
-      const tick = () => {
-        const a = analyserRef.current
-        if (!a) return
-        a.getByteTimeDomainData(buf)
-        let sum = 0
-        for (let i = 0; i < buf.length; i++) {
-          const v = (buf[i] - 128) / 128
-          sum += v * v
-        }
-        const rms = Math.sqrt(sum / buf.length)
-        const now = Date.now()
-
-        if (rms > SILENCE_THRESHOLD) {
-          silenceSinceRef.current = 0
-          if (!audioActiveRef.current) {
-            audioActiveRef.current = true
-            onAudioActiveStart()
-          }
-        } else if (audioActiveRef.current) {
-          // Below threshold — could be inter-word gap OR end of turn.
-          // Require SILENCE_HOLD_MS of continuous silence to declare end.
-          if (silenceSinceRef.current === 0) silenceSinceRef.current = now
-          else if (now - silenceSinceRef.current >= SILENCE_HOLD_MS) {
-            audioActiveRef.current = false
-            silenceSinceRef.current = 0
-            onAudioActiveStop()
-          }
-        }
-        rafRef.current = requestAnimationFrame(tick)
-      }
-      rafRef.current = requestAnimationFrame(tick)
-    } catch (e) {
-      console.warn('[AVATAR] analyser setup failed', e)
-    }
-  }, [onAudioActiveStart, onAudioActiveStop, stopAudioAnalyser])
 
   const cleanupMedia = useCallback(() => {
     if (micStreamRef.current) {
@@ -636,16 +343,9 @@ export default function ClassRoomPage() {
   }, [])
 
   const cleanupAll = useCallback(() => {
-    stopAudioAnalyser()
-    try { dcRef.current?.close() } catch {}
-    try { pcRef.current?.getSenders().forEach((s) => s.track && s.track.stop()) } catch {}
-    try { pcRef.current?.close() } catch {}
-    dcRef.current = null
-    pcRef.current = null
+    try { sessionRef.current?.close() } catch {}
+    sessionRef.current = null
     cleanupMedia()
-    if (audioElRef.current) {
-      try { audioElRef.current.srcObject = null } catch {}
-    }
     if (videoElRef.current) {
       try { videoElRef.current.pause() } catch {}
     }
@@ -659,10 +359,7 @@ export default function ClassRoomPage() {
     }
     teacherBufferRef.current.clear()
     audioPlayingRef.current = false
-    aiSpeakingRef.current = false
-    videoStartedForTurnRef.current = -1
-    turnActiveRef.current = false
-  }, [cleanupMedia, stopAudioAnalyser])
+  }, [cleanupMedia])
 
   const startClass = useCallback(async () => {
     setErrorMsg('')
@@ -673,8 +370,9 @@ export default function ClassRoomPage() {
       reconnectAttemptsRef.current = 0
     }
     skipTranscriptResetRef.current = false
-    kickoffSentRef.current = false
+
     teacherBufferRef.current.clear()
+    audioPlayingRef.current = false
 
     setStatus('requesting-mic')
 
@@ -700,7 +398,7 @@ export default function ClassRoomPage() {
 
     let sessionInfo: any
     try {
-      const res = await fetch('/api/realtime-session', { method: 'POST' })
+      const res = await fetch('/api/gemini-live-token', { method: 'POST' })
       if (!res.ok) throw new Error(`Session ${res.status}`)
       sessionInfo = await res.json()
     } catch {
@@ -712,113 +410,41 @@ export default function ClassRoomPage() {
       return
     }
 
-    const ephemeralKey: string | undefined = sessionInfo?.client_secret?.value
-    const model: string | undefined = sessionInfo?.model
+    const token: string | undefined = sessionInfo?.client_secret?.value
     const expiresAtRaw: number | undefined = sessionInfo?.client_secret?.expires_at
     if (expiresAtRaw) setSessionExpiresAt(expiresAtRaw * 1000)
 
-    if (!ephemeralKey || !model) {
+    if (!token) {
       setStatus('error')
       setErrorMsg('The class could not be initialized. Please try again.')
       cleanupMedia()
       return
     }
 
-    const pc = new RTCPeerConnection()
-    pcRef.current = pc
-
-    const audioEl = audioElRef.current || new Audio()
-    audioEl.autoplay = true
-    audioEl.muted = false
-    audioElRef.current = audioEl
-    pc.ontrack = (e) => {
-      const [remoteStream] = e.streams
-      if (audioEl.srcObject !== remoteStream) {
-        audioEl.srcObject = remoteStream
-      }
-      // Hook the analyser to the SAME MediaStream. This is the single source of truth
-      // for whether the AI is actually producing audible speech right now.
-      startAudioAnalyser(remoteStream)
-    }
-
-    micStream.getAudioTracks().forEach((track) => pc.addTrack(track, micStream))
-
-    const dc = pc.createDataChannel('oai-events')
-    dcRef.current = dc
-
-    dc.onopen = () => {
-      if (kickoffSentRef.current) return
-      kickoffSentRef.current = true
-      sendEvent({
-        type: 'response.create',
-        response: { instructions: INITIAL_KICKOFF },
-      })
-    }
-
-    dc.onmessage = (e) => {
-      try {
-        const evt = JSON.parse(e.data)
-        handleRealtimeEvent(evt)
-      } catch {}
-    }
-
-    pc.onconnectionstatechange = () => {
-      const state = pc.connectionState
-      if (state === 'connected') {
-        setStatus('active')
-        setStartedAt((v) => v ?? Date.now())
-      }
-      if (state === 'failed' || state === 'disconnected' || state === 'closed') {
-        if (statusRef.current !== 'ended') {
-          setAiSpeaking(false)
-          setProcessingResponse(false)
-          if (state !== 'closed' && reconnectAttemptsRef.current < 2) {
-            reconnectAttemptsRef.current += 1
-            setStatus('reconnecting')
-            skipTranscriptResetRef.current = true
-            setTimeout(() => {
-              if (statusRef.current !== 'ended') startClassRef.current()
-            }, 2000)
-          }
-        }
-      }
-    }
+    const session = new GeminiClassroomSession(
+      token,
+      micStream,
+      handleSessionEvent
+    )
+    sessionRef.current = session
 
     try {
-      const offer = await pc.createOffer()
-      await pc.setLocalDescription(offer)
-
-      const sdpUrl = `https://api.openai.com/v1/realtime/calls?model=${encodeURIComponent(model)}`
-      const sdpRes = await fetch(sdpUrl, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${ephemeralKey}`,
-          'Content-Type': 'application/sdp',
-        },
-        body: offer.sdp,
-      })
-      if (!sdpRes.ok) {
-        const errBody = await sdpRes.text()
-        throw new Error(`SDP ${sdpRes.status}: ${errBody.slice(0, 200)}`)
-      }
-      const answerSdp = await sdpRes.text()
-      await pc.setRemoteDescription({ type: 'answer', sdp: answerSdp })
+      await session.start()
     } catch (e: any) {
       setStatus('error')
       setErrorMsg(`Couldn't connect: ${e?.message ?? 'unknown error'}`)
       cleanupAll()
       return
     }
-  }, [handleRealtimeEvent, sendEvent, cleanupMedia, cleanupAll])
+  }, [handleSessionEvent, cleanupMedia, cleanupAll])
 
-  // Keep ref current so reconnect timeout can call it without a stale closure
   useEffect(() => { startClassRef.current = startClass }, [startClass])
 
   const toggleMute = useCallback(() => {
     const stream = micStreamRef.current
     if (!stream) return
     const next = !muted
-    stream.getAudioTracks().forEach((t) => (t.enabled = !next))
+    sessionRef.current?.setMuted(next)
     setMuted(next)
   }, [muted])
 
@@ -842,7 +468,7 @@ export default function ClassRoomPage() {
     transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [transcript])
 
-  // Session expiry warning — show banner 5 minutes before key expires
+  // Session expiry warning — show banner 5 minutes before token expires
   useEffect(() => {
     if (!sessionExpiresAt || status !== 'active') return
     const msUntilWarning = sessionExpiresAt - Date.now() - 5 * 60 * 1000
@@ -851,12 +477,6 @@ export default function ClassRoomPage() {
     return () => clearTimeout(t)
   }, [sessionExpiresAt, status])
 
-  // The HTML audio element is only a sink for the WebRTC MediaStream — it plays the
-  // sound. It does NOT drive AI-speaking state (that comes from the waveform analyser).
-  const attachAudioListeners = useCallback((el: HTMLAudioElement | null) => {
-    audioElRef.current = el
-  }, [])
-
   const durationText = useMemo(() => {
     if (!startedAt) return '00:00'
     const end = endedAt ?? Date.now()
@@ -864,6 +484,7 @@ export default function ClassRoomPage() {
     const mm = String(Math.floor(s / 60)).padStart(2, '0')
     const ss = String(s % 60).padStart(2, '0')
     return `${mm}:${ss}`
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startedAt, endedAt, nowTick])
 
   const statusPill =
@@ -989,9 +610,8 @@ export default function ClassRoomPage() {
           <AiVideo
             videoElRef={videoElRef}
             currentAvatarModeRef={currentAvatarModeRef}
-            currentTurnIdRef={currentTurnIdRef}
           />
-          {/* Student avatar video — shown while student is speaking */}
+          {/* Student avatar video — shown while student is speaking / idle */}
           <StudentVideo
             studentVideoRef={studentVideoRef}
             currentAvatarModeRef={currentAvatarModeRef}
@@ -1144,25 +764,20 @@ export default function ClassRoomPage() {
           </div>
         </div>
       )}
-
-      {/* OpenAI TTS audio — this is what the student hears. */}
-      <audio ref={attachAudioListeners} hidden autoPlay />
     </main>
   )
 }
 
 // ─── Avatar video sub-components ──────────────────────────────────────────────
-// Using named components with stable useCallback refs so React re-renders in the
-// parent never reset el.style.display (display is managed imperatively, not via props).
+// Stable useCallback refs so parent re-renders don't reset el.style.display
+// (display is managed imperatively, not via props).
 
 function AiVideo({
   videoElRef,
   currentAvatarModeRef,
-  currentTurnIdRef,
 }: {
   videoElRef: React.MutableRefObject<HTMLVideoElement | null>
   currentAvatarModeRef: React.MutableRefObject<'idle' | 'ai' | 'student'>
-  currentTurnIdRef: React.MutableRefObject<number>
 }) {
   const stableRef = useCallback((el: HTMLVideoElement | null) => {
     videoElRef.current = el
@@ -1172,7 +787,6 @@ function AiVideo({
       if (currentAvatarModeRef.current === 'ai') {
         el.currentTime = 0
         el.play().catch(() => {})
-        console.log('[AVATAR] VIDEO LOOP currentTime=0 turn=' + currentTurnIdRef.current)
       }
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -1200,22 +814,17 @@ function StudentVideo({
     studentVideoRef.current = el
     if (!el) return
     // INITIAL STATE: student video is the default avatar shown before the AI
-    // connects / starts speaking. Once the AI actually begins its response,
-    // the existing switching logic (response.created / onAudioActiveStart)
-    // will hide this and show the AI video.
+    // begins speaking. Once the AI actually responds, the switching logic
+    // hides this and shows the AI video.
     el.style.display = 'block'
     el.muted = true
     ;(el as any).playsInline = true
-    // Loop on end regardless of mode while we're still in the pre-AI state;
-    // once mode becomes 'ai', the AI video takes over and this element is hidden.
     el.onended = () => {
       if (currentAvatarModeRef.current !== 'ai') {
         el.currentTime = 0
         el.play().catch(() => {})
       }
     }
-    // Kick off playback immediately on mount so the student sees the avatar
-    // instead of a black frame while the WebRTC connection is being set up.
     const kick = () => {
       el.play().catch(() => {
         const onReady = () => {

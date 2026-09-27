@@ -25,6 +25,8 @@ app/
   globals.css                 — ALL CSS for entire project (variables, animations, components)
   admin/
     page.tsx                  — admin research tracker ("use client")
+  class-room/
+    page.tsx                  — live AI classroom UI; uses Gemini Live (see below)
   why-trust-us/
     page.tsx                  — trust marketing page (dark theme, uses lp-* tokens)
   insights/
@@ -32,7 +34,14 @@ app/
   api/
     survey/route.ts           — POST /api/survey → writes SurveyResponse via Prisma
     insights/route.ts         — GET /api/insights → aggregated survey buckets
-    …                          (realtime-session, etc.)
+    gemini-live-token/route.ts — ACTIVE: mints ephemeral Gemini Live token
+    realtime-session/route.ts  — PRESERVED (disconnected): OpenAI Realtime session
+lib/
+  gemini/                     — ALL Gemini Live code lives in this ONE folder.
+    persona.ts                — TEACHER_PERSONA + INITIAL_KICKOFF (shared with OpenAI route)
+    config.ts                 — model id, audio sample rates, VAD tuning
+    audio.ts                  — MicPcmCapture + PcmPlaybackQueue (browser)
+    session.ts                — GeminiClassroomSession browser wrapper
 public/
   hero.mp4                    — hero section video (classroom demo)
   hero-bg.png, roundtable.png, math.png, biology.png, etc.
@@ -103,6 +112,49 @@ The API packs `comprehension` and `interview` into the JSON `answers` blob under
 }
 ```
 
+## Coding Behavior Guidelines (Karpathy Principles)
+
+**Tradeoff:** These guidelines bias toward caution over speed. For trivial one-liners, use judgment.
+
+### 1. Think Before Coding
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
+- State assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them — don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
+
+### 2. Simplicity First
+**Minimum code that solves the problem. Nothing speculative.**
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If 200 lines could be 50, rewrite it.
+
+Test: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+
+### 3. Surgical Changes
+**Touch only what you must. Clean up only your own mess.**
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it — don't delete it.
+- Remove only imports/variables/functions that YOUR changes made unused.
+
+Test: Every changed line should trace directly to the user's request.
+
+### 4. Goal-Driven Execution
+**Define success criteria. Loop until verified.**
+- Transform tasks into verifiable goals before implementing.
+- For multi-step tasks, state a brief plan with verify steps:
+  ```
+  1. [Step] → verify: [check]
+  2. [Step] → verify: [check]
+  ```
+- Strong success criteria allow independent looping. Weak criteria ("make it work") require constant back-and-forth.
+
+---
+
 ## Implementation Rules (non-negotiable)
 1. **Before editing**: ALWAYS read the target file first with Read tool
 2. **No duplication**: If changing a section, DELETE old code completely, then write new
@@ -166,7 +218,73 @@ For every feature requested, follow this sequence:
 ## Known Dependencies
 - React 18, Next.js 14, TypeScript 5
 - Prisma + daily-co SDK (installed but not yet integrated — Phase 1+)
+- `@google/genai` — Gemini Live SDK (active classroom realtime provider)
 - No external UI library (all custom CSS)
+
+## Live Classroom — Realtime Provider
+
+**Active provider:** Google Gemini Live API (via `@google/genai`).
+**Preserved but disconnected:** OpenAI Realtime (`gpt-realtime`).
+
+### Development rule
+> Do not delete or remove the preserved OpenAI Realtime implementation unless explicitly requested. The classroom currently uses Gemini Live, but OpenAI Realtime must remain available for future reconnection.
+
+Files that MUST stay intact (OpenAI, preserved):
+- `app/api/realtime-session/route.ts` — full OpenAI ephemeral-session endpoint (`/v1/realtime/client_secrets`), including the identical `TEACHER_PERSONA`.
+- `.env` keys: `OPENAI_API_KEY`, `OPENAI_REALTIME_MODEL`, `OPENAI_REALTIME_VOICE`.
+
+### Active flow (Gemini)
+```
+Browser (app/class-room/page.tsx)
+      ↓ POST /api/gemini-live-token
+Next.js server (uses GEMINI_API_KEY, calls @google/genai authTokens.create)
+      ↓ ephemeral token (single-use, ≤2 min to redeem, ≤30 min session)
+Browser opens Gemini Live WebSocket via ai.live.connect()
+      ↓ mic → PCM16 @ 16 kHz, base64 chunks via session.sendRealtimeInput()
+      ↑ teacher audio → PCM16 @ 24 kHz → Web Audio queue
+```
+
+### Where Gemini code lives (single folder rule)
+All Gemini logic lives in `lib/gemini/`. The only exception is the Next.js API
+route (`app/api/gemini-live-token/route.ts`) which must sit under `app/api/`
+by framework requirement; that file is a thin wrapper that imports everything
+from `lib/gemini/`.
+
+- `lib/gemini/persona.ts` — `TEACHER_PERSONA` + `INITIAL_KICKOFF`. Verbatim copy of the persona in `app/api/realtime-session/route.ts`. Keep them in sync when the teaching prompt changes.
+- `lib/gemini/config.ts` — `GEMINI_LIVE_MODEL` (default `gemini-3.8-live`), `INPUT_SAMPLE_RATE=16000`, `OUTPUT_SAMPLE_RATE=24000`, VAD prefix/silence tuning, ephemeral-token lifetimes.
+- `lib/gemini/audio.ts` — `MicPcmCapture` (mic → Float32 → PCM16 → base64 via `ScriptProcessorNode` at 16 kHz) and `PcmPlaybackQueue` (24 kHz `AudioBufferSource` queue with a hard `interrupt()` for barge-in).
+- `lib/gemini/session.ts` — `GeminiClassroomSession`: opens `ai.live.connect()`, wires mic input, decodes `serverContent.modelTurn.parts[].inlineData` into the playback queue, and fans server events out to the classroom UI as a small typed event union (`connected`, `student-started/stopped`, `teacher-started/stopped/interrupted`, `student-transcript-delta/final`, `teacher-transcript-delta/final`, `error`, `closed`).
+
+### Environment variables (Gemini)
+- `GEMINI_API_KEY` — **server-side only**. Never expose via `NEXT_PUBLIC_*`.
+- `GEMINI_LIVE_MODEL` — optional override; defaults to `gemini-3.8-live`.
+
+### Model note (do not regress)
+- The active Live model is `gemini-3.8-live` (per Google's current Live-API docs).
+- `gemini-live-2.5-flash-preview` was shut down on **2025-12-09** — never reintroduce it as the classroom model.
+- `gemini-3.8-live` does **not** support `thinkingConfig` / `thinkingLevel`. Do not add those fields to any `LiveConnectConfig` or ephemeral-token `liveConnectConstraints.config` in this codebase.
+
+### Authentication
+Ephemeral tokens minted per-session via `ai.authTokens.create({ config: { uses: 1, newSessionExpireTime, expireTime, liveConnectConstraints: { model, config } } })`. The system instruction, response modality, transcription config, and VAD tuning are locked into the token so the browser cannot override them.
+
+### VAD / interruption
+- Gemini's server-side `automaticActivityDetection` is enabled (with `prefixPaddingMs: 500`, `silenceDurationMs: 900`) — matches the natural-conversation feel of the OpenAI configuration.
+- Barge-in: when Gemini emits its first `interimInputTranscription` chunk (student started speaking), `GeminiClassroomSession` immediately calls `PcmPlaybackQueue.interrupt()` — stops all queued teacher audio and empties the queue. It also handles `serverContent.interrupted` as a redundant server-side signal.
+
+### Transcripts
+- Student transcript: driven by `serverContent.inputTranscription.text` (and interim variant). Finalised on `serverContent.turnComplete`.
+- Teacher transcript: driven by `serverContent.outputTranscription.text`. Finalised on `serverContent.turnComplete`.
+- Both are grouped per-turn using synthetic ids (`student-N` / `teacher-N`) so the existing `upsertItem` transcript state in `class-room/page.tsx` works unchanged.
+
+### Session lifecycle & cleanup
+On `endClass` / unmount, `GeminiClassroomSession.close()`:
+1. closes the Gemini WebSocket,
+2. stops the mic `ScriptProcessorNode` and closes its 16 kHz AudioContext,
+3. calls `PcmPlaybackQueue.close()` (stops all `AudioBufferSource`s, closes the 24 kHz AudioContext),
+4. `cleanupMedia()` stops all mic tracks so the browser's mic indicator goes off.
+
+### Timer
+The classroom timer is a plain `setInterval` driven by `nowTick` (`useEffect` gated on `status === 'active'`). It is intentionally independent of any realtime event — Gemini messages, audio chunks, or transcript events cannot freeze or drift it.
 
 ## When I Get Stuck
 - Errors on building? Check imports, check `"use client"` boundary
